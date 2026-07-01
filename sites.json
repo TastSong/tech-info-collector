@@ -1,0 +1,846 @@
+{
+  "version": 1,
+  "description": "中国科技情报网站清单",
+  "total": 103,
+  "sites": [
+    {
+      "category": "国家级科技部门",
+      "subcategory": "科学技术部",
+      "name": "科学技术部",
+      "urls": [
+        "https://www.most.gov.cn/index.html",
+        "https://www.most.gov.cn/gnwkjdt/"
+      ]
+    },
+    {
+      "category": "国家级科技部门",
+      "subcategory": "国家自然科学基金委员会",
+      "name": "国家自然科学基金委员会——基金要闻",
+      "urls": [
+        "https://www.nsfc.gov.cn/publish/portal0/tab434/module1886/more.htm"
+      ]
+    },
+    {
+      "category": "国家级科技部门",
+      "subcategory": "国家自然科学基金委员会",
+      "name": "国家自然科学基金委员会科学传播与成果转化中心",
+      "urls": [
+        "https://www.nsfc.gov.cn/csc/20333/20288/index.html"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "中央级媒体（推荐优先访问）",
+      "name": "中国科学报",
+      "urls": [
+        "https://stimes.sciencenet.cn/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "中央级媒体（推荐优先访问）",
+      "name": "科学网",
+      "urls": [
+        "https://www.sciencenet.cn/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "中央级媒体（推荐优先访问）",
+      "name": "中国科技网",
+      "urls": [
+        "http://www.stdaily.com/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "中央级媒体（推荐优先访问）",
+      "name": "科技日报",
+      "urls": [
+        "http://www.stdaily.com/index/keji/",
+        "https://epaper.stdaily.com/statics/technology-site/index.html#/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "中央级媒体（推荐优先访问）",
+      "name": "观察者——科技前沿",
+      "urls": [
+        "https://www.guancha.cn/KeJiQianYan"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "综合科技媒体（推荐优先访问）",
+      "name": "虎嗅网",
+      "urls": [
+        "https://www.huxiu.com/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "综合科技媒体（推荐优先访问）",
+      "name": "钛媒体",
+      "urls": [
+        "https://www.tmtpost.com/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "综合科技媒体（推荐优先访问）",
+      "name": "新浪科技",
+      "urls": [
+        "https://tech.sina.com.cn/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "综合科技媒体（推荐优先访问）",
+      "name": "IT之家",
+      "urls": [
+        "https://www.ithome.com/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "综合科技媒体（推荐优先访问）",
+      "name": "36氪",
+      "urls": [
+        "https://36kr.com/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "综合科技媒体（推荐优先访问）",
+      "name": "腾讯科技",
+      "urls": [
+        "https://tech.qq.com/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "综合科技媒体（推荐优先访问）",
+      "name": "网易科技",
+      "urls": [
+        "https://tech.163.com/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "AI与前沿科技媒体",
+      "name": "量子位",
+      "urls": [
+        "https://www.qbitai.com/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "AI与前沿科技媒体",
+      "name": "机器之心",
+      "urls": [
+        "https://www.jiqizhixin.com/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "AI与前沿科技媒体",
+      "name": "雷锋网",
+      "urls": [
+        "https://www.leiphone.com/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "AI与前沿科技媒体",
+      "name": "智东西",
+      "urls": [
+        "https://www.zhidx.com/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "AI与前沿科技媒体",
+      "name": "51CTO",
+      "urls": [
+        "https://www.51cto.com/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "AI与前沿科技媒体",
+      "name": "InfoQ中国",
+      "urls": [
+        "https://www.infoq.cn/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "AI与前沿科技媒体",
+      "name": "掘金技术社区",
+      "urls": [
+        "https://juejin.cn/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "行业媒体",
+      "name": "仪器信息网",
+      "urls": [
+        "https://www.instrument.com.cn/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "行业媒体",
+      "name": "中国仪器仪表行业协会",
+      "urls": [
+        "http://cima.org.cn/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "行业媒体",
+      "name": "科技信息检测服务平台",
+      "urls": [
+        "http://stm.las.ac.cn/STMonitor/home/resource_more_recommendadd.htm?parentPageId=1689579718022&controlType=openhome"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "行业媒体",
+      "name": "半导体行业观察",
+      "urls": [
+        "https://www.semiinsights.com/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "行业媒体",
+      "name": "电子工程专辑",
+      "urls": [
+        "https://www.eet-china.com/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "行业媒体",
+      "name": "OFweek电子工程网",
+      "urls": [
+        "https://ee.ofweek.com/"
+      ]
+    },
+    {
+      "category": "科技媒体",
+      "subcategory": "行业媒体",
+      "name": "通信世界",
+      "urls": [
+        "https://www.cww.net.cn/"
+      ]
+    },
+    {
+      "category": "显示技术",
+      "subcategory": "行业网站",
+      "name": "电子信息产业网新型显示专栏",
+      "urls": [
+        "http://www.cena.com.cn/display/index_3.html"
+      ]
+    },
+    {
+      "category": "显示技术",
+      "subcategory": "行业网站",
+      "name": "Ofweek显示网",
+      "urls": [
+        "https://display.ofweek.com/CATList-2300-8100-display.html"
+      ]
+    },
+    {
+      "category": "显示技术",
+      "subcategory": "行业网站",
+      "name": "CINNO光电科技行业洞察",
+      "urls": [
+        "http://www.cinno.com.cn/"
+      ]
+    },
+    {
+      "category": "显示技术",
+      "subcategory": "行业网站",
+      "name": "电子发烧友网光电显示技术",
+      "urls": [
+        "https://www.elecfans.com/xianshi/"
+      ]
+    },
+    {
+      "category": "显示技术",
+      "subcategory": "行业网站",
+      "name": "LEDinside",
+      "urls": [
+        "https://www.ledinside.cn/news/"
+      ]
+    },
+    {
+      "category": "显示技术",
+      "subcategory": "行业网站",
+      "name": "Display之家",
+      "urls": [
+        "https://www.163.com/dy/media/T1649819741347.html"
+      ]
+    },
+    {
+      "category": "显示技术",
+      "subcategory": "行业网站",
+      "name": "液晶网",
+      "urls": [
+        "https://www.fpdisplay.com/"
+      ]
+    },
+    {
+      "category": "显示技术",
+      "subcategory": "行业网站",
+      "name": "视觉系统网",
+      "urls": [
+        "https://www.vision-systems-china.com/"
+      ]
+    },
+    {
+      "category": "显示技术",
+      "subcategory": "企业官网",
+      "name": "海信中国",
+      "urls": [
+        "https://www.hisense.com/"
+      ]
+    },
+    {
+      "category": "科研院所",
+      "subcategory": null,
+      "name": "青岛能源所官网",
+      "urls": [
+        "http://www.qibebt.cas.cn/"
+      ]
+    },
+    {
+      "category": "科研院所",
+      "subcategory": null,
+      "name": "青岛科技大学官网",
+      "urls": [
+        "http://www.qust.edu.cn/"
+      ]
+    },
+    {
+      "category": "科技园区",
+      "subcategory": null,
+      "name": "青岛高新区官方网站--高新动态",
+      "urls": [
+        "http://gxq.qingdao.gov.cn/xxgk_113/zwzx_113/gxdt_113/"
+      ]
+    },
+    {
+      "category": "科技园区",
+      "subcategory": null,
+      "name": "苏州工业园官方网站--园区要闻",
+      "urls": [
+        "https://www.sipac.gov.cn/szgyyq/zwyw/xwzx_list.shtml"
+      ]
+    },
+    {
+      "category": "地方科技部门（直辖市）",
+      "subcategory": "北京市",
+      "name": "北京市科学技术委员会",
+      "urls": [
+        "https://kw.beijing.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（直辖市）",
+      "subcategory": "北京市",
+      "name": "北京市朝阳区",
+      "urls": [
+        "http://www.bjchy.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（直辖市）",
+      "subcategory": "上海市",
+      "name": "上海市科学技术委员会",
+      "urls": [
+        "https://stcsm.sh.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（直辖市）",
+      "subcategory": "上海市",
+      "name": "上海市浦东新区",
+      "urls": [
+        "https://www.pudong.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（直辖市）",
+      "subcategory": "天津市",
+      "name": "天津市科技局",
+      "urls": [
+        "https://kxjs.tj.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（直辖市）",
+      "subcategory": "天津市",
+      "name": "天津市滨海新区",
+      "urls": [
+        "https://www.tjbh.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（直辖市）",
+      "subcategory": "重庆市",
+      "name": "重庆市科技局",
+      "urls": [
+        "http://kjj.cq.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（直辖市）",
+      "subcategory": "重庆市",
+      "name": "重庆市两江新区",
+      "urls": [
+        "https://www.liangjiang.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（山东省）",
+      "subcategory": "省级",
+      "name": "山东省科学技术厅",
+      "urls": [
+        "http://kjt.shandong.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（山东省）",
+      "subcategory": "市级",
+      "name": "青岛政务网",
+      "urls": [
+        "http://www.qingdao.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（山东省）",
+      "subcategory": "市级",
+      "name": "青岛市科技局",
+      "urls": [
+        "http://qdstc.qingdao.gov.cn/",
+        "http://qdstc.qingdao.gov.cn/kjdt/bskjdt/",
+        "http://qdstc.qingdao.gov.cn/zcfg/qdskjcxzc/"
+      ]
+    },
+    {
+      "category": "地方科技部门（山东省）",
+      "subcategory": "市级",
+      "name": "青岛市西海岸新区",
+      "urls": [
+        "https://www.xihaian.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（山东省）",
+      "subcategory": "市级",
+      "name": "崂山政务网",
+      "urls": [
+        "http://www.laoshan.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（山东省）",
+      "subcategory": "市级",
+      "name": "济南市科技局",
+      "urls": [
+        "http://jnsti.jinan.gov.cn/",
+        "http://jnsti.jinan.gov.cn/col/col11655/index.html"
+      ]
+    },
+    {
+      "category": "地方科技部门（山东省）",
+      "subcategory": "市级",
+      "name": "滨州市科技局",
+      "urls": [
+        "http://kj.binzhou.gov.cn/",
+        "http://kj.binzhou.gov.cn/col/col120144/index.html"
+      ]
+    },
+    {
+      "category": "地方科技部门（山东省）",
+      "subcategory": "市级",
+      "name": "聊城市科技局",
+      "urls": [
+        "http://kjj.liaocheng.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（山东省）",
+      "subcategory": "市级",
+      "name": "济宁市科技局",
+      "urls": [
+        "http://jnkj.jining.gov.cn/",
+        "http://jnkj.jining.gov.cn/col/col14865/index.html"
+      ]
+    },
+    {
+      "category": "地方科技部门（山东省）",
+      "subcategory": "市级",
+      "name": "泰安市科技局",
+      "urls": [
+        "http://kjj.taian.gov.cn/",
+        "http://kjj.taian.gov.cn/col/col47946/index.html"
+      ]
+    },
+    {
+      "category": "地方科技部门（山东省）",
+      "subcategory": "市级",
+      "name": "威海市科技局",
+      "urls": [
+        "https://kjj.weihai.gov.cn/",
+        "https://kjj.weihai.gov.cn/col/col21411/index.html"
+      ]
+    },
+    {
+      "category": "地方科技部门（山东省）",
+      "subcategory": "市级",
+      "name": "日照市科技局",
+      "urls": [
+        "http://stc.rizhao.gov.cn/",
+        "http://stc.rizhao.gov.cn/col/col88457/index.html"
+      ]
+    },
+    {
+      "category": "地方科技部门（山东省）",
+      "subcategory": "市级",
+      "name": "临沂市科技局",
+      "urls": [
+        "http://kjj.linyi.gov.cn/",
+        "http://kjj.linyi.gov.cn/xwzx/gzdt.htm"
+      ]
+    },
+    {
+      "category": "地方科技部门（山东省）",
+      "subcategory": "市级",
+      "name": "菏泽市科技局",
+      "urls": [
+        "http://hzsti.heze.gov.cn/",
+        "http://hzsti.heze.gov.cn/kjlby/?catas=1585806770616537088"
+      ]
+    },
+    {
+      "category": "地方科技部门（山东省）",
+      "subcategory": "市级",
+      "name": "德州市科技局",
+      "urls": [
+        "http://dzst.dezhou.gov.cn/",
+        "http://dzst.dezhou.gov.cn/n74077165/n74077205/index.html"
+      ]
+    },
+    {
+      "category": "地方科技部门（江苏省）",
+      "subcategory": null,
+      "name": "江苏省科技厅",
+      "urls": [
+        "http://kxjst.jiangsu.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（江苏省）",
+      "subcategory": null,
+      "name": "南京市科技局",
+      "urls": [
+        "http://www.njkj.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（江苏省）",
+      "subcategory": null,
+      "name": "苏州市科技局",
+      "urls": [
+        "http://kjj.suzhou.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（江苏省）",
+      "subcategory": null,
+      "name": "苏州昆山市",
+      "urls": [
+        "http://www.ks.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（江苏省）",
+      "subcategory": null,
+      "name": "南京市高新区",
+      "urls": [
+        "http://www.jngxq.cn/home/index"
+      ]
+    },
+    {
+      "category": "地方科技部门（浙江省）",
+      "subcategory": null,
+      "name": "浙江科技厅",
+      "urls": [
+        "https://www.zjkw.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（浙江省）",
+      "subcategory": null,
+      "name": "杭州市科技局",
+      "urls": [
+        "http://kj.hangzhou.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（浙江省）",
+      "subcategory": null,
+      "name": "宁波市科技局",
+      "urls": [
+        "https://kjj.ningbo.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（浙江省）",
+      "subcategory": null,
+      "name": "杭州市余杭区",
+      "urls": [
+        "https://www.yuhang.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（广东省）",
+      "subcategory": null,
+      "name": "广东省科技厅",
+      "urls": [
+        "http://gdstc.gd.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（广东省）",
+      "subcategory": null,
+      "name": "深圳市科技创新委员会",
+      "urls": [
+        "http://stic.sz.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（广东省）",
+      "subcategory": null,
+      "name": "深圳市南山区",
+      "urls": [
+        "http://www.szns.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（广东省）",
+      "subcategory": null,
+      "name": "广州市科技局",
+      "urls": [
+        "http://kjj.gz.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（广东省）",
+      "subcategory": null,
+      "name": "广州市黄埔区",
+      "urls": [
+        "http://www.hp.gov.cn/zwfw/index.html"
+      ]
+    },
+    {
+      "category": "地方科技部门（其他省市）",
+      "subcategory": "安徽省",
+      "name": "安徽省科技厅",
+      "urls": [
+        "http://kjt.ah.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（其他省市）",
+      "subcategory": "四川省",
+      "name": "成都市科技局",
+      "urls": [
+        "http://cdst.chengdu.gov.cn/cdkxjsj",
+        "http://cdst.chengdu.gov.cn/cdkxjsj/kjdt/list.shtml"
+      ]
+    },
+    {
+      "category": "地方科技部门（其他省市）",
+      "subcategory": "四川省",
+      "name": "成都市天府新区",
+      "urls": [
+        "http://www.cdtf.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（其他省市）",
+      "subcategory": "湖北省",
+      "name": "武汉市科技局",
+      "urls": [
+        "https://kjj.wuhan.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（其他省市）",
+      "subcategory": "湖北省",
+      "name": "武汉市东湖高新区",
+      "urls": [
+        "http://www.wehdz.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（其他省市）",
+      "subcategory": "陕西省",
+      "name": "西安市科技局",
+      "urls": [
+        "http://xakj.xa.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（其他省市）",
+      "subcategory": "陕西省",
+      "name": "西安市西咸新区",
+      "urls": [
+        "http://www.xixianxinqu.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（其他省市）",
+      "subcategory": "辽宁省",
+      "name": "沈阳市科技局",
+      "urls": [
+        "https://kjj.shenyang.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（其他省市）",
+      "subcategory": "黑龙江省",
+      "name": "哈尔滨市科技局",
+      "urls": [
+        "https://www.harbin.gov.cn/haerbin/c106753/bmzfxxgk_zn.shtml"
+      ]
+    },
+    {
+      "category": "地方科技部门（其他省市）",
+      "subcategory": "吉林省",
+      "name": "长春市科技局",
+      "urls": [
+        "http://kjj.changchun.gov.cn/"
+      ]
+    },
+    {
+      "category": "地方科技部门（其他省市）",
+      "subcategory": "福建省",
+      "name": "厦门市科技局",
+      "urls": [
+        "http://sti.xm.gov.cn/"
+      ]
+    },
+    {
+      "category": "科技金融与行业服务",
+      "subcategory": null,
+      "name": "科技金融在线",
+      "urls": [
+        "http://jrkjaq.com/"
+      ]
+    },
+    {
+      "category": "科技金融与行业服务",
+      "subcategory": null,
+      "name": "各地服务业协会",
+      "urls": [
+        "http://www.stsa.org.cn/",
+        "http://www.cxsd.org.cn/"
+      ]
+    },
+    {
+      "category": "新兴科技媒体（补充扩展）",
+      "subcategory": "区块链与Web3",
+      "name": "链闻",
+      "urls": [
+        "https://www.chainnews.com/"
+      ]
+    },
+    {
+      "category": "新兴科技媒体（补充扩展）",
+      "subcategory": "区块链与Web3",
+      "name": "Odaily星球日报",
+      "urls": [
+        "https://www.odaily.com/"
+      ]
+    },
+    {
+      "category": "新兴科技媒体（补充扩展）",
+      "subcategory": "智能制造与机器人",
+      "name": "机器人在线",
+      "urls": [
+        "https://www.jqr.com/"
+      ]
+    },
+    {
+      "category": "新兴科技媒体（补充扩展）",
+      "subcategory": "智能制造与机器人",
+      "name": "工控网",
+      "urls": [
+        "https://www.gongkong.com/"
+      ]
+    },
+    {
+      "category": "新兴科技媒体（补充扩展）",
+      "subcategory": "新能源与环保",
+      "name": "OFweek光伏网",
+      "urls": [
+        "https://solar.ofweek.com/"
+      ]
+    },
+    {
+      "category": "新兴科技媒体（补充扩展）",
+      "subcategory": "新能源与环保",
+      "name": "电池中国",
+      "urls": [
+        "https://www.cbea.com/"
+      ]
+    },
+    {
+      "category": "新兴科技媒体（补充扩展）",
+      "subcategory": "医疗科技",
+      "name": "动脉网",
+      "urls": [
+        "https://www.vbdata.cn/"
+      ]
+    },
+    {
+      "category": "新兴科技媒体（补充扩展）",
+      "subcategory": "医疗科技",
+      "name": "健界",
+      "urls": [
+        "https://www.cn-healthcare.com/"
+      ]
+    },
+    {
+      "category": "新兴科技媒体（补充扩展）",
+      "subcategory": "汽车科技",
+      "name": "盖世汽车",
+      "urls": [
+        "https://auto.gasgoo.com/"
+      ]
+    },
+    {
+      "category": "新兴科技媒体（补充扩展）",
+      "subcategory": "汽车科技",
+      "name": "汽车之家",
+      "urls": [
+        "https://www.autohome.com.cn/"
+      ]
+    },
+    {
+      "category": "企业信息平台",
+      "subcategory": "药渡",
+      "name": "药渡（CRO信息）",
+      "urls": [
+        "https://www.pharmacodia.com/"
+      ]
+    }
+  ]
+}
