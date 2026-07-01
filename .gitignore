@@ -1,0 +1,29 @@
+# dependencies
+node_modules
+.pnp
+.pnp.*
+
+# next.js
+.next/
+out/
+build
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# database (local runtime data)
+data/collector.db
+data/collector.db-journal
+data/collector.db-wal
+data/collector.db-shm
+
+# os / editor
+.DS_Store
+.idea
+.vscode
+
+# secrets / local env
+.env
+.env.local
+.env.*.local
