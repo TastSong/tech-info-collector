@@ -1,12 +1,32 @@
 /**
  * 采集 CLI：pnpm crawl [siteId]
  *   - 带站点 id：只跑该站点
- *   - 不带：跑所有 enabled 站点
+ *   - 不带：跑所有 enabled 站点（按域名分组并行，环境变量 CRAWL_CONCURRENCY 控制并发数，默认 10）
+ *
+ * 思路：不同域名的限流队列独立，所以可以并行；同域名站点共享限流，组内串行。
  */
 import { eq } from "drizzle-orm";
+import PQueue from "p-queue";
 import { db, schema } from "../../db/client";
 import { runSite } from "./runner";
 import { closeBrowser } from "../crawler/playwright";
+
+const CONCURRENCY = Number(process.env.CRAWL_CONCURRENCY ?? 10);
+
+/** 按站点首个 url 的 host 分组，同域名站点串行，跨域名并行。 */
+function groupByHost(
+  sites: (typeof schema.sites.$inferSelect)[],
+): (typeof schema.sites.$inferSelect)[][] {
+  const map = new Map<string, (typeof schema.sites.$inferSelect)[]>();
+  for (const s of sites) {
+    let host = "unknown";
+    try { host = new URL(s.urls[0]).host; } catch {}
+    const list = map.get(host);
+    if (list) list.push(s);
+    else map.set(host, [s]);
+  }
+  return [...map.values()];
+}
 
 async function main() {
   const idArg = process.argv[2];
@@ -25,24 +45,46 @@ async function main() {
     process.exit(1);
   }
 
-  let totalFetched = 0;
-  for (const s of targets) {
-    console.log(`\n▶ #${s.id} ${s.name} [${s.render}]`);
-    if (!s.listSelector) {
-      console.log("  ⊘ 跳过：未配置选择器");
-      continue;
-    }
-    try {
-      const r = await runSite(s);
-      console.log(
-        `  ✓ 采集=${r.fetched} 跳过=${r.skipped} 错误=${r.errorCount} (${r.status})`,
-      );
-      totalFetched += r.fetched;
-    } catch (e) {
-      console.log(`  ✗ ${(e as Error).message}`);
-    }
+  // 有无选择器的站点分开（无选择器直接跳过，不占并发槽）
+  const ready = targets.filter((s) => s.listSelector);
+  const skipped = targets.filter((s) => !s.listSelector);
+  for (const s of skipped) {
+    console.log(`⊘ #${s.id} ${s.name} — 未配置选择器，跳过`);
   }
 
+  if (!ready.length) {
+    console.log("无可用站点。");
+    process.exit(0);
+  }
+
+  // 按域名分组
+  const groups = groupByHost(ready);
+  console.log(
+    `并行采集 ${ready.length} 站 (${groups.length} 域名组) · 并发=${CONCURRENCY}\n`,
+  );
+
+  const q = new PQueue({ concurrency: CONCURRENCY });
+  let totalFetched = 0;
+
+  for (const group of groups) {
+    q.add(async () => {
+      // 组内串行（同域名共享限流队列，并行无益且可能触发反爬）
+      for (const s of group) {
+        process.stdout.write(`▶ #${s.id} ${s.name} [${s.render}] ...`);
+        try {
+          const r = await runSite(s);
+          console.log(
+            ` ✓ 采${r.fetched} 跳${r.skipped} 错${r.errorCount} (${r.status})`,
+          );
+          totalFetched += r.fetched;
+        } catch (e) {
+          console.log(` ✗ ${(e as Error).message}`);
+        }
+      }
+    });
+  }
+
+  await q.onIdle();
   await closeBrowser();
   console.log(`\n完成，共采集 ${totalFetched} 篇新文章。`);
 }
