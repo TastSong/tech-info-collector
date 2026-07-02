@@ -1,5 +1,5 @@
 import { db, schema } from "@/db/client";
-import { desc, sql, isNull, and, gte } from "drizzle-orm";
+import { desc, sql, isNull, and, gte, eq } from "drizzle-orm";
 import { FeedCard } from "../components/FeedCard";
 
 export const dynamic = "force-dynamic";
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function FeedPage() {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  // 近7天 + 未查看 的文章，JOIN sites 取 category
+  // 近7天 + 未查看 的文章，JOIN sites + aiReviews 取分类和AI摘要
   const rows = db
     .select({
       id: schema.articles.id,
@@ -17,9 +17,11 @@ export default async function FeedPage() {
       siteId: schema.articles.siteId,
       siteName: schema.sites.name,
       category: schema.sites.category,
+      summary: schema.aiReviews.summary,
     })
     .from(schema.articles)
     .innerJoin(schema.sites, sql`${schema.articles.siteId} = ${schema.sites.id}`)
+    .leftJoin(schema.aiReviews, eq(schema.articles.id, schema.aiReviews.articleId))
     .where(
       and(
         isNull(schema.articles.viewedAt),

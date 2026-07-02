@@ -9,10 +9,11 @@ interface ArticleItem {
   fetchedAt: string | Date | null;
   publishedAt: string | Date | null;
   siteName: string | null;
+  summary: string | null;
 }
 
 /**
- * Feed 文章卡片：点击标题跳转详情，右侧"已阅读"按钮就地隐藏。
+ * Feed 文章卡片：标题 + AI 摘要 + 来源信息，右侧"已阅读"按钮就地隐藏。
  */
 export function FeedCard({ article }: { article: ArticleItem }) {
   const [dismissed, setDismissed] = useState(false);
@@ -38,6 +39,11 @@ export function FeedCard({ article }: { article: ArticleItem }) {
         <div className="font-medium text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
           {article.title || "(无标题)"}
         </div>
+        {article.summary ? (
+          <p className="mt-1 text-sm text-slate-500 line-clamp-2">
+            {article.summary}
+          </p>
+        ) : null}
         <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
           <span>{article.siteName}</span>
           <span>·</span>
