@@ -1133,7 +1133,7 @@
       "category": "地方科技部门（广东省）",
       "subcategory": null,
       "urls": [
-        "http://stic.sz.gov.cn/"
+        "https://stic.sz.gov.cn/"
       ],
       "render": "static",
       "list_selector": "li",
