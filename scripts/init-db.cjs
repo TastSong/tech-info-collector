@@ -2,7 +2,11 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
-const db = new Database(path.join(process.cwd(), 'data/collector.db'));
+const dbPath = path.join(process.cwd(), 'data/collector.db');
+const dir = path.dirname(dbPath);
+if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 
 // 建表
@@ -35,21 +39,33 @@ db.exec(`
   );
 `);
 
-// 导入种子
-const seed = JSON.parse(fs.readFileSync('data/sites.seed.json', 'utf-8'));
-const insert = db.prepare(
-  'INSERT INTO sites (name,category,subcategory,urls,render,list_selector,link_selector,title_selector,body_selector,date_selector,ai_involvement,interval,enabled,scope) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
-);
-const tx = db.transaction((sites) => {
-  for (const s of sites) {
-    insert.run(
-      s.name, s.category ?? null, s.subcategory ?? null, JSON.stringify(s.urls), s.render,
-      s.list_selector ?? null, s.link_selector ?? null, s.title_selector ?? null,
-      s.body_selector ?? null, s.date_selector ?? null,
-      s.ai_involvement ?? 'extract_judge', s.interval ?? null, s.enabled ? 1 : 0, s.scope ?? null
-    );
-  }
-});
-tx(seed.sites);
-console.log('DB 初始化完成：' + seed.sites.length + ' 个站点');
+// 幂等导入：仅当 sites 表为空时从 sites.json 导入
+const count = db.prepare('SELECT COUNT(*) AS cnt FROM sites').get();
+if (count.cnt === 0) {
+  const allSites = JSON.parse(fs.readFileSync('sites.json', 'utf-8'));
+  const insert = db.prepare(
+    'INSERT INTO sites (name,category,subcategory,urls,render,list_selector,link_selector,item_selector,title_selector,body_selector,date_selector,ai_involvement,interval,enabled,scope) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+  );
+  const tx = db.transaction((sites) => {
+    for (const s of sites) {
+      insert.run(
+        s.name, s.category ?? null, s.subcategory ?? null,
+        JSON.stringify(s.urls),
+        s.render ?? 'static',
+        s.list_selector ?? null, s.link_selector ?? null,
+        s.item_selector ?? null, s.title_selector ?? null,
+        s.body_selector ?? null, s.date_selector ?? null,
+        s.ai_involvement ?? 'extract_judge',
+        s.interval ?? '0 */6 * * *',
+        s.enabled ? 1 : 0,
+        s.scope ?? null
+      );
+    }
+  });
+  tx(allSites.sites);
+  const enabledCount = allSites.sites.filter((s) => s.enabled).length;
+  console.log('Init complete: ' + allSites.sites.length + ' sites (' + enabledCount + ' enabled)');
+} else {
+  console.log('DB already has ' + count.cnt + ' sites, skip init');
+}
 db.close();

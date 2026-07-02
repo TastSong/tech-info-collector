@@ -28,7 +28,6 @@ data/collector.db-shm
 # Docs
 README.md
 PLAN.md
-sites.json
 *.md
 
 # Docker

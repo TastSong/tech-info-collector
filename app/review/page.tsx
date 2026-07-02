@@ -4,6 +4,8 @@ import { eq, asc, desc } from "drizzle-orm";
 import { statusBadge } from "../components/Badges";
 import { ArticleActions } from "../components/ActionButtons";
 
+export const dynamic = "force-dynamic";
+
 export default async function ReviewPage() {
   const reviewArticles = db
     .select()

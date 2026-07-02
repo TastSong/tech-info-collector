@@ -2,6 +2,8 @@ import { db, schema } from "@/db/client";
 import { desc, sql, isNull, and, gte } from "drizzle-orm";
 import { FeedCard } from "../components/FeedCard";
 
+export const dynamic = "force-dynamic";
+
 export default async function FeedPage() {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 

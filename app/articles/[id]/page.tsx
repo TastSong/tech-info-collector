@@ -6,6 +6,8 @@ import { ArticleActions } from "../../components/ActionButtons";
 import { statusBadge } from "../../components/Badges";
 import { MarkViewed } from "../../components/MarkViewed";
 
+export const dynamic = "force-dynamic";
+
 export default async function ArticleDetailPage({
   params,
   searchParams,

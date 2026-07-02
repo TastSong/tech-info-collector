@@ -3,6 +3,8 @@ import { db, schema } from "@/db/client";
 import { sql } from "drizzle-orm";
 import { renderBadge } from "../components/Badges";
 
+export const dynamic = "force-dynamic";
+
 export default async function SitesPage() {
   const sites = db.select().from(schema.sites).all();
 

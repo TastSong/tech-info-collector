@@ -2,6 +2,8 @@ import { db, schema } from "@/db/client";
 import { desc } from "drizzle-orm";
 import { RunsTable } from "./RunsTable";
 
+export const dynamic = "force-dynamic";
+
 export default function RunsPage() {
   const logs = db
     .select()

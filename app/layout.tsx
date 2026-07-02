@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: "Node.js 科技情报采集 + AI 审核沙盒",
 };
 
+export const dynamic = "force-dynamic";
+
 function NavLink({
   href,
   children,
