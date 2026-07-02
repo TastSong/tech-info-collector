@@ -2,11 +2,10 @@ import { NextResponse } from "next/server";
 import { db, schema } from "@/db/client";
 import { eq, desc } from "drizzle-orm";
 
-/**
- * GET /api/runs/active — 返回当前在跑 + 最近完成的 run logs。
- * 前端轮询此接口来展示采集进度。
- * running 日志只取 10 分钟内的，超过的视为僵尸（清理掉）。
- */
+export const dynamic = "force-dynamic";
+
+// GET /api/runs/active — 返回当前在跑 + 最近完成的 run logs
+// running 日志只取 10 分钟内的，超过的视为僵尸（清理掉）
 export async function GET() {
   const allRunning = db
     .select()
@@ -15,7 +14,7 @@ export async function GET() {
     .orderBy(desc(schema.runLogs.startedAt))
     .all();
 
-  const cutoff = Date.now() - 10 * 60 * 1000; // 10 分钟前
+  const cutoff = Date.now() - 10 * 60 * 1000;
 
   const running: typeof allRunning = [];
   const stale: typeof allRunning = [];
@@ -29,7 +28,6 @@ export async function GET() {
     }
   }
 
-  // 自动清理僵尸 running（标记为 error）
   const now = new Date();
   for (const r of stale) {
     db.update(schema.runLogs)
@@ -38,7 +36,6 @@ export async function GET() {
       .run();
   }
 
-  // 最近 1 小时内完成的
   const recent = db
     .select()
     .from(schema.runLogs)

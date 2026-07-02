@@ -1,0 +1,37 @@
+# Git
+.git
+.gitignore
+
+# Dependencies
+node_modules
+
+# Build
+.next
+out
+build
+*.tsbuildinfo
+
+# Local env & data
+.env
+.env.local
+.env.*.local
+data/collector.db
+data/collector.db-journal
+data/collector.db-wal
+data/collector.db-shm
+
+# OS
+.DS_Store
+.idea
+.vscode
+
+# Docs
+README.md
+PLAN.md
+sites.json
+*.md
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml

@@ -6,6 +6,8 @@ import { NextResponse } from "next/server";
 import { db, schema } from "@/db/client";
 import { eq } from "drizzle-orm";
 
+export const dynamic = "force-dynamic";
+
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },

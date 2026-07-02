@@ -14,6 +14,8 @@ import { closeBrowser } from "@/src/crawler/playwright";
 import { createAbortController, getAbortSignal } from "@/src/pipeline/abort";
 import type { Site } from "@/src/pipeline/types";
 
+export const dynamic = "force-dynamic";
+
 const CONCURRENCY = Number(process.env.CRAWL_CONCURRENCY ?? 10);
 
 /** 按站点首个 url 的 host 分组，同域名站点串行，跨域名并行。 */

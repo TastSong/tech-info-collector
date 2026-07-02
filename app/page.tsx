@@ -6,6 +6,8 @@ import { CrawlTrigger } from "./components/ActionButtons";
 import { statusBadge, renderBadge } from "./components/Badges";
 import { LiveProgress } from "./components/LiveProgress";
 
+export const dynamic = "force-dynamic";
+
 export default function Home() {
   const articles = db.select().from(schema.articles).all();
   const total = articles.length;

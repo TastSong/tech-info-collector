@@ -9,6 +9,8 @@ import { eq } from "drizzle-orm";
 import { abortCrawl } from "@/src/pipeline/abort";
 import { closeBrowser } from "@/src/crawler/playwright";
 
+export const dynamic = "force-dynamic";
+
 export async function POST() {
   abortCrawl();
 

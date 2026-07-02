@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { db, schema } from "@/db/client";
-import { eq, desc, like, sql } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { statusBadge } from "../components/Badges";
+
+export const dynamic = "force-dynamic";
 
 export default async function ArticlesPage(props: {
   searchParams: Promise<{ site?: string; status?: string }>;
@@ -10,15 +12,17 @@ export default async function ArticlesPage(props: {
   const siteId = sp.site ? Number(sp.site) : undefined;
   const status = sp.status || undefined;
 
-  let q = db
+  const conditions = [sql`1=1`];
+  if (siteId) conditions.push(eq(schema.articles.siteId, siteId));
+  if (status) conditions.push(eq(schema.articles.status, status as any));
+
+  const articles = db
     .select()
     .from(schema.articles)
+    .where(sql.join(conditions, " AND "))
     .orderBy(desc(schema.articles.fetchedAt))
-    .limit(60);
-  if (siteId) q = q.where(eq(schema.articles.siteId, siteId));
-  if (status) q = q.where(eq(schema.articles.status, status));
-
-  const articles = q.all();
+    .limit(60)
+    .all();
 
   // 站点名映射
   const sites = db.select().from(schema.sites).all();

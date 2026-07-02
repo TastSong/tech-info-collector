@@ -17,5 +17,5 @@
     "paths": { "@/*": ["./*"] }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "src/config/discover-dynamic.ts", "src/config/discover-selectors.ts", "src/config/seed-remaining.ts", "src/crawler/probe.ts", "src/crawler/inspect.ts", "src/scheduler/cron.ts"]
 }

@@ -75,7 +75,7 @@ export async function runSite(site: Site): Promise<RunResult> {
       try {
         const html = await queueFor(url).add(() =>
           fetchHtml(url, site.render, { waitSelector: site.bodySelector ?? undefined }, signal),
-        );
+        ) as string;
         items.push(...parseList(html, url, selectors));
       } catch (e) {
         if (signal?.aborted) throw new DOMException("用户中止", "AbortError");

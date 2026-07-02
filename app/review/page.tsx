@@ -12,20 +12,7 @@ export default async function ReviewPage() {
     .orderBy(asc(schema.articles.fetchedAt))
     .all();
 
-  // 带 AI review
-  const reviewMap = new Map(
-    db
-      .select()
-      .from(schema.aiReviews)
-      .where(
-        // 只取 review 文章的最新审核
-        // simpler: select all and filter
-      )
-      .all()
-      .map((r) => [r.articleId, r]),
-  );
-
-  // Actually fetch ai_reviews per article — use a join or batch
+  // 加载所有已审核文章
   const allReviews = db.select().from(schema.aiReviews).all();
   const reviewOf = new Map(allReviews.map((r) => [r.articleId, r]));
 

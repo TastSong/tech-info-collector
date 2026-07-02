@@ -8,7 +8,12 @@ export default function RunsPage() {
     .from(schema.runLogs)
     .orderBy(desc(schema.runLogs.startedAt))
     .limit(50)
-    .all();
+    .all()
+    .map((r) => ({
+      ...r,
+      startedAt: r.startedAt?.toISOString() ?? null,
+      endedAt: r.endedAt?.toISOString() ?? null,
+    }));
 
   const sites = db.select().from(schema.sites).all();
   const siteNames = Object.fromEntries(sites.map((s) => [s.id, s.name]));
