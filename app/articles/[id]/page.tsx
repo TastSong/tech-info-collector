@@ -54,7 +54,7 @@ export default async function ArticleDetailPage({
       </div>
 
       {/* Title + status */}
-      <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <h1 className="flex-1 text-xl font-bold text-slate-900">
           {article.title}
         </h1>
@@ -78,9 +78,9 @@ export default async function ArticleDetailPage({
       </div>
 
       {/* AI Review Panel (right) + Body (left) */}
-      <div className="grid grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-8">
         {/* Body */}
-        <div className="col-span-2">
+        <div className="lg:col-span-2">
           <h2 className="mb-3 text-sm font-semibold text-slate-700">正文</h2>
           <div className="prose prose-slate max-w-none rounded-xl border border-slate-200 bg-white p-6 text-sm leading-relaxed whitespace-pre-line">
             {article.body || "(无正文)"}
@@ -88,7 +88,7 @@ export default async function ArticleDetailPage({
         </div>
 
         {/* AI Review */}
-        <div className="col-span-1">
+        <div className="lg:col-span-1">
           <h2 className="mb-3 text-sm font-semibold text-slate-700">
             AI 审核 ({review?.model ?? "未分析"})
           </h2>

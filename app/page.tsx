@@ -41,7 +41,7 @@ export default function Home() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
       {/* Header */}
-      <div className="mb-8 flex items-end justify-between">
+      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">仪表盘</h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -53,7 +53,7 @@ export default function Home() {
       </div>
 
       {/* Stats */}
-      <section className="mb-10 grid grid-cols-4 gap-4">
+      <section className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="text-2xl font-semibold text-slate-900">{total}</div>
           <div className="mt-1 text-sm text-slate-500">总文章</div>
@@ -89,7 +89,7 @@ export default function Home() {
       <section className="mb-10">
         <h2 className="mb-3 text-lg font-semibold">最近采集</h2>
         {runs.length ? (
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                 <tr>
@@ -154,7 +154,7 @@ export default function Home() {
             管理站点 →
           </Link>
         </div>
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>

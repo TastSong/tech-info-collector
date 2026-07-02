@@ -40,9 +40,9 @@ export default async function SitesPage() {
               s.enabled ? "border-slate-200" : "border-slate-100 opacity-60"
             }`}
           >
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <span className="font-medium text-slate-900">{s.name}</span>
                   {renderBadge(s.render)}
                   {s.enabled ? (
@@ -73,13 +73,13 @@ export default async function SitesPage() {
             <div className="mt-3 space-y-1 text-xs text-slate-400">
               <div>
                 URLs：{(s.urls as string[]).map((u) => (
-                  <code key={u} className="ml-1 rounded bg-slate-50 px-1">
+                  <code key={u} className="ml-1 rounded bg-slate-50 px-1 break-all">
                     {u}
                   </code>
                 ))}
               </div>
               {s.listSelector ? (
-                <div>
+                <div className="break-all">
                   选择器：list=<code className="rounded bg-slate-50 px-1">
                     {s.listSelector}
                   </code>{" "}

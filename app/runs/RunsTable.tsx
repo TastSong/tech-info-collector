@@ -60,7 +60,7 @@ export function RunsTable({ initialLogs, siteNames }: Props) {
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-slate-400">
           自动刷新中 · {lastRefresh.toLocaleTimeString("zh-CN")}
           {runningCount > 0 && (
@@ -71,7 +71,7 @@ export function RunsTable({ initialLogs, siteNames }: Props) {
           )}
         </p>
       </div>
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>

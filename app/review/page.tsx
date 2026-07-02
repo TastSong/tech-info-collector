@@ -43,7 +43,7 @@ export default async function ReviewPage() {
                 key={a.id}
                 className="rounded-xl border border-amber-200 bg-white p-5"
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex-1 min-w-0">
                     <Link
                       href={`/articles/${a.id}`}
