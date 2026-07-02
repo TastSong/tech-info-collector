@@ -74,9 +74,9 @@ async function main() {
         try {
           const r = await runSite(s);
           console.log(
-            ` ✓ 采${r.fetched} 跳${r.skipped} 错${r.errorCount} (${r.status})`,
+            ` ✓ 新${r.fetched} 变${r.updated} 跳${r.skipped} 错${r.errorCount} (${r.status})`,
           );
-          totalFetched += r.fetched;
+          totalFetched += r.fetched + r.updated;
         } catch (e) {
           console.log(` ✗ ${(e as Error).message}`);
         }

@@ -95,7 +95,7 @@ export async function POST(req: Request) {
     .then(() => {
       // 清空 abort controller（正常结束，非中止）
       if (!ac.signal.aborted) {
-        console.log(`[crawl] 完成，共采集 ${totalFetched} 篇新文章。`);
+        console.log(`[crawl] 完成，共采集 ${totalFetched} 篇新文章 (含更新/跳过)。`);
       }
     })
     .catch(() => {});

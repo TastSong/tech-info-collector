@@ -90,6 +90,7 @@ export const runLogs = sqliteTable("run_logs", {
     .default("running"),
   fetched: integer("fetched").notNull().default(0),
   skipped: integer("skipped").notNull().default(0),
+  updated: integer("updated").notNull().default(0),
   errorCount: integer("error_count").notNull().default(0),
   message: text("message"),
 });

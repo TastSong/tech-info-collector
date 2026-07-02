@@ -93,7 +93,8 @@ export default function Home() {
                 <tr>
                   <th className="px-4 py-3">时间</th>
                   <th className="px-4 py-3">站点</th>
-                  <th className="px-4 py-3">采集</th>
+                  <th className="px-4 py-3">新采</th>
+                  <th className="px-4 py-3">更新</th>
                   <th className="px-4 py-3">跳过</th>
                   <th className="px-4 py-3">错误</th>
                   <th className="px-4 py-3">结果</th>
@@ -116,6 +117,7 @@ export default function Home() {
                       {r.siteId}
                     </td>
                     <td className="px-4 py-3 text-emerald-600">{r.fetched}</td>
+                    <td className="px-4 py-3 text-indigo-600">{r.updated > 0 ? r.updated : "-"}</td>
                     <td className="px-4 py-3 text-slate-400">{r.skipped}</td>
                     <td className="px-4 py-3 text-red-500">
                       {r.errorCount > 0 ? r.errorCount : "-"}

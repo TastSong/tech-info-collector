@@ -9,6 +9,7 @@ interface RunItem {
   status: string;
   fetched: number;
   skipped: number;
+  updated: number;
   errorCount: number;
   startedAt: string | null;
   endedAt: string | null;
@@ -85,7 +86,10 @@ export function LiveProgress() {
                 </span>
                 <span className="text-slate-500">
                   {r.fetched > 0 && (
-                    <span className="text-emerald-600 mr-2">已抓 {r.fetched}</span>
+                    <span className="text-emerald-600 mr-2">新 {r.fetched}</span>
+                  )}
+                  {r.updated > 0 && (
+                    <span className="text-indigo-600 mr-2">变 {r.updated}</span>
                   )}
                   {r.errorCount > 0 && (
                     <span className="text-red-500 mr-2">错误 {r.errorCount}</span>
@@ -118,7 +122,7 @@ export function LiveProgress() {
                 key={r.id}
                 className="inline-flex items-center rounded bg-emerald-100 px-2 py-1 text-emerald-700"
               >
-                站点#{r.siteId ?? "?"}: +{r.fetched}
+                站点#{r.siteId ?? "?"}: 新+{r.fetched} 变{r.updated > 0 ? `+${r.updated}` : 0}
               </span>
             ))}
             {recent.length > 10 && (
