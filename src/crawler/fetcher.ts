@@ -25,17 +25,23 @@ export interface FetchOpts {
   maxRetries?: number;
 }
 
-/** TLS 容错 Agent：
- *  - rejectUnauthorized: false → 容忍过期/不完整证书（sanden, gfhr）
- *  - 禁用 ECDHE/ECDH 密码套件 → 绕过 stic.sz.gov.cn 的 bad ecpoint */
-const TLS_AGENT = new https.Agent({
+/** TLS 容错 Agent（用于 stic.sz.gov.cn 等有 SSL 兼容问题的站点）：
+ *  - rejectUnauthorized: false → 容忍过期/不完整证书
+ *  - 禁用 ECDHE/ECDH 密码套件 → 绕过 bad ecpoint */
+const TLS_FALLBACK_AGENT = new https.Agent({
   rejectUnauthorized: false,
-  // 仅使用非 EC 密码套件，避免服务器 bad ecpoint 导致 OpenSSL 3.x 拒绝握手
   ciphers:
     "AES256-GCM-SHA384:AES128-GCM-SHA256:" +
     "AES256-SHA256:AES128-SHA256:AES256-SHA:AES128-SHA:" +
     "HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4:!DHE:!ECDHE:!ECDH",
   secureProtocol: "TLSv1_2_method",
+});
+
+/** 标准 TLS Agent（大多数正常站点）：
+ *  - rejectUnauthorized: false → 容忍证书问题
+ *  - 使用默认密码套件（含 ECDHE） */
+const TLS_AGENT = new https.Agent({
+  rejectUnauthorized: false,
 });
 
 /** 可重试的错误：5xx、连接失败、网络超时等 */
@@ -68,9 +74,21 @@ export async function fetchHtml(
     }
 
     try {
-      return await nativeFetch(url, opts.timeoutMs ?? 30000, externalSignal);
+      return await nativeFetch(url, opts.timeoutMs ?? 30000, externalSignal, false);
     } catch (e) {
       if (externalSignal?.aborted) throw new DOMException("用户中止", "AbortError");
+      // SSL 回退：标准 agent 失败后尝试非 ECDHE 密码套件（如 stic.sz.gov.cn）
+      if (attempt === 0 && isSslError(e)) {
+        console.log(`  ⚠ SSL retry with fallback ciphers for ${url}`);
+        try {
+          return await nativeFetch(url, opts.timeoutMs ?? 30000, externalSignal, true);
+        } catch (e2) {
+          if (externalSignal?.aborted) throw new DOMException("用户中止", "AbortError");
+          lastErr = e2;
+          if (!isRetryable(e2)) throw e2;
+          continue;
+        }
+      }
       lastErr = e;
       if (!isRetryable(e) || attempt >= maxRetries) throw e;
     }
@@ -79,12 +97,20 @@ export async function fetchHtml(
   throw lastErr;
 }
 
+/** SSL 层错误（握手/证书/协议），可用回退密码套件重试 */
+function isSslError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /EPROTO|ECONNRESET|sslv3|ssl3_read|handshake|CERT_|UNABLE_TO_VERIFY/i.test(msg);
+}
+
 /** 原生 http/https 抓取，支持跨协议重定向（最多 8 跳，含 cookie 转发）、GBK 编码识别 */
 function nativeFetch(
   url: string,
   timeoutMs: number,
-  externalSignal?: AbortSignal,
+  externalSignal: AbortSignal | undefined,
+  useFallbackAgent: boolean,
 ): Promise<string> {
+  const agent = useFallbackAgent ? TLS_FALLBACK_AGENT : TLS_AGENT;
   return new Promise<string>((resolve, reject) => {
     let timedOut = false;
     const timer = setTimeout(() => {
@@ -124,7 +150,7 @@ function nativeFetch(
       const req = mod.get(
         currentUrl,
         {
-          agent: isHttps ? TLS_AGENT : undefined,
+          agent: isHttps ? agent : undefined,
           headers,
         },
         (res) => {

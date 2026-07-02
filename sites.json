@@ -386,15 +386,17 @@
       "category": "科技媒体",
       "subcategory": "行业媒体",
       "urls": [
-        "https://www.eet-china.com/"
+        "https://www.eetrend.com/"
       ],
       "render": "static",
-      "list_selector": "div.theTitle",
-      "link_selector": "a",
+      "list_selector": "div.views-row",
+      "link_selector": "a[href*=\"/content/\"]",
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
       "enabled": true,
-      "scope": null
+      "scope": "电子工程/半导体行业新闻与设计资讯",
+      "title_selector": ".list-title",
+      "body_selector": ".field-name-body"
     },
     {
       "name": "OFweek电子工程网",

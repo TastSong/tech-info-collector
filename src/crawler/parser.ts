@@ -77,11 +77,14 @@ export function parseList(
 export function parseDetail(html: string, s: Selectors): Detail {
   const $ = cheerio.load(html);
 
-  const title = (
-    s.titleSelector
-      ? $(s.titleSelector).first().text()
-      : $("h1").first().text() || $("title").first().text()
-  ).trim();
+  // titleSelector 优先；若命中但文本为空（选择器仅列表页有效），回退到 h1/title
+  let title = "";
+  if (s.titleSelector) {
+    title = $(s.titleSelector).first().text().trim();
+  }
+  if (!title) {
+    title = ($("h1").first().text() || $("title").first().text()).trim();
+  }
 
   let body = "";
   if (s.bodySelector) {
