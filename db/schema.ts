@@ -53,6 +53,7 @@ export const articles = sqliteTable("articles", {
   fetchedAt: integer("fetched_at", { mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),
+  viewedAt: integer("viewed_at", { mode: "timestamp" }),
 });
 
 /** AI 沙盒对单篇文章的审核结果（审计留痕） */

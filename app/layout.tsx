@@ -58,6 +58,7 @@ export default function RootLayout({
             </Link>
             <div className="flex items-center gap-1">
               <NavLink href="/">首页</NavLink>
+              <NavLink href="/feed">资讯流</NavLink>
               <NavLink href="/articles">文章</NavLink>
               <NavLink href="/review" count={reviewCount}>
                 待复核

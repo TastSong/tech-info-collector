@@ -4,13 +4,18 @@ import { db, schema } from "@/db/client";
 import { eq, desc } from "drizzle-orm";
 import { ArticleActions } from "../../components/ActionButtons";
 import { statusBadge } from "../../components/Badges";
+import { MarkViewed } from "../../components/MarkViewed";
 
 export default async function ArticleDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const { id } = await params;
+  const sp = await searchParams; // from=feed → 调整返回链接
+
   const article = db
     .select()
     .from(schema.articles)
@@ -31,11 +36,16 @@ export default async function ArticleDetailPage({
     .orderBy(desc(schema.aiReviews.createdAt))
     .get();
 
+  const backHref = sp.from === "feed" ? "/feed" : "/articles";
+  const backLabel = sp.from === "feed" ? "← 返回资讯流" : "← 文章";
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
+      <MarkViewed articleId={article.id} />
+
       <div className="mb-4 flex items-center gap-3 text-sm text-slate-500">
-        <Link href="/articles" className="hover:text-slate-900">
-          ← 文章
+        <Link href={backHref} className="hover:text-slate-900">
+          {backLabel}
         </Link>
         <span>·</span>
         <span>{site?.name ?? `站点#${article.siteId}`}</span>
