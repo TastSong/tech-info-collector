@@ -20,11 +20,17 @@ export async function fetchHtml(
   url: string,
   mode: RenderMode,
   opts: FetchOpts = {},
+  externalSignal?: AbortSignal,
 ): Promise<string> {
-  if (mode === "dynamic") return fetchDynamic(url, opts);
+  if (mode === "dynamic") return fetchDynamic(url, opts, externalSignal);
 
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), opts.timeoutMs ?? 30000);
+
+  // 组合 external signal（来自全局 AbortController）与超时
+  const onExternalAbort = () => ctl.abort();
+  externalSignal?.addEventListener("abort", onExternalAbort, { once: true });
+
   try {
     const res = await fetch(url, {
       headers: {
@@ -47,6 +53,7 @@ export async function fetchHtml(
     return decode(buf, charset);
   } finally {
     clearTimeout(timer);
+    externalSignal?.removeEventListener("abort", onExternalAbort);
   }
 }
 

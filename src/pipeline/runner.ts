@@ -6,12 +6,13 @@
  */
 import { eq } from "drizzle-orm";
 import { db, schema } from "../../db/client";
-import type { Site } from "../types";
+import type { Site } from "./types";
 import { fetchHtml } from "../crawler/fetcher";
 import { parseList, parseDetail } from "../crawler/parser";
 import { queueFor } from "../crawler/rate-limit";
 import { contentHash } from "./dedup";
 import { tryParseDate } from "../lib/date";
+import { getAbortSignal } from "./abort";
 
 export interface RunResult {
   fetched: number;
@@ -60,15 +61,19 @@ export async function runSite(site: Site): Promise<RunResult> {
       throw new Error("缺少 listSelector，未配置选择器");
     }
 
+    const signal = getAbortSignal();
+
     // 1) 抓所有列表 url，汇总条目
     const items = [];
     for (const url of site.urls) {
+      if (signal?.aborted) throw new DOMException("用户中止", "AbortError");
       try {
         const html = await queueFor(url).add(() =>
-          fetchHtml(url, site.render, { waitSelector: site.bodySelector ?? undefined }),
+          fetchHtml(url, site.render, { waitSelector: site.bodySelector ?? undefined }, signal),
         );
         items.push(...parseList(html, url, selectors));
       } catch (e) {
+        if (signal?.aborted) throw new DOMException("用户中止", "AbortError");
         errorCount++;
         errors.push(`list ${url}: ${(e as Error).message}`);
       }
@@ -77,13 +82,14 @@ export async function runSite(site: Site): Promise<RunResult> {
     // 2) 逐条抓详情 + 入库（控制在 MAX_ITEMS 以内）
     const workItems = items.slice(0, MAX_ITEMS_PER_SITE);
     for (const it of workItems) {
+      if (signal?.aborted) throw new DOMException("用户中止", "AbortError");
       if (existing.has(it.url)) {
         skipped++;
         continue;
       }
       try {
         const html = await queueFor(it.url).add(() =>
-          fetchHtml(it.url, site.render),
+          fetchHtml(it.url, site.render, {}, signal),
         );
         const d = parseDetail(html, selectors);
         if (!d.title || d.body.length < 50) {
@@ -104,6 +110,7 @@ export async function runSite(site: Site): Promise<RunResult> {
         existing.add(it.url);
         fetched++;
       } catch (e) {
+        if (signal?.aborted) throw new DOMException("用户中止", "AbortError");
         errorCount++;
         errors.push(`detail ${it.url}: ${(e as Error).message}`);
       }

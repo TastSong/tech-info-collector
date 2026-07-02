@@ -5,14 +5,38 @@ import { eq, desc } from "drizzle-orm";
 /**
  * GET /api/runs/active — 返回当前在跑 + 最近完成的 run logs。
  * 前端轮询此接口来展示采集进度。
+ * running 日志只取 10 分钟内的，超过的视为僵尸（清理掉）。
  */
 export async function GET() {
-  const running = db
+  const allRunning = db
     .select()
     .from(schema.runLogs)
     .where(eq(schema.runLogs.status, "running"))
     .orderBy(desc(schema.runLogs.startedAt))
     .all();
+
+  const cutoff = Date.now() - 10 * 60 * 1000; // 10 分钟前
+
+  const running: typeof allRunning = [];
+  const stale: typeof allRunning = [];
+
+  for (const r of allRunning) {
+    const ts = r.startedAt ? new Date(r.startedAt).getTime() : 0;
+    if (ts < cutoff) {
+      stale.push(r);
+    } else {
+      running.push(r);
+    }
+  }
+
+  // 自动清理僵尸 running（标记为 error）
+  const now = new Date();
+  for (const r of stale) {
+    db.update(schema.runLogs)
+      .set({ status: "error", endedAt: now, message: "超时未完成，自动标记为失败" })
+      .where(eq(schema.runLogs.id, r.id))
+      .run();
+  }
 
   // 最近 1 小时内完成的
   const recent = db

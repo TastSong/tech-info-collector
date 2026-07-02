@@ -20,6 +20,7 @@ export async function getBrowser(): Promise<Browser> {
 export async function fetchDynamic(
   url: string,
   opts: { timeoutMs?: number; waitSelector?: string } = {},
+  externalSignal?: AbortSignal,
 ): Promise<string> {
   const browser = await getBrowser();
   const context = await browser.newContext({ userAgent: UA, locale: "zh-CN" });

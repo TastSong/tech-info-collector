@@ -3,6 +3,7 @@
  *
  * 策略：立即响应，后台并行（按域名分组 + CRAWL_CONCURRENCY 控制并发，与 CLI 一致）。
  * 进度通过 run_logs 表 + GET /api/runs/active 实时展示。
+ * 可通过 POST /api/crawl/stop 中止。
  */
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db/client";
@@ -10,6 +11,7 @@ import { eq } from "drizzle-orm";
 import PQueue from "p-queue";
 import { runSite } from "@/src/pipeline/runner";
 import { closeBrowser } from "@/src/crawler/playwright";
+import { createAbortController, getAbortSignal } from "@/src/pipeline/abort";
 import type { Site } from "@/src/pipeline/types";
 
 const CONCURRENCY = Number(process.env.CRAWL_CONCURRENCY ?? 10);
@@ -69,12 +71,14 @@ export async function POST(req: Request) {
 
   // 立即返回，后台执行
   const q = new PQueue({ concurrency: CONCURRENCY });
+  const ac = createAbortController(q);
   let totalFetched = 0;
 
   for (const group of groups) {
     q.add(async () => {
       // 组内串行（同域名共享限流，并行无益）
       for (const s of group) {
+        if (ac.signal.aborted) break;
         try {
           const r = await runSite(s);
           totalFetched += r.fetched;
@@ -89,7 +93,10 @@ export async function POST(req: Request) {
   q.onIdle()
     .then(() => closeBrowser().catch(() => {}))
     .then(() => {
-      console.log(`[crawl] 完成，共采集 ${totalFetched} 篇新文章。`);
+      // 清空 abort controller（正常结束，非中止）
+      if (!ac.signal.aborted) {
+        console.log(`[crawl] 完成，共采集 ${totalFetched} 篇新文章。`);
+      }
     })
     .catch(() => {});
 
