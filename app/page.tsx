@@ -4,6 +4,7 @@ import { count, eq, sql } from "drizzle-orm";
 import { Stat } from "./components/Stat";
 import { CrawlTrigger } from "./components/ActionButtons";
 import { statusBadge, renderBadge } from "./components/Badges";
+import { LiveProgress } from "./components/LiveProgress";
 
 export default function Home() {
   const articles = db.select().from(schema.articles).all();
@@ -78,6 +79,9 @@ export default function Home() {
           <div className="mt-1 text-sm text-red-600">AI 已筛除</div>
         </div>
       </section>
+
+      {/* Live Progress */}
+      <LiveProgress />
 
       {/* Recent Runs */}
       <section className="mb-10">

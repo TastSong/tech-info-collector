@@ -5,9 +5,9 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db/client";
 import { eq } from "drizzle-orm";
-import { runSite } from "@/pipeline/runner";
-import { closeBrowser } from "@/crawler/playwright";
-import type { Site } from "@/pipeline/types";
+import { runSite } from "@/src/pipeline/runner";
+import { closeBrowser } from "@/src/crawler/playwright";
+import type { Site } from "@/src/pipeline/types";
 
 export async function POST(req: Request) {
   let siteId: number | undefined;
