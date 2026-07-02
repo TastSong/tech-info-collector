@@ -82,7 +82,13 @@ export function CrawlTrigger() {
         });
         if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
-        setMsg(`✓ 采集已开始 (site=${data.siteId ?? "全部"})`);
+        if (data.started) {
+          setMsg(
+            `✓ 已启动 ${data.targetCount} 站 (${data.groupCount} 域名组, 并发${data.concurrency})`,
+          );
+        } else {
+          setMsg(`✓ 采集已开始`);
+        }
         router.refresh();
       } catch (e) {
         setMsg(`失败: ${(e as Error).message}`);
