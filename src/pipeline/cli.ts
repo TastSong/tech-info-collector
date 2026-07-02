@@ -10,6 +10,7 @@ import PQueue from "p-queue";
 import { db, schema } from "../../db/client";
 import { runSite } from "./runner";
 import { closeBrowser } from "../crawler/playwright";
+import { analyzePending } from "../ai/analyze";
 
 const CONCURRENCY = Number(process.env.CRAWL_CONCURRENCY ?? 10);
 
@@ -86,7 +87,12 @@ async function main() {
 
   await q.onIdle();
   await closeBrowser();
-  console.log(`\n完成，共采集 ${totalFetched} 篇新文章。`);
+  console.log(`\n采集完成，共采集 ${totalFetched} 篇新文章。`);
+
+  // 采集完成后自动对 raw 文章做 AI 分析
+  console.log("开始 AI 分析…");
+  await analyzePending({ concurrency: CONCURRENCY });
+  console.log("AI 分析完成。");
 }
 
 main();

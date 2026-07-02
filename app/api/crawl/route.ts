@@ -12,6 +12,7 @@ import PQueue from "p-queue";
 import { runSite } from "@/src/pipeline/runner";
 import { closeBrowser } from "@/src/crawler/playwright";
 import { createAbortController, getAbortSignal } from "@/src/pipeline/abort";
+import { analyzePending } from "@/src/ai/analyze";
 import type { Site } from "@/src/pipeline/types";
 
 export const dynamic = "force-dynamic";
@@ -91,13 +92,19 @@ export async function POST(req: Request) {
     });
   }
 
-  // 后台跑完之后关浏览器（不阻塞响应）
+  // 后台跑完之后关浏览器 + 自动触发 AI 分析
   q.onIdle()
     .then(() => closeBrowser().catch(() => {}))
     .then(() => {
-      // 清空 abort controller（正常结束，非中止）
       if (!ac.signal.aborted) {
         console.log(`[crawl] 完成，共采集 ${totalFetched} 篇新文章 (含更新/跳过)。`);
+        // 采集完成后自动对 raw 文章做 AI 分析
+        return analyzePending({ concurrency: Number(process.env.CRAWL_CONCURRENCY ?? 3) });
+      }
+    })
+    .then(() => {
+      if (!ac.signal.aborted) {
+        console.log(`[crawl] AI 分析完成。`);
       }
     })
     .catch(() => {});
