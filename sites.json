@@ -1,7 +1,7 @@
 {
   "version": 1,
   "description": "中国科技情报网站清单",
-  "total": 104,
+  "total": 101,
   "sites": [
     {
       "name": "科学技术部",
@@ -9,7 +9,7 @@
       "subcategory": "科学技术部",
       "urls": [
         "https://www.most.gov.cn/index.html",
-        "https://www.most.gov.cn/gnwkjdt/"
+        "https://www.most.gov.cn/kjbgz/"
       ],
       "render": "static",
       "list_selector": "li.mhide",
@@ -382,22 +382,6 @@
       "link_selector": "a"
     },
     {
-      "name": "半导体行业观察",
-      "category": "科技媒体",
-      "subcategory": "行业媒体",
-      "urls": [
-        "https://www.semiinsights.com/"
-      ],
-      "render": "static",
-      "ai_involvement": "extract_judge",
-      "interval": "0 */6 * * *",
-      "enabled": true,
-      "scope": null,
-      "list_selector": "article",
-      "link_selector": "a",
-      "title_selector": "h2, h3"
-    },
-    {
       "name": "电子工程专辑",
       "category": "科技媒体",
       "subcategory": "行业媒体",
@@ -614,8 +598,8 @@
       "urls": [
         "http://gxq.qingdao.gov.cn/xxgk_113/zwzx_113/gxdt_113/"
       ],
-      "render": "static",
-      "list_selector": "td",
+      "render": "dynamic",
+      "list_selector": "li",
       "link_selector": "a",
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
@@ -687,7 +671,7 @@
       "category": "地方科技部门（直辖市）",
       "subcategory": "上海市",
       "urls": [
-        "https://www.pudong.gov.cn/"
+        "https://www.pudong.gov.cn/zwgk/index.html"
       ],
       "render": "static",
       "ai_involvement": "extract_judge",
@@ -750,8 +734,8 @@
       "urls": [
         "https://www.liangjiang.gov.cn/"
       ],
-      "render": "dynamic",
-      "list_selector": "ul",
+      "render": "static",
+      "list_selector": "li",
       "link_selector": "a",
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
@@ -1014,7 +998,7 @@
       "category": "地方科技部门（江苏省）",
       "subcategory": null,
       "urls": [
-        "http://www.njkj.gov.cn/"
+        "http://kjj.nanjing.gov.cn/"
       ],
       "render": "static",
       "ai_involvement": "extract_judge",
@@ -1074,7 +1058,7 @@
       "category": "地方科技部门（浙江省）",
       "subcategory": null,
       "urls": [
-        "https://www.zjkw.gov.cn/"
+        "https://kjt.zj.gov.cn/"
       ],
       "render": "static",
       "ai_involvement": "extract_judge",
@@ -1166,8 +1150,8 @@
       "urls": [
         "http://www.szns.gov.cn/"
       ],
-      "render": "static",
-      "list_selector": "li.clear",
+      "render": "dynamic",
+      "list_selector": "li",
       "link_selector": "a",
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
@@ -1402,44 +1386,18 @@
       "scope": null
     },
     {
-      "name": "链闻",
-      "category": "新兴科技媒体（补充扩展）",
-      "subcategory": "区块链与Web3",
-      "urls": [
-        "https://www.chainnews.com/"
-      ],
-      "render": "static",
-      "ai_involvement": "extract_judge",
-      "interval": "0 */6 * * *",
-      "enabled": false,
-      "scope": null
-    },
-    {
-      "name": "Odaily星球日报",
-      "category": "新兴科技媒体（补充扩展）",
-      "subcategory": "区块链与Web3",
-      "urls": [
-        "https://www.odaily.com/"
-      ],
-      "render": "static",
-      "ai_involvement": "extract_judge",
-      "interval": "0 */6 * * *",
-      "enabled": false,
-      "scope": null
-    },
-    {
       "name": "机器人在线",
       "category": "新兴科技媒体（补充扩展）",
       "subcategory": "智能制造与机器人",
       "urls": [
-        "https://www.jqr.com/"
+        "https://robot.ofweek.com/"
       ],
-      "render": "static",
+      "render": "dynamic",
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
       "enabled": true,
       "scope": null,
-      "list_selector": "div.article-item",
+      "list_selector": "li",
       "link_selector": "a",
       "title_selector": "h3"
     },
