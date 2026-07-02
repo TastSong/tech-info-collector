@@ -1,14 +1,15 @@
 # ===== tech-info-collector Docker 部署 =====
-FROM node:22-alpine AS deps
+# 使用 Debian-based 镜像 (glibc) 以支持 Playwright Chromium
+FROM node:22-slim AS deps
 
 RUN npm install -g pnpm@9.15.0
-RUN apk add --no-cache python3 make g++
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml .npmrc ./
 RUN pnpm install --prod --frozen-lockfile
 
-FROM node:22-alpine AS builder
+FROM node:22-slim AS builder
 
 RUN npm install -g pnpm@9.15.0
 
@@ -23,16 +24,17 @@ RUN mkdir -p /app/data && node scripts/build-init-db.cjs
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm build
 
-FROM node:22-alpine AS runner
+FROM node:22-slim AS runner
 
 RUN npm install -g pnpm@9.15.0
 
-# Playwright 从自己的 CDN 下载 Chromium 二进制（不依赖 apk/apt 源）
-# --with-deps 在 Alpine 上不可用，手动装系统依赖
-RUN apk add --no-cache \
-    cups-libs libxcomposite libxdamage libxrandr \
-    mesa-gbm pango alsa-lib at-spi2-core \
-    nss nspr dbus-libs gtk+3.0
+# Playwright 系统依赖 (Debian Bookworm/glibc)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libnss3 libnspr4 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 \
+    libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 \
+    libxfixes3 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 \
+    libasound2 libatspi2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN npx playwright install chromium

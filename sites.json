@@ -99,8 +99,9 @@
       "category": "科技媒体",
       "subcategory": "中央级媒体（推荐优先访问）",
       "urls": [
-        "http://www.stdaily.com/index/keji/",
-        "https://epaper.stdaily.com/statics/technology-site/index.html#/"
+        "https://www.stdaily.com/index/keji/",
+        "https://www.stdaily.com/index/yaowen/",
+        "https://www.stdaily.com/"
       ],
       "render": "static",
       "list_selector": "div.kjxwTit",
@@ -267,7 +268,7 @@
       "urls": [
         "https://www.leiphone.com/"
       ],
-      "render": "static",
+      "render": "dynamic",
       "list_selector": "div.tags",
       "link_selector": "a",
       "ai_involvement": "extract_judge",
@@ -372,11 +373,13 @@
       "urls": [
         "http://stm.las.ac.cn/STMonitor/home/resource_more_recommendadd.htm?parentPageId=1689579718022&controlType=openhome"
       ],
-      "render": "static",
+      "render": "dynamic",
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
       "enabled": true,
-      "scope": null
+      "scope": null,
+      "list_selector": "ul li",
+      "link_selector": "a"
     },
     {
       "name": "半导体行业观察",
@@ -389,7 +392,10 @@
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
       "enabled": true,
-      "scope": null
+      "scope": null,
+      "list_selector": "article",
+      "link_selector": "a",
+      "title_selector": "h2, h3"
     },
     {
       "name": "电子工程专辑",
@@ -477,7 +483,9 @@
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
       "enabled": true,
-      "scope": null
+      "scope": null,
+      "list_selector": "div.home_list div.swiper-slide",
+      "link_selector": "a"
     },
     {
       "name": "电子发烧友网光电显示技术",
@@ -685,7 +693,10 @@
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
       "enabled": true,
-      "scope": null
+      "scope": null,
+      "list_selector": "li",
+      "link_selector": "a",
+      "title_selector": "a"
     },
     {
       "name": "天津市科技局",
@@ -1009,7 +1020,9 @@
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
       "enabled": true,
-      "scope": null
+      "scope": null,
+      "list_selector": "li",
+      "link_selector": "a"
     },
     {
       "name": "苏州市科技局",
@@ -1067,7 +1080,9 @@
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
       "enabled": true,
-      "scope": null
+      "scope": null,
+      "list_selector": "li",
+      "link_selector": "a"
     },
     {
       "name": "杭州市科技局",
@@ -1212,11 +1227,13 @@
         "http://cdst.chengdu.gov.cn/cdkxjsj",
         "http://cdst.chengdu.gov.cn/cdkxjsj/kjdt/list.shtml"
       ],
-      "render": "static",
+      "render": "dynamic",
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
       "enabled": true,
-      "scope": null
+      "scope": null,
+      "list_selector": "li",
+      "link_selector": "a"
     },
     {
       "name": "成都市天府新区",
@@ -1225,11 +1242,13 @@
       "urls": [
         "http://www.cdtf.gov.cn/"
       ],
-      "render": "static",
+      "render": "dynamic",
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
       "enabled": true,
-      "scope": null
+      "scope": null,
+      "list_selector": "li",
+      "link_selector": "a"
     },
     {
       "name": "武汉市科技局",
@@ -1392,7 +1411,7 @@
       "render": "static",
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
-      "enabled": true,
+      "enabled": false,
       "scope": null
     },
     {
@@ -1405,7 +1424,7 @@
       "render": "static",
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
-      "enabled": true,
+      "enabled": false,
       "scope": null
     },
     {
@@ -1419,7 +1438,10 @@
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
       "enabled": true,
-      "scope": null
+      "scope": null,
+      "list_selector": "div.article-item",
+      "link_selector": "a",
+      "title_selector": "h3"
     },
     {
       "name": "工控网",
@@ -1456,13 +1478,15 @@
       "category": "新兴科技媒体（补充扩展）",
       "subcategory": "新能源与环保",
       "urls": [
-        "https://www.cbea.com/"
+        "http://www.cbea.com/"
       ],
       "render": "static",
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
       "enabled": true,
-      "scope": null
+      "scope": null,
+      "list_selector": "ul.box-item-list li",
+      "link_selector": "a"
     },
     {
       "name": "动脉网",
@@ -1538,25 +1562,6 @@
       "interval": "0 */6 * * *",
       "enabled": true,
       "scope": null
-    },
-    {
-      "name": "青岛高新区——高新动态",
-      "category": "科技园区",
-      "subcategory": null,
-      "urls": [
-        "http://gxq.qingdao.gov.cn/xxgk_113/zwzx_113/gxdt_113/"
-      ],
-      "render": "static",
-      "list_selector": "td",
-      "link_selector": "a",
-      "item_selector": null,
-      "title_selector": null,
-      "body_selector": null,
-      "date_selector": null,
-      "ai_involvement": "extract_judge",
-      "interval": "0 */6 * * *",
-      "enabled": true,
-      "scope": "青岛高新区产业动态、入驻企业新闻、园区政策"
     }
   ]
 }

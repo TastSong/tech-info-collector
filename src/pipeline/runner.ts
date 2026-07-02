@@ -25,8 +25,8 @@ export interface RunResult {
 /** 单站单次运行最多抓取的详情数（MVP 控制时长；ithome 首页聚合可达数百条）。 */
 const MAX_ITEMS_PER_SITE = 30;
 
-/** 已入库文章的快照：url → {id, contentHash} */
-type ExistingEntry = { id: number; hash: string };
+/** 已入库文章的快照：url → {id, siteId, hash} */
+type ExistingEntry = { id: number; siteId: number; hash: string };
 
 export async function runSite(site: Site): Promise<RunResult> {
   const startedAt = new Date();
@@ -41,16 +41,21 @@ export async function runSite(site: Site): Promise<RunResult> {
   let skipped = 0;
   let updated = 0;
   let errorCount = 0;
+  let duplicateCount = 0;
   const errors: string[] = [];
 
-  // 已入库文章 → url 到已有记录的映射（用于内容变更检测）
+  // 全库已入库文章 → url 到已有记录的映射（用于内容变更检测 + 跨站URL冲突检测）
   const existing = new Map<string, ExistingEntry>(
     db
-      .select({ url: schema.articles.url, id: schema.articles.id, hash: schema.articles.contentHash })
+      .select({
+        url: schema.articles.url,
+        id: schema.articles.id,
+        siteId: schema.articles.siteId,
+        hash: schema.articles.contentHash,
+      })
       .from(schema.articles)
-      .where(eq(schema.articles.siteId, site.id))
       .all()
-      .map((r) => [r.url, { id: r.id, hash: r.hash ?? "" }]),
+      .map((r) => [r.url, { id: r.id, siteId: r.siteId, hash: r.hash ?? "" }]),
   );
 
   const selectors = {
@@ -126,45 +131,76 @@ export async function runSite(site: Site): Promise<RunResult> {
       const prev = existing.get(val.it.url);
 
       if (prev) {
-        // 已存在的 URL，对比 contentHash
+        // URL 已存在
+        if (prev.siteId !== site.id) {
+          // 跨站点 URL 冲突：另一站点已采集此文章，跳过
+          duplicateCount++;
+          continue;
+        }
+        // 同站点，对比 contentHash
         if (prev.hash === val.hash) {
           // 内容无变化 → 跳过
           skipped++;
           continue;
         }
         // 内容有变化 → 更新文章并重置为 raw，触发重新 AI 审核
-        db.update(schema.articles)
-          .set({
-            title: val.d.title,
-            body: val.d.body,
-            contentHash: val.hash,
-            publishedAt: tryParseDate(val.d.date ?? val.it.date) ?? undefined,
-            status: "raw",
-            fetchedAt: new Date(),
-          })
-          .where(eq(schema.articles.id, prev.id))
-          .run();
-        updated++;
+        try {
+          db.update(schema.articles)
+            .set({
+              title: val.d.title,
+              body: val.d.body,
+              contentHash: val.hash,
+              publishedAt: tryParseDate(val.d.date ?? val.it.date) ?? undefined,
+              status: "raw",
+              fetchedAt: new Date(),
+            })
+            .where(eq(schema.articles.id, prev.id))
+            .run();
+          updated++;
+        } catch (e) {
+          errorCount++;
+          errors.push(`update: ${(e as Error).message}`);
+        }
       } else {
-        // 新 URL → 插入新文章
-        db.insert(schema.articles)
-          .values({
-            siteId: site.id,
-            url: val.it.url,
-            title: val.d.title,
-            body: val.d.body,
-            publishedAt: tryParseDate(val.d.date ?? val.it.date),
-            contentHash: val.hash,
-            status: "raw",
-          })
-          .run();
-        existing.set(val.it.url, { id: -1, hash: val.hash });
-        fetched++;
+        // 新 URL → 插入新文章（容忍 UNIQUE 约束冲突）
+        try {
+          db.insert(schema.articles)
+            .values({
+              siteId: site.id,
+              url: val.it.url,
+              title: val.d.title,
+              body: val.d.body,
+              publishedAt: tryParseDate(val.d.date ?? val.it.date),
+              contentHash: val.hash,
+              status: "raw",
+            })
+            .run();
+          existing.set(val.it.url, { id: -1, siteId: site.id, hash: val.hash });
+          fetched++;
+        } catch (e) {
+          const msg = (e as Error).message;
+          if (msg.includes("UNIQUE constraint")) {
+            duplicateCount++;
+          } else {
+            errorCount++;
+            errors.push(`insert: ${msg}`);
+          }
+        }
       }
     }
 
     const status: RunResult["status"] =
-      errorCount > 0 && (fetched > 0 || updated > 0) ? "partial" : errorCount > 0 ? "error" : "success";
+      errorCount > 0 && (fetched > 0 || updated > 0) ? "partial"
+      : errorCount > 0 ? "error"
+      : duplicateCount > 0 ? "partial"
+      : "success";
+
+    const summaryParts: string[] = [];
+    if (duplicateCount > 0) summaryParts.push(`dup:${duplicateCount}`);
+    const message = errors.slice(0, 5).join(" | ") || null;
+    const fullMessage = summaryParts.length > 0
+      ? (message ? `${summaryParts.join(" ")} | ${message}` : summaryParts.join(" "))
+      : message;
 
     db.update(schema.runLogs)
       .set({
@@ -174,7 +210,7 @@ export async function runSite(site: Site): Promise<RunResult> {
         skipped,
         updated,
         errorCount,
-        message: errors.slice(0, 5).join(" | ") || null,
+        message: fullMessage,
       })
       .where(eq(schema.runLogs.id, logId))
       .run();
@@ -185,6 +221,7 @@ export async function runSite(site: Site): Promise<RunResult> {
 
     return { fetched, skipped, updated, errorCount, status };
   } catch (e) {
+    const msg = (e as Error).message;
     db.update(schema.runLogs)
       .set({
         endedAt: new Date(),
@@ -192,11 +229,11 @@ export async function runSite(site: Site): Promise<RunResult> {
         fetched,
         skipped,
         updated,
-        errorCount,
-        message: (e as Error).message,
+        errorCount: errorCount + 1,
+        message: msg,
       })
       .where(eq(schema.runLogs.id, logId))
       .run();
-    return { fetched, skipped, updated, errorCount, status: "error" };
+    return { fetched, skipped, updated, errorCount: errorCount + 1, status: "error" };
   }
 }
