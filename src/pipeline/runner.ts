@@ -79,41 +79,51 @@ export async function runSite(site: Site): Promise<RunResult> {
       }
     }
 
-    // 2) 逐条抓详情 + 入库（控制在 MAX_ITEMS 以内）
+    // 2) 详情并行抓取（交由 rate-limit 队列控制并发上限）
     const workItems = items.slice(0, MAX_ITEMS_PER_SITE);
-    for (const it of workItems) {
-      if (signal?.aborted) throw new DOMException("用户中止", "AbortError");
-      if (existing.has(it.url)) {
+    const tasks = workItems.map((it) =>
+      queueFor(it.url).add(async () => {
+        if (signal?.aborted) throw new DOMException("用户中止", "AbortError");
+        if (existing.has(it.url)) return { skipped: true } as const;
+        try {
+          const html = await fetchHtml(it.url, site.render, {}, signal);
+          const d = parseDetail(html, selectors);
+          if (!d.title || d.body.length < 50) return { skipped: true } as const;
+          return { it, html, d } as const;
+        } catch (e) {
+          if (signal?.aborted) throw new DOMException("用户中止", "AbortError");
+          throw e;
+        }
+      }),
+    );
+
+    const results = await Promise.allSettled(tasks);
+
+    for (const r of results) {
+      if (r.status === "rejected") {
+        errorCount++;
+        errors.push(`detail: ${(r.reason as Error).message}`);
+        continue;
+      }
+      const val = r.value;
+      if (!val) continue;
+      if ("skipped" in val) {
         skipped++;
         continue;
       }
-      try {
-        const html = await queueFor(it.url).add(() =>
-          fetchHtml(it.url, site.render, {}, signal),
-        );
-        const d = parseDetail(html, selectors);
-        if (!d.title || d.body.length < 50) {
-          skipped++;
-          continue;
-        }
-        db.insert(schema.articles)
-          .values({
-            siteId: site.id,
-            url: it.url,
-            title: d.title,
-            body: d.body,
-            publishedAt: tryParseDate(d.date ?? it.date),
-            contentHash: contentHash(d.body),
-            status: "raw",
-          })
-          .run();
-        existing.add(it.url);
-        fetched++;
-      } catch (e) {
-        if (signal?.aborted) throw new DOMException("用户中止", "AbortError");
-        errorCount++;
-        errors.push(`detail ${it.url}: ${(e as Error).message}`);
-      }
+      db.insert(schema.articles)
+        .values({
+          siteId: site.id,
+          url: val.it.url,
+          title: val.d.title,
+          body: val.d.body,
+          publishedAt: tryParseDate(val.d.date ?? val.it.date),
+          contentHash: contentHash(val.d.body),
+          status: "raw",
+        })
+        .run();
+      existing.add(val.it.url);
+      fetched++;
     }
 
     const status: RunResult["status"] =
