@@ -1,6 +1,17 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
+/** 系统用户（唯一用户，注册后不可再注册） */
+export const users = sqliteTable("users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  authToken: text("auth_token"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+});
+
 /** 采集站点配置：现有 sites.json 扩展而来 */
 export const sites = sqliteTable("sites", {
   id: integer("id").primaryKey({ autoIncrement: true }),

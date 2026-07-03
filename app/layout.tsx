@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { db, schema } from "@/db/client";
 import { count, eq } from "drizzle-orm";
 import { NavLinks } from "./components/NavLinks";
+import { UserMenu } from "./components/UserMenu";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,7 +14,7 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -23,6 +25,13 @@ export default function RootLayout({
       .from(schema.articles)
       .where(eq(schema.articles.status, "review"))
       .get()?.v ?? 0;
+
+  // 获取当前登录用户
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
+  const currentUser = token
+    ? db.select().from(schema.users).where(eq(schema.users.authToken, token)).get()
+    : null;
 
   return (
     <html lang="zh-CN">
@@ -35,7 +44,10 @@ export default function RootLayout({
             >
               科技情报
             </Link>
-            <NavLinks reviewCount={reviewCount} />
+            <div className="flex items-center gap-3">
+              <NavLinks reviewCount={reviewCount} />
+              {currentUser && <UserMenu username={currentUser.username} />}
+            </div>
           </div>
         </nav>
         {children}
