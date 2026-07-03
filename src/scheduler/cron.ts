@@ -1,14 +1,14 @@
 /**
- * 定时调度器：pnpm scheduler
+ * 定时调度器
  *
- * 读取全局 settings.cron_interval（默认 "0 9 * * *" 每天9点），按 cron 依次执行：
+ * 读取全局 settings.cron_interval（默认 "0 9 * * *" 每天9点），按 cron 周期执行：
  *   采集 (crawl all) → AI 审核 (analyze all raw)。
  *
- * 环境变量：
- *   CRON_INTERVAL  — 兜底 cron 表达式，仅当 DB 中 settings.cron_interval 为空时使用
+ * 由 instrumentation hook 在 Next.js 启动时自动调用 startScheduler()；
+ * 也可独立运行：pnpm scheduler（用于独立调度进程）。
  */
 
-import cron from "node-cron";
+import cron, { type ScheduledTask } from "node-cron";
 import PQueue from "p-queue";
 import { pathToFileURL } from "node:url";
 import { db, schema } from "../../db/client";
@@ -18,8 +18,9 @@ import { analyzePending } from "../ai/analyze";
 import { closeBrowser } from "../crawler/playwright";
 import { fire } from "../notify/notifier";
 
-const DEFAULT_CRON = "0 9 * * *"; // 每天 9:00
+const DEFAULT_CRON = "0 9 * * *";
 const MAX_CONCURRENT = 2;
+const TZ = "Asia/Shanghai";
 
 function getSchedule(): string {
   const row = db
@@ -28,15 +29,15 @@ function getSchedule(): string {
     .where(eq(schema.settings.key, "cron_interval"))
     .get();
   if (row?.value) return row.value;
-  // 兜底：环境变量或每天9点
   return process.env.CRON_INTERVAL ?? DEFAULT_CRON;
 }
 
 export async function runAll() {
   const started = Date.now();
   const interval = getSchedule();
+  const now = new Date().toLocaleString("zh-CN", { timeZone: TZ });
   console.log(
-    `[cron ${new Date().toISOString()}] 开始定时采集+审核（cron: ${interval}）…`,
+    `[cron ${now}] 开始定时采集+审核（cron: ${interval}）…`,
   );
 
   const siteRows = db
@@ -105,27 +106,49 @@ export async function runAll() {
   }).catch(() => {});
 }
 
-let task: cron.ScheduledTask | null = null;
+let mainTask: ScheduledTask | null = null;
+let watchTask: ScheduledTask | null = null;
 
-async function main() {
+export function startScheduler() {
   const interval = getSchedule();
-  console.log(`[cron] 启动定时调度（${interval}）`);
-  task = cron.schedule(interval, runAll);
-  console.log(`[cron] 调度器就绪`);
+  console.log(`[cron] 启动定时调度（cron: ${interval}，时区: ${TZ}）`);
 
-  // 每分钟检查一次 cron 是否变更，热更新
-  cron.schedule("*/1 * * * *", () => {
-    const current = getSchedule();
-    if (current !== interval && task) {
-      console.log(`[cron] cron 变更: ${interval} → ${current}，热更新`);
-      task.stop();
-      task = cron.schedule(current, runAll);
-    }
-  });
+  mainTask = cron.schedule(
+    interval,
+    runAll,
+    { timezone: TZ },
+  );
+
+  // 每分钟检测 cron 变更并热更新
+  let currentCron = interval;
+  watchTask = cron.schedule(
+    "*/1 * * * *",
+    () => {
+      const latest = getSchedule();
+      if (latest !== currentCron && mainTask) {
+        console.log(`[cron] cron 变更: ${currentCron} → ${latest}，热更新`);
+        mainTask.stop();
+        mainTask = cron.schedule(
+          latest,
+          runAll,
+          { timezone: TZ },
+        );
+        currentCron = latest;
+      }
+    },
+    { timezone: TZ },
+  );
+}
+
+export function stopScheduler() {
+  mainTask?.stop();
+  watchTask?.stop();
 }
 
 const invokedDirectly =
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href;
 
-if (invokedDirectly) main();
+if (invokedDirectly) {
+  startScheduler();
+}
