@@ -19,6 +19,14 @@ export const reviewSchema = z.object({
   usable: z
     .boolean()
     .describe("内容是否可用（真实文章且非噪声/导航/公告空壳/无关转载）"),
+  isNews: z
+    .boolean()
+    .describe("是否为新闻/资讯类内容（有明确时间、事件、结论），非教程/文档/FAQ/关于页/纯列表/招聘广告/产品介绍页"),
+  newsScore: z
+    .number()
+    .min(0)
+    .max(1)
+    .describe("新闻属性评分 0-1：≥0.7为明确新闻；0.4-0.7为模糊/半新闻(评论/观点/分析)；<0.4为非新闻(教程/文档/广告/关于页)"),
   reason: z.string().describe("一句话判断理由"),
 });
 

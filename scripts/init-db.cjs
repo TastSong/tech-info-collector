@@ -28,7 +28,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS ai_reviews (
     id INTEGER PRIMARY KEY AUTOINCREMENT, article_id INTEGER NOT NULL REFERENCES articles(id),
     model TEXT NOT NULL, relevant INTEGER, summary TEXT, headline TEXT, key_points TEXT,
-    tags TEXT, quality_score REAL, usable INTEGER, reason TEXT, tokens_used INTEGER,
+    tags TEXT, quality_score REAL, is_news INTEGER, news_score REAL, usable INTEGER, reason TEXT, tokens_used INTEGER,
     created_at INTEGER NOT NULL DEFAULT (unixepoch())
   );
   CREATE TABLE IF NOT EXISTS run_logs (
@@ -59,12 +59,19 @@ try {
   }
 }
 
-// 向已有 ai_reviews 表添加 headline 列（幂等）
+// 向已有 ai_reviews 表添加 is_news / news_score 列（幂等）
 try {
-  db.exec(`ALTER TABLE ai_reviews ADD COLUMN headline TEXT`);
+  db.exec(`ALTER TABLE ai_reviews ADD COLUMN is_news INTEGER`);
 } catch (e) {
   if (!e.message.includes('duplicate column name')) {
-    console.error('ALTER TABLE ai_reviews failed:', e.message);
+    console.error('ALTER TABLE ai_reviews ADD is_news failed:', e.message);
+  }
+}
+try {
+  db.exec(`ALTER TABLE ai_reviews ADD COLUMN news_score REAL`);
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) {
+    console.error('ALTER TABLE ai_reviews ADD news_score failed:', e.message);
   }
 }
 

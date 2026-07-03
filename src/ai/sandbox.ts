@@ -70,12 +70,17 @@ export async function reviewArticle(input: {
       "headline(string,≤30字短标题，用于资讯流展示，提炼文章最核心的情报信息，要求简洁有信息量)；" +
       "keyPoints(string[],3-5条)；tags(string[],2-5个)；" +
       "qualityScore(number,0-1,情报价值/可用性)；usable(boolean,是否真实可用非噪声/导航/空壳/无关转载)；" +
+      "isNews(boolean,是否为新闻/资讯类内容)；newsScore(number,0-1,新闻属性评分)；" +
       "reason(string,一句话理由)。" +
       "判定规则：导航/目录页/公告空壳/与范围明显无关 → usable=false 且 qualityScore<0.3；" +
       "真实相关情报 → usable=true，按信息量/时效/影响力给 0.3-1.0。" +
       "时效性考量：若发布时间距今超过30天且内容无持续参考价值→适当降分；" +
       "若为近7天内最新动态且信息量充足→适当加分；" +
-      "若发布时间未知则按中等时效处理。",
+      "若发布时间未知则按中等时效处理。" +
+      "新闻识别(isNews + newsScore)：明确新闻/资讯(有事件、时间、结论) → isNews=true 且 newsScore≥0.7；" +
+      "评论/观点/分析文章 → isNews=true 但 newsScore 0.4-0.7；" +
+      "教程/文档/FAQ/关于页/招聘广告/产品介绍/纯列表/导航 → isNews=false 且 newsScore<0.4。" +
+      "注意：新闻判断只看内容性质，不看 relevance/usable 的结论。即便内容相关且可用，只要不是新闻形式也要标记 isNews=false。",
     prompt:
       `关注范围(scope)：${scope}\n\n` +
       `发布时间：${pubTime}\n\n` +
@@ -121,6 +126,8 @@ const threshold = (name: string, def: number) =>
 export function decideStatus(r: Review): "ready" | "rejected" | "review" {
   const lo = threshold("AI_REVIEW_LOW", 0.4);
   const hi = threshold("AI_REVIEW_HIGH", 0.7);
+  // 非新闻内容直接驳回，不上资讯流
+  if (!r.isNews) return "rejected";
   if (!r.usable) return "rejected";
   if (!r.relevant) return "review";
   if (r.qualityScore >= hi) return "ready";

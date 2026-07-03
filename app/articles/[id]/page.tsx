@@ -124,6 +124,16 @@ export default async function ArticleDetailPage({
                   </span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-slate-400">新闻属性</span>
+                  <span
+                    className={`font-medium ${review.isNews ? "text-emerald-600" : "text-red-500"}`}
+                  >
+                    {review.isNews
+                      ? `✓ 新闻 (${(review.newsScore ?? 0).toFixed(2)})`
+                      : `✗ 非新闻 (${(review.newsScore ?? 0).toFixed(2)})`}
+                  </span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-slate-400">tokens</span>
                   <span>{review.tokensUsed ?? "-"}</span>
                 </div>

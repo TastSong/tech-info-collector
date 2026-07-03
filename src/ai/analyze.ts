@@ -73,6 +73,8 @@ export async function analyzePending(opts: Opts = {}): Promise<void> {
             keyPoints: r.keyPoints,
             tags: r.tags,
             qualityScore: r.qualityScore,
+            isNews: r.isNews,
+            newsScore: r.newsScore,
             usable: r.usable,
             reason: r.reason,
             tokensUsed: r.tokens,

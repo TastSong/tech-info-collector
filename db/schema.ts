@@ -80,6 +80,8 @@ export const aiReviews = sqliteTable("ai_reviews", {
   keyPoints: text("key_points", { mode: "json" }).$type<string[]>(),
   tags: text("tags", { mode: "json" }).$type<string[]>(),
   qualityScore: real("quality_score"),
+  isNews: integer("is_news", { mode: "boolean" }),
+  newsScore: real("news_score"),
   usable: integer("usable", { mode: "boolean" }),
   reason: text("reason"),
   tokensUsed: integer("tokens_used"),

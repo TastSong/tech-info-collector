@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function FeedPage() {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  // 近7天 + 未查看 的文章，JOIN sites + aiReviews 取分类和AI摘要
+  // 近7天 + 未查看 + status=ready 的文章，JOIN sites + aiReviews 取分类和AI摘要
   const rows = db
     .select({
       id: schema.articles.id,
@@ -27,6 +27,7 @@ export default async function FeedPage() {
       and(
         isNull(schema.articles.viewedAt),
         gte(schema.articles.fetchedAt, sevenDaysAgo),
+        eq(schema.articles.status, "ready"),
       ),
     )
     .orderBy(desc(schema.articles.fetchedAt))
