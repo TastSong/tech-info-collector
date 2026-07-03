@@ -47,6 +47,10 @@ db.exec(`
     total_skipped INTEGER NOT NULL DEFAULT 0,
     total_errors INTEGER NOT NULL DEFAULT 0
   );
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT
+  );
 `);
 
 // 向已有 run_logs 表添加 crawl_session_id 列（幂等）

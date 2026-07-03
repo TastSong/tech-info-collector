@@ -12,6 +12,12 @@ export const users = sqliteTable("users", {
     .default(sql`(unixepoch())`),
 });
 
+/** 系统设置（key-value） */
+export const settings = sqliteTable("settings", {
+  key: text("key").primaryKey(),
+  value: text("value"),
+});
+
 /** 采集站点配置：现有 sites.json 扩展而来 */
 export const sites = sqliteTable("sites", {
   id: integer("id").primaryKey({ autoIncrement: true }),

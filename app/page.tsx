@@ -5,6 +5,7 @@ import { Stat } from "./components/Stat";
 import { CrawlTrigger } from "./components/ActionButtons";
 import { statusBadge, renderBadge } from "./components/Badges";
 import { LiveProgress } from "./components/LiveProgress";
+import { ScheduleSection } from "./components/ScheduleSection";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,9 @@ export default function Home() {
 
       {/* Live Progress */}
       <LiveProgress />
+
+      {/* Schedule */}
+      <ScheduleSection />
 
       {/* Recent Runs */}
       <section className="mb-10">

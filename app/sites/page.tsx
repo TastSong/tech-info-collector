@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { db, schema } from "@/db/client";
 import { sql } from "drizzle-orm";
-import { renderBadge } from "../components/Badges";
+import { SiteCard } from "../components/SiteCard";
 
 export const dynamic = "force-dynamic";
 
@@ -34,67 +33,14 @@ export default async function SitesPage() {
 
       <div className="space-y-4">
         {sites.map((s) => (
-          <div
+          <SiteCard
             key={s.id}
-            className={`rounded-xl border bg-white p-5 ${
-              s.enabled ? "border-slate-200" : "border-slate-100 opacity-60"
-            }`}
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="font-medium text-slate-900">{s.name}</span>
-                  {renderBadge(s.render)}
-                  {s.enabled ? (
-                    <span className="text-xs font-medium text-emerald-600">
-                      启用
-                    </span>
-                  ) : (
-                    <span className="text-xs text-slate-400">禁用</span>
-                  )}
-                </div>
-                <div className="mt-1 text-xs text-slate-500">
-                  {s.category}
-                  {s.subcategory ? ` / ${s.subcategory}` : ""} ·{" "}
-                  {s.interval ?? "-"} · AI: {s.aiInvolvement}
-                </div>
-              </div>
-              <div className="text-right text-sm text-slate-500">
-                <div>{counts.get(s.id) ?? 0} 篇</div>
-                {s.lastRunAt ? (
-                  <div className="text-xs text-slate-400">
-                    上次：{new Date(s.lastRunAt).toLocaleDateString("zh-CN")}
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            {/* URLs + selectors (read only for now) */}
-            <div className="mt-3 space-y-1 text-xs text-slate-400">
-              <div>
-                URLs：{(s.urls as string[]).map((u) => (
-                  <code key={u} className="ml-1 rounded bg-slate-50 px-1 break-all">
-                    {u}
-                  </code>
-                ))}
-              </div>
-              {s.listSelector ? (
-                <div className="break-all">
-                  选择器：list=<code className="rounded bg-slate-50 px-1">
-                    {s.listSelector}
-                  </code>{" "}
-                  / link=<code className="rounded bg-slate-50 px-1">
-                    {s.linkSelector ?? "-"}
-                  </code>{" "}
-                  / body=
-                  <code className="rounded bg-slate-50 px-1">
-                    {s.bodySelector ?? "自动"}
-                  </code>
-                </div>
-              ) : null}
-              <div>scope：{s.scope ?? "（未设置）"}</div>
-            </div>
-          </div>
+            site={{
+              ...s,
+              urls: s.urls as string[],
+            }}
+            articleCount={counts.get(s.id) ?? 0}
+          />
         ))}
       </div>
     </main>
