@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db/client";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, and, ne, sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +74,17 @@ export async function GET() {
     .all()
     .at(0) ?? null;
 
+  // 查询属于当前 session 且已完成的 runLogs（用于计算进度）
+  let sessionCompleted = 0;
+  if (runningSession) {
+    const sessionLogs = db
+      .select({ id: schema.runLogs.id, status: schema.runLogs.status })
+      .from(schema.runLogs)
+      .where(eq(schema.runLogs.crawlSessionId, runningSession.id))
+      .all();
+    sessionCompleted = sessionLogs.filter((l) => l.status !== "running").length;
+  }
+
   const items = {
     running: running.map((r) => ({
       ...r,
@@ -88,7 +99,7 @@ export async function GET() {
           id: runningSession.id,
           status: runningSession.status,
           siteCount: runningSession.siteCount,
-          completedCount: running.length, // DB 中正在跑的 run_logs 数
+          completedCount: sessionCompleted,
         }
       : null,
   };

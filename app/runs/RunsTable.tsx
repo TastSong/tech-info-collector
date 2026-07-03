@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 interface RunLog {
   id: number;
   siteId: number | null;
+  crawlSessionId: number | null;
   status: string;
   fetched: number;
   skipped: number;
@@ -15,13 +16,19 @@ interface RunLog {
   message: string | null;
 }
 
+interface CrawlSessionInfo {
+  id: number;
+  startedAt: string | Date | null;
+}
+
 interface Props {
   initialLogs: RunLog[];
   siteNames: Record<number, string>;
+  sessionMap: Record<number, CrawlSessionInfo>;
 }
 
 /** 运行日志表格，每 3s 轮询自动更新。 */
-export function RunsTable({ initialLogs, siteNames }: Props) {
+export function RunsTable({ initialLogs, siteNames, sessionMap }: Props) {
   const [logs, setLogs] = useState<RunLog[]>(initialLogs);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
@@ -75,6 +82,7 @@ export function RunsTable({ initialLogs, siteNames }: Props) {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
+              <th className="px-4 py-3">采集批次</th>
               <th className="px-4 py-3">开始时间</th>
               <th className="px-4 py-3">站点</th>
               <th className="px-4 py-3">新采</th>
@@ -93,6 +101,13 @@ export function RunsTable({ initialLogs, siteNames }: Props) {
                   r.status === "running" ? "bg-indigo-50/50" : ""
                 }`}
               >
+                <td className="px-4 py-3 text-xs text-slate-400">
+                  {r.crawlSessionId ? (
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono">
+                      #{r.crawlSessionId}
+                    </span>
+                  ) : "-"}
+                </td>
                 <td className="px-4 py-3 text-slate-500">
                   {r.startedAt
                     ? new Date(r.startedAt).toLocaleString("zh-CN")
@@ -128,7 +143,7 @@ export function RunsTable({ initialLogs, siteNames }: Props) {
             ))}
             {!logs.length ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
                   暂无运行记录
                 </td>
               </tr>

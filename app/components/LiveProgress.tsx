@@ -77,9 +77,7 @@ export function LiveProgress() {
   const runningFetched = running.reduce((s, r) => s + r.fetched, 0);
   const runningUpdated = running.reduce((s, r) => s + r.updated, 0);
   const runningErrors = running.reduce((s, r) => s + r.errorCount, 0);
-  const sessionDone = session
-    ? running.filter((r) => r.status !== "running").length
-    : 0;
+  const sessionDone = session?.completedCount ?? 0;
 
   return (
     <div className="space-y-4">
