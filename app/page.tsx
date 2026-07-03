@@ -15,10 +15,10 @@ export default function Home() {
   const reviewCount = articles.filter((a) => a.status === "review").length;
   const rejectedCount = articles.filter((a) => a.status === "rejected").length;
 
-  // 最近 5 次运行
-  const runs = db
+  // 最近 5 次 crawl session
+  const sessions = db
     .select()
-    .from(schema.runLogs)
+    .from(schema.crawlSessions)
     .orderBy(sql`id DESC`)
     .limit(5)
     .all();
@@ -88,13 +88,13 @@ export default function Home() {
       {/* Recent Runs */}
       <section className="mb-10">
         <h2 className="mb-3 text-lg font-semibold">最近采集</h2>
-        {runs.length ? (
+        {sessions.length ? (
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-4 py-3">时间</th>
-                  <th className="px-4 py-3">站点</th>
+                  <th className="px-4 py-3">站点数</th>
                   <th className="px-4 py-3">新采</th>
                   <th className="px-4 py-3">更新</th>
                   <th className="px-4 py-3">跳过</th>
@@ -103,11 +103,11 @@ export default function Home() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {runs.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50">
+                {sessions.map((s) => (
+                  <tr key={s.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3 text-slate-500">
-                      {r.startedAt
-                        ? new Date(r.startedAt).toLocaleString("zh-CN", {
+                      {s.startedAt
+                        ? new Date(s.startedAt).toLocaleString("zh-CN", {
                             month: "short",
                             day: "numeric",
                             hour: "2-digit",
@@ -116,22 +116,31 @@ export default function Home() {
                         : "-"}
                     </td>
                     <td className="px-4 py-3 font-medium">
-                      {r.siteId}
+                      {s.status === "running" ? (
+                        <span className="flex items-center gap-1.5">
+                          <span className="inline-flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                          {s.siteCount} 站
+                        </span>
+                      ) : (
+                        <span>{s.siteCount} 站</span>
+                      )}
                     </td>
-                    <td className="px-4 py-3 text-emerald-600">{r.fetched}</td>
-                    <td className="px-4 py-3 text-indigo-600">{r.updated > 0 ? r.updated : "-"}</td>
-                    <td className="px-4 py-3 text-slate-400">{r.skipped}</td>
+                    <td className="px-4 py-3 text-emerald-600">{s.totalFetched > 0 ? s.totalFetched : "-"}</td>
+                    <td className="px-4 py-3 text-indigo-600">{s.totalUpdated > 0 ? s.totalUpdated : "-"}</td>
+                    <td className="px-4 py-3 text-slate-400">{s.totalSkipped > 0 ? s.totalSkipped : "-"}</td>
                     <td className="px-4 py-3 text-red-500">
-                      {r.errorCount > 0 ? r.errorCount : "-"}
+                      {s.totalErrors > 0 ? s.totalErrors : "-"}
                     </td>
                     <td className="px-4 py-3">
-                      {r.status === "success"
+                      {s.status === "success"
                         ? <span className="text-xs font-medium text-emerald-600">成功</span>
-                        : r.status === "partial"
+                        : s.status === "partial"
                         ? <span className="text-xs font-medium text-amber-600">部分</span>
-                        : r.status === "error"
-                        ? <span className="text-xs font-medium text-red-600">失败</span>
-                        : <span className="text-xs text-slate-400">{r.status}</span>}
+                        : s.status === "running"
+                        ? <span className="text-xs font-medium text-indigo-600">采集中</span>
+                        : s.status === "aborted"
+                        ? <span className="text-xs font-medium text-slate-500">已中止</span>
+                        : <span className="text-xs font-medium text-red-600">失败</span>}
                     </td>
                   </tr>
                 ))}
@@ -139,7 +148,7 @@ export default function Home() {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-slate-400">暂无运行记录</p>
+          <p className="text-sm text-slate-400">暂无采集记录</p>
         )}
       </section>
 

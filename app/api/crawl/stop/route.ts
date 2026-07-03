@@ -33,6 +33,23 @@ export async function POST() {
       .run();
   }
 
+  // 将 running 状态的 crawl_sessions 也标记为 aborted
+  const runningSessions = db
+    .select()
+    .from(schema.crawlSessions)
+    .where(eq(schema.crawlSessions.status, "running"))
+    .all();
+
+  for (const s of runningSessions) {
+    db.update(schema.crawlSessions)
+      .set({
+        status: "aborted",
+        endedAt: now,
+      })
+      .where(eq(schema.crawlSessions.id, s.id))
+      .run();
+  }
+
   // 关掉浏览器
   await closeBrowser().catch(() => {});
 

@@ -28,12 +28,20 @@ const MAX_ITEMS_PER_SITE = 30;
 /** 已入库文章的快照：url → {id, siteId, hash} */
 type ExistingEntry = { id: number; siteId: number; hash: string };
 
-export async function runSite(site: Site): Promise<RunResult> {
+export async function runSite(
+  site: Site,
+  crawlSessionId?: number,
+): Promise<RunResult> {
   const startedAt = new Date();
   const logId = (
     db
       .insert(schema.runLogs)
-      .values({ siteId: site.id, startedAt, status: "running" })
+      .values({
+        siteId: site.id,
+        crawlSessionId: crawlSessionId ?? null,
+        startedAt,
+        status: "running",
+      })
       .run().lastInsertRowid as number
   ) ?? 0;
 

@@ -87,9 +87,29 @@ export const aiReviews = sqliteTable("ai_reviews", {
     .default(sql`(unixepoch())`),
 });
 
+/** 一次采集触发 = 一次 crawl session */
+export const crawlSessions = sqliteTable("crawl_sessions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  startedAt: integer("started_at", { mode: "timestamp" }).notNull(),
+  endedAt: integer("ended_at", { mode: "timestamp" }),
+  status: text("status", {
+    enum: ["running", "success", "partial", "error", "aborted"],
+  })
+    .notNull()
+    .default("running"),
+  siteCount: integer("site_count").notNull().default(0),
+  totalFetched: integer("total_fetched").notNull().default(0),
+  totalUpdated: integer("total_updated").notNull().default(0),
+  totalSkipped: integer("total_skipped").notNull().default(0),
+  totalErrors: integer("total_errors").notNull().default(0),
+});
+
 /** 单次采集运行日志 */
 export const runLogs = sqliteTable("run_logs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  crawlSessionId: integer("crawl_session_id").references(
+    () => crawlSessions.id,
+  ),
   siteId: integer("site_id")
     .notNull()
     .references(() => sites.id),

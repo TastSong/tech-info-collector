@@ -99,7 +99,7 @@ export function RunsTable({ initialLogs, siteNames }: Props) {
                     : "-"}
                 </td>
                 <td className="px-4 py-3 font-medium">
-                  {siteNames[r.siteId ?? 0] ?? `#${r.siteId}`}
+                  {siteNames[r.siteId ?? 0] ?? `站点 #${r.siteId ?? "?"}`}
                 </td>
                 <td className="px-4 py-3 text-emerald-600">{r.fetched}</td>
                 <td className="px-4 py-3 text-indigo-600">{r.updated > 0 ? r.updated : "-"}</td>

@@ -70,6 +70,18 @@ export async function POST(req: Request) {
     );
   }
 
+  // 创建 crawl session
+  const sessionId = (
+    db
+      .insert(schema.crawlSessions)
+      .values({
+        startedAt: new Date(),
+        status: "running",
+        siteCount: ready.length,
+      })
+      .run().lastInsertRowid as number
+  ) ?? 1;
+
   const groups = groupByHost(ready);
 
   // 立即返回，后台执行
@@ -83,7 +95,7 @@ export async function POST(req: Request) {
       for (const s of group) {
         if (ac.signal.aborted) break;
         try {
-          const r = await runSite(s);
+          const r = await runSite(s, sessionId);
           totalFetched += r.fetched;
         } catch {
           // runSite 自己已写 run_logs 错误，这里只需抓取不中断
@@ -92,10 +104,39 @@ export async function POST(req: Request) {
     });
   }
 
-  // 后台跑完之后关浏览器 + 自动触发 AI 分析
+  // 后台跑完之后关浏览器 + 汇总 session + 自动触发 AI 分析
   q.onIdle()
     .then(() => closeBrowser().catch(() => {}))
     .then(() => {
+      // 汇总 session 结果
+      const sessionRuns = db
+        .select()
+        .from(schema.runLogs)
+        .where(eq(schema.runLogs.crawlSessionId, sessionId))
+        .all();
+      const totalErrors = sessionRuns.reduce((s, r) => s + r.errorCount, 0);
+      const totalUpdated = sessionRuns.reduce((s, r) => s + r.updated, 0);
+      const totalSkipped = sessionRuns.reduce((s, r) => s + r.skipped, 0);
+      const hasErrors = totalErrors > 0;
+      const hasPartial = sessionRuns.some((r) => r.status === "partial");
+      const sessionStatus: typeof schema.crawlSessions.$inferInsert.status =
+        ac.signal.aborted ? "aborted"
+        : hasErrors && totalFetched === 0 ? "error"
+        : hasPartial || hasErrors ? "partial"
+        : "success";
+
+      db.update(schema.crawlSessions)
+        .set({
+          endedAt: new Date(),
+          status: sessionStatus,
+          totalFetched,
+          totalUpdated,
+          totalSkipped,
+          totalErrors,
+        })
+        .where(eq(schema.crawlSessions.id, sessionId))
+        .run();
+
       if (!ac.signal.aborted) {
         console.log(`[crawl] 完成，共采集 ${totalFetched} 篇新文章 (含更新/跳过)。`);
         // 采集完成后自动对 raw 文章做 AI 分析

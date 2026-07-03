@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db/client";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/runs/active — 返回当前在跑 + 最近完成的 run logs
+// GET /api/runs/active — 返回当前在跑 + 最近完成的 run logs（带站点名 + session 汇总）
 // running 日志只取 10 分钟内的，超过的视为僵尸（清理掉）
 export async function GET() {
   const allRunning = db
@@ -48,5 +48,50 @@ export async function GET() {
       return Date.now() - new Date(r.endedAt).getTime() < 60 * 60 * 1000;
     });
 
-  return NextResponse.json({ running, recent });
+  // 查找站点名
+  const siteNames = new Map<number, string>();
+  const allSiteIds = new Set([
+    ...running.map((r) => r.siteId),
+    ...recent.map((r) => r.siteId),
+  ]);
+  if (allSiteIds.size > 0) {
+    const sites = db
+      .select({ id: schema.sites.id, name: schema.sites.name })
+      .from(schema.sites)
+      .all();
+    for (const s of sites) {
+      siteNames.set(s.id, s.name);
+    }
+  }
+
+  // 当前 running session
+  const runningSession = db
+    .select()
+    .from(schema.crawlSessions)
+    .where(eq(schema.crawlSessions.status, "running"))
+    .orderBy(desc(schema.crawlSessions.startedAt))
+    .limit(1)
+    .all()
+    .at(0) ?? null;
+
+  const items = {
+    running: running.map((r) => ({
+      ...r,
+      siteName: siteNames.get(r.siteId) ?? null,
+    })),
+    recent: recent.map((r) => ({
+      ...r,
+      siteName: siteNames.get(r.siteId) ?? null,
+    })),
+    session: runningSession
+      ? {
+          id: runningSession.id,
+          status: runningSession.status,
+          siteCount: runningSession.siteCount,
+          completedCount: running.length, // DB 中正在跑的 run_logs 数
+        }
+      : null,
+  };
+
+  return NextResponse.json(items);
 }

@@ -37,7 +37,27 @@ db.exec(`
     fetched INTEGER NOT NULL DEFAULT 0, skipped INTEGER NOT NULL DEFAULT 0,
     updated INTEGER NOT NULL DEFAULT 0, error_count INTEGER NOT NULL DEFAULT 0, message TEXT
   );
+  CREATE TABLE IF NOT EXISTS crawl_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    started_at INTEGER NOT NULL, ended_at INTEGER,
+    status TEXT NOT NULL DEFAULT 'running',
+    site_count INTEGER NOT NULL DEFAULT 0,
+    total_fetched INTEGER NOT NULL DEFAULT 0,
+    total_updated INTEGER NOT NULL DEFAULT 0,
+    total_skipped INTEGER NOT NULL DEFAULT 0,
+    total_errors INTEGER NOT NULL DEFAULT 0
+  );
 `);
+
+// 向已有 run_logs 表添加 crawl_session_id 列（幂等）
+try {
+  db.exec(`ALTER TABLE run_logs ADD COLUMN crawl_session_id INTEGER REFERENCES crawl_sessions(id)`);
+} catch (e) {
+  // 列已存在时忽略
+  if (!e.message.includes('duplicate column name')) {
+    console.error('ALTER TABLE run_logs failed:', e.message);
+  }
+}
 
 // 幂等导入：仅当 sites 表为空时从 sites.json 导入
 const count = db.prepare('SELECT COUNT(*) AS cnt FROM sites').get();

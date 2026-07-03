@@ -60,6 +60,21 @@ async function main() {
 
   // 按域名分组
   const groups = groupByHost(ready);
+  // 创建 crawl session
+  const sessionCount = db.select().from(schema.crawlSessions).all().length;
+  const sessionIndex = sessionCount + 1;
+  const sessionId = (
+    db
+      .insert(schema.crawlSessions)
+      .values({
+        startedAt: new Date(),
+        status: "running",
+        siteCount: ready.length,
+      })
+      .run().lastInsertRowid as number
+  ) ?? 1;
+
+  console.log(`\n=== 第 ${sessionIndex} 次采集 ===`);
   console.log(
     `并行采集 ${ready.length} 站 (${groups.length} 域名组) · 并发=${CONCURRENCY}\n`,
   );
@@ -73,7 +88,7 @@ async function main() {
       for (const s of group) {
         process.stdout.write(`▶ #${s.id} ${s.name} [${s.render}] ...`);
         try {
-          const r = await runSite(s);
+          const r = await runSite(s, sessionId);
           console.log(
             ` ✓ 新${r.fetched} 变${r.updated} 跳${r.skipped} 错${r.errorCount} (${r.status})`,
           );
@@ -87,6 +102,35 @@ async function main() {
 
   await q.onIdle();
   await closeBrowser();
+
+  // 汇总 session 结果
+  const sessionRuns = db
+    .select()
+    .from(schema.runLogs)
+    .where(eq(schema.runLogs.crawlSessionId, sessionId))
+    .all();
+  const totalErrors = sessionRuns.reduce((s, r) => s + r.errorCount, 0);
+  const totalUpdated = sessionRuns.reduce((s, r) => s + r.updated, 0);
+  const totalSkipped = sessionRuns.reduce((s, r) => s + r.skipped, 0);
+  const hasErrors = totalErrors > 0;
+  const hasPartial = sessionRuns.some((r) => r.status === "partial");
+  const status: typeof schema.crawlSessions.$inferInsert.status =
+    hasErrors && totalFetched === 0 ? "error"
+    : hasPartial || hasErrors ? "partial"
+    : "success";
+
+  db.update(schema.crawlSessions)
+    .set({
+      endedAt: new Date(),
+      status,
+      totalFetched,
+      totalUpdated,
+      totalSkipped,
+      totalErrors,
+    })
+    .where(eq(schema.crawlSessions.id, sessionId))
+    .run();
+
   console.log(`\n采集完成，共采集 ${totalFetched} 篇新文章。`);
 
   // 采集完成后自动对 raw 文章做 AI 分析
