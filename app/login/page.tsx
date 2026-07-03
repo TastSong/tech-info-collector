@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -16,11 +14,11 @@ export default function LoginPage() {
     fetch("/api/auth/me")
       .then((r) => r.json())
       .then((data) => {
-        if (data.user) router.replace("/");
+        if (data.user) window.location.href = "/";
       })
       .catch(() => {})
       .finally(() => setChecking(false));
-  }, [router]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +42,8 @@ export default function LoginPage() {
         setSubmitting(false);
         return;
       }
-      router.push("/");
+      // 硬导航绕过 RSC 缓存，确保跳转到已认证页面
+      window.location.href = "/";
     } catch {
       setError("网络错误，请重试");
       setSubmitting(false);

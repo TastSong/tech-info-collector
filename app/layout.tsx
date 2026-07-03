@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { db, schema } from "@/db/client";
 import { count, eq } from "drizzle-orm";
+import { verifySignedToken } from "@/src/lib/password";
 import { NavLinks } from "./components/NavLinks";
 import { UserMenu } from "./components/UserMenu";
 import "./globals.css";
@@ -13,6 +14,24 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = "force-dynamic";
+
+/** Verify auth cookie and return current user (id + username), or null. */
+async function getCurrentUser(): Promise<{ id: number; username: string } | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
+  if (!token) return null;
+
+  const payload = verifySignedToken(token);
+  if (!payload) return null;
+
+  // Confirm the user still exists in DB
+  const user = db.select({ id: schema.users.id, username: schema.users.username })
+    .from(schema.users)
+    .where(eq(schema.users.id, payload.u))
+    .get();
+
+  return user ?? null;
+}
 
 export default async function RootLayout({
   children,
@@ -26,12 +45,7 @@ export default async function RootLayout({
       .where(eq(schema.articles.status, "review"))
       .get()?.v ?? 0;
 
-  // 获取当前登录用户
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  const currentUser = token
-    ? db.select().from(schema.users).where(eq(schema.users.authToken, token)).get()
-    : null;
+  const currentUser = await getCurrentUser();
 
   return (
     <html lang="zh-CN">

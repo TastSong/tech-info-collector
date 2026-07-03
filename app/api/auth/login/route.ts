@@ -8,7 +8,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db, schema } from "@/db/client";
-import { verifyPassword, generateToken } from "@/src/lib/password";
+import { verifyPassword, createSignedToken } from "@/src/lib/password";
 import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -37,12 +37,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "用户名或密码错误" }, { status: 401 });
   }
 
-  const authToken = generateToken();
-
-  db.update(schema.users)
-    .set({ authToken })
-    .where(eq(schema.users.id, user.id))
-    .run();
+  // 自签名 token，支持多浏览器同时在线
+  const authToken = createSignedToken(user.id, user.username);
 
   const cookieStore = await cookies();
   cookieStore.set("auth_token", authToken, {

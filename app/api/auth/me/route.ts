@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db, schema } from "@/db/client";
+import { verifySignedToken } from "@/src/lib/password";
 import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -18,10 +19,16 @@ export async function GET() {
     return NextResponse.json({ user: null });
   }
 
+  const payload = verifySignedToken(token);
+  if (!payload) {
+    return NextResponse.json({ user: null });
+  }
+
+  // Verify user still exists
   const user = db
     .select()
     .from(schema.users)
-    .where(eq(schema.users.authToken, token))
+    .where(eq(schema.users.id, payload.u))
     .get();
 
   if (!user) {
