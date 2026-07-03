@@ -94,6 +94,16 @@ export default async function ArticleDetailPage({
           </h2>
           {review ? (
             <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
+              {review.headline ? (
+                <div>
+                  <div className="mb-1 text-xs font-medium text-slate-500">
+                    AI 标题
+                  </div>
+                  <p className="text-sm font-medium text-slate-800">
+                    {review.headline}
+                  </p>
+                </div>
+              ) : null}
               <div className="flex flex-col gap-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-slate-400">相关性</span>

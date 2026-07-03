@@ -6,6 +6,7 @@ import Link from "next/link";
 interface ArticleItem {
   id: number;
   title: string | null;
+  headline: string | null;
   fetchedAt: string | Date | null;
   publishedAt: string | Date | null;
   siteName: string | null;
@@ -13,7 +14,7 @@ interface ArticleItem {
 }
 
 /**
- * Feed 文章卡片：标题 + AI 摘要 + 来源信息，右侧"已阅读"按钮就地隐藏。
+ * Feed 文章卡片：AI 生成标题 + 原文标题 + AI 摘要 + 来源信息，右侧"已阅读"按钮就地隐藏。
  */
 export function FeedCard({ article }: { article: ArticleItem }) {
   const [dismissed, setDismissed] = useState(false);
@@ -30,6 +31,8 @@ export function FeedCard({ article }: { article: ArticleItem }) {
 
   if (dismissed) return null;
 
+  const displayTitle = article.headline || article.title || "(无标题)";
+
   return (
     <div className="group flex items-center rounded-xl border border-slate-200 bg-white p-4 hover:border-indigo-300 hover:shadow-sm transition-all">
       <Link
@@ -37,8 +40,13 @@ export function FeedCard({ article }: { article: ArticleItem }) {
         className="flex-1 min-w-0"
       >
         <div className="font-medium text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
-          {article.title || "(无标题)"}
+          {displayTitle}
         </div>
+        {article.headline && article.title && article.headline !== article.title ? (
+          <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">
+            原文：{article.title}
+          </p>
+        ) : null}
         {article.summary ? (
           <p className="mt-1 text-sm text-slate-500 line-clamp-2">
             {article.summary}

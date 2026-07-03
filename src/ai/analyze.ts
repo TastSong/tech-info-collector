@@ -60,6 +60,7 @@ export async function analyzePending(opts: Opts = {}): Promise<void> {
           title: a.title ?? "",
           body: a.body ?? "",
           scope: s.scope,
+          publishedAt: a.publishedAt,
         });
         const status = decideStatus(r);
         db.insert(schema.aiReviews)
@@ -68,6 +69,7 @@ export async function analyzePending(opts: Opts = {}): Promise<void> {
             model: r.model,
             relevant: r.relevant,
             summary: r.summary,
+            headline: r.headline,
             keyPoints: r.keyPoints,
             tags: r.tags,
             qualityScore: r.qualityScore,

@@ -76,6 +76,7 @@ export const aiReviews = sqliteTable("ai_reviews", {
   model: text("model").notNull(),
   relevant: integer("relevant", { mode: "boolean" }),
   summary: text("summary"),
+  headline: text("headline"),
   keyPoints: text("key_points", { mode: "json" }).$type<string[]>(),
   tags: text("tags", { mode: "json" }).$type<string[]>(),
   qualityScore: real("quality_score"),

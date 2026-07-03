@@ -19,7 +19,7 @@ db.exec(`
   );
   CREATE TABLE IF NOT EXISTS ai_reviews (
     id INTEGER PRIMARY KEY AUTOINCREMENT, article_id INTEGER NOT NULL REFERENCES articles(id),
-    model TEXT NOT NULL, relevant INTEGER, summary TEXT, key_points TEXT,
+    model TEXT NOT NULL, relevant INTEGER, summary TEXT, headline TEXT, key_points TEXT,
     tags TEXT, quality_score REAL, usable INTEGER, reason TEXT, tokens_used INTEGER,
     created_at INTEGER NOT NULL DEFAULT (unixepoch())
   );
@@ -47,6 +47,15 @@ try {
 } catch (e) {
   if (!e.message.includes('duplicate column name')) {
     console.error('ALTER TABLE run_logs failed:', e.message);
+  }
+}
+
+// 向已有 ai_reviews 表添加 headline 列（幂等）
+try {
+  db.exec(`ALTER TABLE ai_reviews ADD COLUMN headline TEXT`);
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) {
+    console.error('ALTER TABLE ai_reviews failed:', e.message);
   }
 }
 db.close();

@@ -18,6 +18,7 @@ export default async function FeedPage() {
       siteName: schema.sites.name,
       category: schema.sites.category,
       summary: schema.aiReviews.summary,
+      headline: schema.aiReviews.headline,
     })
     .from(schema.articles)
     .innerJoin(schema.sites, sql`${schema.articles.siteId} = ${schema.sites.id}`)

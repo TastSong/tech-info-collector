@@ -50,25 +50,35 @@ export async function reviewArticle(input: {
   title: string;
   body: string;
   scope: string | null;
+  publishedAt: Date | null;
 }): Promise<ReviewResult> {
   const title = (input.title ?? "").slice(0, 200);
   const body = (input.body ?? "").slice(0, MAX_INPUT_CHARS);
   const scope = input.scope ?? "科技情报(泛)";
+  const pubTime =
+    input.publishedAt instanceof Date && !isNaN(input.publishedAt.getTime())
+      ? input.publishedAt.toISOString().slice(0, 10)
+      : "未知";
 
   const { text, usage } = await generateText({
     model: getModel(),
     temperature: 0.2,
     system:
-      "你是科技情报审核助手。依据给定的关注范围(scope)，对文章做结构化提取与可用性判定。" +
+      "你是科技情报审核助手。依据给定的关注范围(scope)、发布时间，对文章做结构化提取与可用性判定。" +
       "输出要求：只返回一个 JSON 对象，不要 markdown 代码块、不要解释、不要多余文字。" +
       "字段：relevant(boolean) 是否属于 scope 范围；summary(string,≤100字中文摘要)；" +
+      "headline(string,≤30字短标题，用于资讯流展示，提炼文章最核心的情报信息，要求简洁有信息量)；" +
       "keyPoints(string[],3-5条)；tags(string[],2-5个)；" +
       "qualityScore(number,0-1,情报价值/可用性)；usable(boolean,是否真实可用非噪声/导航/空壳/无关转载)；" +
       "reason(string,一句话理由)。" +
       "判定规则：导航/目录页/公告空壳/与范围明显无关 → usable=false 且 qualityScore<0.3；" +
-      "真实相关情报 → usable=true，按信息量/时效/影响力给 0.3-1.0。",
+      "真实相关情报 → usable=true，按信息量/时效/影响力给 0.3-1.0。" +
+      "时效性考量：若发布时间距今超过30天且内容无持续参考价值→适当降分；" +
+      "若为近7天内最新动态且信息量充足→适当加分；" +
+      "若发布时间未知则按中等时效处理。",
     prompt:
       `关注范围(scope)：${scope}\n\n` +
+      `发布时间：${pubTime}\n\n` +
       `标题：${title}\n\n正文：\n${body}\n\n只输出 JSON 对象。`,
   });
 

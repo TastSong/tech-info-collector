@@ -6,6 +6,9 @@ export const reviewSchema = z.object({
     .boolean()
     .describe("内容是否属于该站点 scope 关注范围内的科技情报"),
   summary: z.string().describe("100 字以内的中文摘要"),
+  headline: z
+    .string()
+    .describe("≤30字短标题，用于资讯流展示，提炼文章最核心的情报信息"),
   keyPoints: z.array(z.string()).describe("3-5 条简短关键信息点"),
   tags: z.array(z.string()).describe("2-5 个主题标签"),
   qualityScore: z
