@@ -841,33 +841,35 @@ webhook 失败只 `.catch(() => {})`，无重试、无死信队列。
 
 ## 8. 改进建议
 
+> 💡 每条建议均有独立详细文档，包含原因、具体修改步骤和影响范围分析。
+
 ### 8.1 短期（可立即执行）
 
-| 优先级 | 建议 | 涉及文件 |
-|---|---|---|
-| P0 | 添加 AI 审核失败重试机制（3次指数退避） | `src/ai/analyze.ts` |
-| P0 | 抽取公共采集服务层，消除 CLI/API 重复 | 新建 `src/pipeline/service.ts` |
-| P1 | `runSite` 使用参数化查询代替全量加载 | `src/pipeline/runner.ts:56-67` |
-| P1 | 中间件增加 token 签名验证 | `middleware.ts` |
-| P1 | 为 AI 审核添加事务包裹 | `src/ai/analyze.ts:53-85` |
-| P2 | 统一 CRON vs CLI 的并发配置 | `src/scheduler/cron.ts` |
-| P2 | 添加登录速率限制 | `app/api/auth/login/route.ts` |
-| P2 | Playwright 获取添加重试逻辑 | `src/crawler/playwright.ts` |
+| 优先级 | 建议 | 详细文档 | 涉及文件 |
+|---|---|---|---|
+| P0 | 添加 AI 审核失败重试机制（3次指数退避） | [📄 S01](suggestions/S01-ai-retry.md) | `src/ai/analyze.ts` |
+| P0 | 抽取公共采集服务层，消除 CLI/API 重复 | [📄 S02](suggestions/S02-extract-service.md) | 新建 `src/pipeline/service.ts` |
+| P1 | `runSite` 使用参数化查询代替全量加载 | [📄 S03](suggestions/S03-param-query.md) | `src/pipeline/runner.ts:56-67` |
+| P1 | 中间件增加 token 签名验证 | [📄 S04](suggestions/S04-middleware-auth.md) | `middleware.ts` |
+| P1 | 为 AI 审核添加事务包裹 | [📄 S05](suggestions/S05-transaction.md) | `src/ai/analyze.ts:53-85` |
+| P2 | 统一 CRON vs CLI 的并发配置 | [📄 S06](suggestions/S06-unify-concurrency.md) | `src/scheduler/cron.ts` |
+| P2 | 添加登录速率限制 | [📄 S07](suggestions/S07-rate-limit-login.md) | `app/api/auth/login/route.ts` |
+| P2 | Playwright 获取添加重试逻辑 | [📄 S08](suggestions/S08-playwright-retry.md) | `src/crawler/playwright.ts` |
 
 ### 8.2 中期（需要一定开发量）
 
-- **引入结构化日志**: pino 或 winston，JSON 格式输出，支持日志级别
-- **健康检查 API**: 返回 DB 连接、浏览器状态、最后采集时间
-- **数据库迁移规范化**: 使用 Drizzle Kit 的 migrate 功能，不再用 try/catch ALTER TABLE
-- **全局采集进度 WebSocket**: 替代 3s 轮询，实时推送采集进度
-- **站点配置管理 UI**: 替代直接编辑 `sites.json` 的方式
+- **[📄 S09](suggestions/S09-structured-logging.md) 引入结构化日志**: pino 或 winston，JSON 格式输出，支持日志级别
+- **[📄 S10](suggestions/S10-health-check.md) 健康检查 API**: 返回 DB 连接、浏览器状态、最后采集时间
+- **[📄 S11](suggestions/S11-migration.md) 数据库迁移规范化**: 使用 Drizzle Kit 的 migrate 功能，不再用 try/catch ALTER TABLE
+- **[📄 S12](suggestions/S12-websocket-progress.md) 全局采集进度 WebSocket**: 替代 3s 轮询，实时推送采集进度
+- **[📄 S13](suggestions/S13-site-management-ui.md) 站点配置管理 UI**: 替代直接编辑 `sites.json` 的方式
 
 ### 8.3 长期（架构级改进）
 
-- **迁移到 PostgreSQL**: 解决 SQLite 同步阻塞和多副本支持问题。Drizzle ORM 已支持 PostgreSQL，迁移成本可控
-- **采集 Worker 分离**: 将采集/审核逻辑移至独立 Worker 进程或队列（如 BullMQ），避免阻塞 Next.js 主进程
-- **引入缓存层**: 对热点 API（站点列表、统计）使用内存缓存，减少 DB 压力
-- **可观测性**: OpenTelemetry 集成，追踪采集耗时、LLM 调用延迟分布
+- **[📄 S14](suggestions/S14-postgresql.md) 迁移到 PostgreSQL**: 解决 SQLite 同步阻塞和多副本支持问题。Drizzle ORM 已支持 PostgreSQL，迁移成本可控
+- **[📄 S15](suggestions/S15-worker-separation.md) 采集 Worker 分离**: 将采集/审核逻辑移至独立 Worker 进程，避免阻塞 Next.js 主进程
+- **[📄 S16](suggestions/S16-cache-layer.md) 引入缓存层**: 对热点 API（站点列表、统计）使用内存缓存，减少 DB 压力
+- **[📄 S17](suggestions/S17-observability.md) 可观测性**: OpenTelemetry 集成，追踪采集耗时、LLM 调用延迟分布
 
 ---
 
