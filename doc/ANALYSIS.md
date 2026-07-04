@@ -863,6 +863,7 @@ webhook 失败只 `.catch(() => {})`，无重试、无死信队列。
 - **[📄 S11](suggestions/S11-migration.md) 数据库迁移规范化**: 使用 Drizzle Kit 的 migrate 功能，不再用 try/catch ALTER TABLE
 - **[📄 S12](suggestions/S12-websocket-progress.md) 全局采集进度 WebSocket**: 替代 3s 轮询，实时推送采集进度
 - **[📄 S13](suggestions/S13-site-management-ui.md) 站点配置管理 UI**: 替代直接编辑 `sites.json` 的方式
+- **[📄 S18](suggestions/S18-intelligent-crawler.md) 智能爬虫**: 基于 AI SDK tool-calling，LLM 自主探索页面并提取内容，彻底替代手工 CSS 选择器
 
 ### 8.3 长期（架构级改进）
 
