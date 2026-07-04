@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { db, schema } from "@/db/client";
-import { count, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { verifySignedToken } from "@/src/lib/password";
 import { NavLinks } from "./components/NavLinks";
 import { UserMenu } from "./components/UserMenu";
@@ -38,13 +38,6 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const reviewCount =
-    db
-      .select({ v: count() })
-      .from(schema.articles)
-      .where(eq(schema.articles.status, "review"))
-      .get()?.v ?? 0;
-
   const currentUser = await getCurrentUser();
 
   return (
@@ -59,7 +52,7 @@ export default async function RootLayout({
               科技情报
             </Link>
             <div className="flex items-center gap-3">
-              <NavLinks reviewCount={reviewCount} />
+              <NavLinks />
               {currentUser && <UserMenu username={currentUser.username} />}
             </div>
           </div>

@@ -41,9 +41,8 @@ export async function analyzePending(opts: Opts = {}): Promise<void> {
   );
 
   const queue = new PQueue({ concurrency });
-  let ready = 0;
+  let published = 0;
   let rejected = 0;
-  let review = 0;
   let errored = 0;
   let tokens = 0;
 
@@ -85,22 +84,21 @@ export async function analyzePending(opts: Opts = {}): Promise<void> {
           .where(eq(schema.articles.id, a.id))
           .run();
         tokens += r.tokens;
-        if (status === "ready") ready++;
-        else if (status === "rejected") rejected++;
-        else review++;
-        const tag = status === "ready" ? "✓" : status === "rejected" ? "✗" : "?";
+        if (status === "published") published++;
+        else rejected++;
+        const tag = status === "published" ? "✓" : "✗";
         console.log(
           `  ${tag} #${a.id} q=${r.qualityScore.toFixed(2)} ${(a.title ?? "").slice(0, 38)}`,
         );
       } catch (e) {
         errored++;
-        // 失败转人工复核，不阻断批次
+        // 失败直接驳回，不阻断批次
         db.update(schema.articles)
-          .set({ status: "review" })
+          .set({ status: "rejected" })
           .where(eq(schema.articles.id, a.id))
           .run();
         console.log(
-          `  ! #${a.id} 失败→review: ${(e as Error).message.slice(0, 90)}`,
+          `  ! #${a.id} 失败→rejected: ${(e as Error).message.slice(0, 90)}`,
         );
       }
     });
@@ -108,7 +106,7 @@ export async function analyzePending(opts: Opts = {}): Promise<void> {
 
   await queue.onIdle();
   console.log(
-    `\n完成：ready=${ready} rejected=${rejected} review=${review} error=${errored} tokens≈${tokens}`,
+    `\n完成：published=${published} rejected=${rejected} error=${errored} tokens≈${tokens}`,
   );
 }
 

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db, schema } from "@/db/client";
 import { eq, desc } from "drizzle-orm";
-import { ArticleActions } from "../../components/ActionButtons";
 import { statusBadge } from "../../components/Badges";
 import { MarkViewed } from "../../components/MarkViewed";
 
@@ -60,10 +59,6 @@ export default async function ArticleDetailPage({
         </h1>
         <div className="flex items-center gap-3 shrink-0">
           {statusBadge(article.status)}
-          <ArticleActions
-            articleId={article.id}
-            currentStatus={article.status}
-          />
         </div>
       </div>
 

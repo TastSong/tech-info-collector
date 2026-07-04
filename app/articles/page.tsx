@@ -30,10 +30,8 @@ export default async function ArticlesPage(props: {
   const statuses = [
     "raw",
     "analyzing",
-    "ready",
-    "rejected",
-    "review",
     "published",
+    "rejected",
   ];
 
   return (
@@ -54,12 +52,8 @@ export default async function ArticlesPage(props: {
           >
             {s === "published"
               ? "已发布"
-              : s === "ready"
-              ? "可用"
               : s === "rejected"
               ? "已驳回"
-              : s === "review"
-              ? "待复核"
               : s === "analyzing"
               ? "审核中"
               : "原始"}

@@ -63,7 +63,7 @@ export const articles = sqliteTable("articles", {
   publishedAt: integer("published_at", { mode: "timestamp" }),
   contentHash: text("content_hash"),
   status: text("status", {
-    enum: ["raw", "analyzing", "ready", "rejected", "review", "published"],
+    enum: ["raw", "analyzing", "published", "rejected"],
   })
     .notNull()
     .default("raw"),

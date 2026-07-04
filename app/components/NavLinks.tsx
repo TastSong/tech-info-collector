@@ -30,7 +30,7 @@ function NavLink({
   );
 }
 
-export function NavLinks({ reviewCount }: { reviewCount: number }) {
+export function NavLinks() {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 
@@ -56,7 +56,6 @@ export function NavLinks({ reviewCount }: { reviewCount: number }) {
         <NavLink href="/">首页</NavLink>
         <NavLink href="/feed">资讯流</NavLink>
         <NavLink href="/articles">文章</NavLink>
-        <NavLink href="/review" count={reviewCount}>待复核</NavLink>
         <NavLink href="/sites">站点</NavLink>
         <NavLink href="/runs">日志</NavLink>
       </div>
@@ -68,7 +67,6 @@ export function NavLinks({ reviewCount }: { reviewCount: number }) {
             <NavLink href="/" onClick={close}>首页</NavLink>
             <NavLink href="/feed" onClick={close}>资讯流</NavLink>
             <NavLink href="/articles" onClick={close}>文章</NavLink>
-            <NavLink href="/review" count={reviewCount} onClick={close}>待复核</NavLink>
             <NavLink href="/sites" onClick={close}>站点</NavLink>
             <NavLink href="/runs" onClick={close}>日志</NavLink>
           </div>

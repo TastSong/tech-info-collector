@@ -12,8 +12,7 @@ export const dynamic = "force-dynamic";
 export default function Home() {
   const articles = db.select().from(schema.articles).all();
   const total = articles.length;
-  const readyCount = articles.filter((a) => a.status === "ready" || a.status === "published").length;
-  const reviewCount = articles.filter((a) => a.status === "review").length;
+  const readyCount = articles.filter((a) => a.status === "published").length;
   const rejectedCount = articles.filter((a) => a.status === "rejected").length;
 
   // 最近 5 次 crawl session
@@ -46,7 +45,7 @@ export default function Home() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">仪表盘</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {total} 篇文章 · {readyCount} 可用 · {reviewCount} 待复核 ·{" "}
+            {total} 篇文章 · {readyCount} 已发布 ·{" "}
             {rejectedCount} 已驳回
           </p>
         </div>
@@ -54,7 +53,7 @@ export default function Home() {
       </div>
 
       {/* Stats */}
-      <section className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <section className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="text-2xl font-semibold text-slate-900">{total}</div>
           <div className="mt-1 text-sm text-slate-500">总文章</div>
@@ -63,17 +62,7 @@ export default function Home() {
           <div className="text-2xl font-semibold text-emerald-700">
             {readyCount}
           </div>
-          <div className="mt-1 text-sm text-emerald-600">可用情报</div>
-        </div>
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <div className="text-2xl font-semibold text-amber-700">
-            {reviewCount}
-          </div>
-          <div className="mt-1 text-sm text-amber-600">
-            <Link href="/review" className="hover:underline">
-              待人工复核 →{" "}
-            </Link>
-          </div>
+          <div className="mt-1 text-sm text-emerald-600">已发布情报</div>
         </div>
         <div className="rounded-xl border border-red-200 bg-red-50 p-4">
           <div className="text-2xl font-semibold text-red-700">

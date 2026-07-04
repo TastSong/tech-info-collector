@@ -116,21 +116,19 @@ const threshold = (name: string, def: number) =>
   Number(process.env[name] ?? def);
 
 /**
- * 确定性状态闸门 —— LLM 的 usable/relevant/score 仅是建议，最终落库状态由此函数决定。
- *   !usable             → rejected（噪声/空壳）
- *   usable 但 !relevant  → review（偏离范围，人工定夺）
- *   score >= HIGH        → ready（高质量可用）
- *   score < LOW          → rejected（低质量）
- *   其余（灰区）          → review（人工复核）
+ * 确定性状态闸门 —— LLM 的 usable/qualityScore/newsScore 仅是建议，最终落库状态由此函数决定。
+ *
+ * 综合评分 = qualityScore * 0.7 + newsScore * 0.3
+ *   (情报价值占 70%，新闻属性占 30%——教程/分析/评论也可发布，只是权重略低)
+ *
+ *   !usable                                 → rejected（噪声/空壳/纯导航/公告）
+ *   combinedScore < AI_PUBLISH_THRESHOLD    → rejected（质量不足）
+ *   其余                                    → published（自动发布）
  */
-export function decideStatus(r: Review): "ready" | "rejected" | "review" {
-  const lo = threshold("AI_REVIEW_LOW", 0.4);
-  const hi = threshold("AI_REVIEW_HIGH", 0.7);
-  // 非新闻内容直接驳回，不上资讯流
-  if (!r.isNews) return "rejected";
+export function decideStatus(r: Review): "published" | "rejected" {
   if (!r.usable) return "rejected";
-  if (!r.relevant) return "review";
-  if (r.qualityScore >= hi) return "ready";
-  if (r.qualityScore < lo) return "rejected";
-  return "review";
+  const t = threshold("AI_PUBLISH_THRESHOLD", 0.5);
+  const combined = r.qualityScore * 0.7 + r.newsScore * 0.3;
+  if (combined < t) return "rejected";
+  return "published";
 }

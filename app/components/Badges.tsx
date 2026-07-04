@@ -11,9 +11,8 @@ export function badge(label: string, color: "green" | "amber" | "red" | "slate")
 
 export function statusBadge(s: string) {
   switch (s) {
-    case "ready": case "published": return badge("✓ 可用", "green");
+    case "published": return badge("✓ 已发布", "green");
     case "rejected": return badge("✗ 驳回", "red");
-    case "review": return badge("? 待复核", "amber");
     case "analyzing": return badge("⊗ 审核中", "slate");
     default: return badge(s, "slate");
   }
