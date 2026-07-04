@@ -11,7 +11,6 @@ import { db, schema } from "../../db/client";
 import { runSite } from "./runner";
 import { closeBrowser } from "../crawler/playwright";
 import { analyzePending } from "../ai/analyze";
-import { isIntelligentCrawlEnabled } from "../ai/intelligent-crawl";
 
 const CONCURRENCY = Number(process.env.CRAWL_CONCURRENCY ?? 10);
 
@@ -47,15 +46,11 @@ async function main() {
     process.exit(1);
   }
 
-  // 有无选择器的站点分开
-  // 有选择器的正常采集；无选择器但启用智能爬虫的也纳入采集
-  const intelligentEnabled = isIntelligentCrawlEnabled();
-  const ready = targets.filter((s) =>
-    s.listSelector || (intelligentEnabled && s.aiInvolvement !== "none")
-  );
+  // 只采集 AI 启用的站点（aiInvolvement != none），全部走智能爬虫
+  const ready = targets.filter((s) => s.aiInvolvement !== "none");
   const skipped = targets.filter((s) => !ready.includes(s));
   for (const s of skipped) {
-    console.log(`⊘ #${s.id} ${s.name} — 未配置选择器且智能爬虫未启用，跳过`);
+    console.log(`⊘ #${s.id} ${s.name} — AI 未启用，跳过`);
   }
 
   if (!ready.length) {

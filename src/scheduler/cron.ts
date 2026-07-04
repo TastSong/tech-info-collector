@@ -17,7 +17,6 @@ import { runSite } from "../pipeline/runner";
 import { analyzePending } from "../ai/analyze";
 import { closeBrowser } from "../crawler/playwright";
 import { fire } from "../notify/notifier";
-import { isIntelligentCrawlEnabled } from "../ai/intelligent-crawl";
 
 const DEFAULT_CRON = "0 9 * * *";
 const MAX_CONCURRENT = 2;
@@ -47,10 +46,7 @@ export async function runAll() {
     .where(eq(schema.sites.enabled, true))
     .all();
 
-  const intelligentEnabled = isIntelligentCrawlEnabled();
-  const toRun = siteRows.filter((s) =>
-    !!s.listSelector || (intelligentEnabled && s.aiInvolvement !== "none")
-  );
+  const toRun = siteRows.filter((s) => s.aiInvolvement !== "none");
 
   if (!toRun.length) {
     console.log("[cron] 无可用站点，跳过");

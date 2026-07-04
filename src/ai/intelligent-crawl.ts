@@ -17,7 +17,6 @@
  */
 import "dotenv/config";
 import { generateText, Output, stepCountIs } from "ai";
-import { z } from "zod";
 import { getModel } from "../ai/sandbox";
 import { fetchHtml } from "../crawler/fetcher";
 import { parseDetail } from "../crawler/parser";
@@ -72,25 +71,7 @@ export function isIntelligentCrawlEnabled(): boolean {
 }
 
 const MAX_ITEMS = () => envInt("INTELLIGENT_CRAWL_MAX_ITEMS", 30);
-const MAX_STEPS = () => envInt("INTELLIGENT_CRAWL_MAX_STEPS", 5);
 const TIMEOUT_MS = () => envInt("INTELLIGENT_CRAWL_TIMEOUT_MS", 120_000);
-
-// ── Phase 1 输出 Schema ──
-
-/** LLM 在 Phase 1 最终输出的结构化结果 */
-const phase1OutputSchema = z.object({
-  articles: z.array(
-    z.object({
-      url: z.string().describe("文章的完整 URL（绝对路径）"),
-      title: z.string().describe("从列表页提取的文章标题"),
-      date: z.string().nullable().describe("文章的发布日期（如能提取到）"),
-    }),
-  ).describe("从列表页提取到的文章链接和标题列表"),
-  extractionNotes: z
-    .string()
-    .optional()
-    .describe("关于提取过程的简要说明（遇到什么问题等）"),
-});
 
 // ── 主入口 ──
 
@@ -126,46 +107,47 @@ export async function intelligentCrawl(input: {
   let listItems: Array<{ url: string; title: string; date: string | null }> = [];
 
   try {
+    console.log(`    📡 调用 LLM (maxSteps=${envInt("INTELLIGENT_CRAWL_MAX_STEPS", 10)})...`);
+
     const result = await withTimeout(
       generateText({
         model: getModel(),
         temperature: 0.1,
-        stopWhen: stepCountIs(MAX_STEPS()),
         abortSignal: input.signal,
         maxRetries: 1,
 
         system:
-          `你是智能网页爬虫助手。你的任务是分析网站首页/列表页的 HTML 结构，找到文章链接列表。\n\n` +
+          `你是智能网页爬虫助手。分析网站首页/列表页的 HTML 结构，找到文章链接列表。\n\n` +
           `工作流程：\n` +
           `1. 调用 fetch_page 抓取站点首页\n` +
-          `2. 仔细分析返回的 HTML，找到文章列表区域（观察重复的 DOM 模式）。注意：HTML 中的 script/style/nav/footer 等非内容标签已被移除\n` +
+          `2. 分析返回的 HTML，找到文章列表区域（观察重复的 DOM 模式）。HTML 中 script/style/nav/footer 等非内容标签已被移除\n` +
           `3. 调用 extract_links，传入你发现的选择器：\n` +
-          `   - containerSelector: 必须的，每个文章条目的容器（如 'ul.list li'、'div.news-item'）\n` +
-          `   - linkSelector: 可选，容器内链接的定位(如 'a.title'、'h3 a')\n` +
-          `   - titleSelector: 可选，标题的定位\n` +
-          `   - dateSelector: 可选，日期的定位\n` +
-          `4. 收到 extract_links 的返回结果后，简要总结提取情况即可\n\n` +
+          `   - containerSelector: 必须，文章条目容器（如 'ul.list li'、'div.news-item'）\n` +
+          `   - linkSelector: 可选，链接定位(如 'a.title'、'h3 a')\n` +
+          `   - titleSelector: 可选，标题定位\n` +
+          `   - dateSelector: 可选，日期定位\n` +
+          `4. 收到结果后简要总结即可\n\n` +
           `规则：\n` +
-          `- 只选择看起来是文章/新闻/博客条目的区域\n` +
-          `- 排除导航菜单、侧边栏推荐、页脚链接\n` +
-          `- 排除链接文本太短（<4字）或包含 javascript:/#/void 的链接\n` +
-          `- 排除"关于我们"、"联系我们"、"登录"、"注册"等非文章页面\n` +
-          `- 最多找 ${MAX_ITEMS()} 篇文章\n\n` +
+          `- 只选文章/新闻/博客条目区域，排除导航、侧边栏、页脚\n` +
+          `- 排除文本太短（<4字）或 javascript:/#/void 链接\n` +
+          `- 排除"关于"、"联系"、"登录"、"注册"等非文章页面\n` +
+          `- 最多找 ${MAX_ITEMS()} 篇\n\n` +
           `关注范围：${scope}`,
 
         prompt:
-          `请抓取并分析以下网站：\n\n` +
           `站点名称：${input.siteName}\n` +
           `站点 URL：${input.siteUrl}\n` +
           `渲染模式：${input.render}\n` +
           `关注范围：${scope}\n\n` +
-          `请先抓取首页，分析页面结构，找到文章列表，提取文章链接。`,
+          `请抓取首页，分析结构，找到文章列表，提取链接。`,
 
         tools: {
           fetch_page: fetchPageTool,
           extract_links: extractLinksTool,
         },
 
+        // generateText 默认 stopWhen=isStepCount(1)，不显式设置只能跑1步。
+        stopWhen: stepCountIs(envInt("INTELLIGENT_CRAWL_MAX_STEPS", 10)),
         output: Output.text(),
       }),
       TIMEOUT_MS(),
