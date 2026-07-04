@@ -11,6 +11,7 @@ import { db, schema } from "../../db/client";
 import { runSite } from "./runner";
 import { closeBrowser } from "../crawler/playwright";
 import { analyzePending } from "../ai/analyze";
+import { isIntelligentCrawlEnabled } from "../ai/intelligent-crawl";
 
 const CONCURRENCY = Number(process.env.CRAWL_CONCURRENCY ?? 10);
 
@@ -46,11 +47,15 @@ async function main() {
     process.exit(1);
   }
 
-  // 有无选择器的站点分开（无选择器直接跳过，不占并发槽）
-  const ready = targets.filter((s) => s.listSelector);
-  const skipped = targets.filter((s) => !s.listSelector);
+  // 有无选择器的站点分开
+  // 有选择器的正常采集；无选择器但启用智能爬虫的也纳入采集
+  const intelligentEnabled = isIntelligentCrawlEnabled();
+  const ready = targets.filter((s) =>
+    s.listSelector || (intelligentEnabled && s.aiInvolvement !== "none")
+  );
+  const skipped = targets.filter((s) => !ready.includes(s));
   for (const s of skipped) {
-    console.log(`⊘ #${s.id} ${s.name} — 未配置选择器，跳过`);
+    console.log(`⊘ #${s.id} ${s.name} — 未配置选择器且智能爬虫未启用，跳过`);
   }
 
   if (!ready.length) {

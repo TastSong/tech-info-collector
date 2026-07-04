@@ -13,6 +13,7 @@ import { queueFor } from "../crawler/rate-limit";
 import { contentHash } from "./dedup";
 import { tryParseDate } from "../lib/date";
 import { getAbortSignal } from "./abort";
+import { intelligentCrawl, isIntelligentCrawlEnabled } from "../ai/intelligent-crawl";
 
 export interface RunResult {
   fetched: number;
@@ -27,6 +28,147 @@ const MAX_ITEMS_PER_SITE = 30;
 
 /** 已入库文章的快照：url → {id, siteId, hash} */
 type ExistingEntry = { id: number; siteId: number; hash: string };
+
+// ── 共享：去重、contentHash 对比、写入 DB ──
+
+interface ReadyArticle {
+  url: string;
+  title: string;
+  body: string;
+  contentHash: string;
+  publishedAt: Date | null;
+}
+
+interface DedupResult {
+  fetched: number;
+  skipped: number;
+  updated: number;
+  errorCount: number;
+  duplicateCount: number;
+  errors: string[];
+}
+
+/** 对一批文章做去重 + contentHash 对比 + 写入 DB（智能爬虫和选择器爬虫共用） */
+function deduplicateAndSave(
+  articles: ReadyArticle[],
+  siteId: number,
+  existing: Map<string, ExistingEntry>,
+  errors: string[],
+): DedupResult {
+  let fetched = 0;
+  let skipped = 0;
+  let updated = 0;
+  let errorCount = 0;
+  let duplicateCount = 0;
+
+  for (const article of articles) {
+    const prev = existing.get(article.url);
+
+    if (prev) {
+      // URL 已存在
+      if (prev.siteId !== siteId) {
+        duplicateCount++;
+        continue;
+      }
+      if (prev.hash === article.contentHash) {
+        skipped++;
+        continue;
+      }
+      // 内容有变化 → 更新
+      try {
+        db.update(schema.articles)
+          .set({
+            title: article.title,
+            body: article.body,
+            contentHash: article.contentHash,
+            publishedAt: article.publishedAt,
+            status: "raw",
+            fetchedAt: new Date(),
+          })
+          .where(eq(schema.articles.id, prev.id))
+          .run();
+        updated++;
+      } catch (e) {
+        errorCount++;
+        errors.push(`update: ${(e as Error).message}`);
+      }
+    } else {
+      // 新文章
+      try {
+        db.insert(schema.articles)
+          .values({
+            siteId,
+            url: article.url,
+            title: article.title,
+            body: article.body,
+            publishedAt: article.publishedAt,
+            contentHash: article.contentHash,
+            status: "raw",
+          })
+          .run();
+        existing.set(article.url, { id: -1, siteId, hash: article.contentHash });
+        fetched++;
+      } catch (e) {
+        const msg = (e as Error).message;
+        if (msg.includes("UNIQUE constraint")) {
+          duplicateCount++;
+        } else {
+          errorCount++;
+          errors.push(`insert: ${msg}`);
+        }
+      }
+    }
+  }
+
+  return { fetched, skipped, updated, errorCount, duplicateCount, errors };
+}
+
+/** 写入 run_logs + 更新 sites.lastRunAt，返回 RunResult */
+function finalizeRun(
+  logId: number,
+  siteId: number,
+  dedup: DedupResult,
+): RunResult {
+  const status: RunResult["status"] =
+    dedup.errorCount > 0 && (dedup.fetched > 0 || dedup.updated > 0) ? "partial"
+    : dedup.errorCount > 0 ? "error"
+    : dedup.duplicateCount > 0 ? "partial"
+    : "success";
+
+  const summaryParts: string[] = [];
+  if (dedup.duplicateCount > 0) summaryParts.push(`dup:${dedup.duplicateCount}`);
+  const message = dedup.errors.slice(0, 5).join(" | ") || null;
+  const fullMessage = summaryParts.length > 0
+    ? (message ? `${summaryParts.join(" ")} | ${message}` : summaryParts.join(" "))
+    : message;
+
+  db.update(schema.runLogs)
+    .set({
+      endedAt: new Date(),
+      status,
+      fetched: dedup.fetched,
+      skipped: dedup.skipped,
+      updated: dedup.updated,
+      errorCount: dedup.errorCount,
+      message: fullMessage,
+    })
+    .where(eq(schema.runLogs.id, logId))
+    .run();
+  db.update(schema.sites)
+    .set({ lastRunAt: new Date() })
+    .where(eq(schema.sites.id, siteId))
+    .run();
+
+  return {
+    fetched: dedup.fetched,
+    skipped: dedup.skipped,
+    updated: dedup.updated,
+    errorCount: dedup.errorCount,
+    status,
+  };
+}
+
+// ── 主入口 ──
 
 export async function runSite(
   site: Site,
@@ -45,14 +187,9 @@ export async function runSite(
       .run().lastInsertRowid as number
   ) ?? 0;
 
-  let fetched = 0;
-  let skipped = 0;
-  let updated = 0;
-  let errorCount = 0;
-  let duplicateCount = 0;
   const errors: string[] = [];
 
-  // 全库已入库文章 → url 到已有记录的映射（用于内容变更检测 + 跨站URL冲突检测）
+  // 全库已入库文章 → url 到已有记录的映射
   const existing = new Map<string, ExistingEntry>(
     db
       .select({
@@ -75,6 +212,35 @@ export async function runSite(
   };
 
   try {
+    // ── 智能爬虫分支：无选择器但 AI 已启用 ──
+    if (!site.listSelector && isIntelligentCrawlEnabled() && site.aiInvolvement !== "none") {
+      const signal = getAbortSignal();
+
+      console.log(`  🧠 #${site.id} ${site.name} — 使用智能爬虫 (无选择器)`);
+      const result = await intelligentCrawl({
+        siteUrl: site.urls[0],
+        siteName: site.name,
+        scope: site.scope,
+        render: site.render,
+        signal,
+      });
+
+      console.log(
+        `    → ${result.articles.length} 篇 · ${result.stats.toolCalls} tool调用 · ${result.stats.totalDurationMs}ms`,
+      );
+
+      const ready: ReadyArticle[] = result.articles.map((a) => ({
+        url: a.url,
+        title: a.title,
+        body: a.body,
+        contentHash: a.contentHash,
+        publishedAt: a.publishedAt,
+      }));
+
+      const dedup = deduplicateAndSave(ready, site.id, existing, errors);
+      return finalizeRun(logId, site.id, dedup);
+    }
+
     if (!site.listSelector) {
       throw new Error("缺少 listSelector，未配置选择器");
     }
@@ -92,16 +258,15 @@ export async function runSite(
         items.push(...parseList(html, url, selectors));
       } catch (e) {
         if (signal?.aborted) throw new DOMException("用户中止", "AbortError");
-        errorCount++;
         errors.push(`list ${url}: ${(e as Error).message}`);
       }
     }
 
-    // 2) 在列表层按 url 去重（列表页本身可能出现重复链接）
+    // 2) 在列表层按 url 去重
     const seen = new Set<string>();
     const deduped = items.filter((it) => seen.has(it.url) ? false : (seen.add(it.url), true));
 
-    // 3) 详情并行抓取（所有条目都发起请求，existing 的也不跳过，用于检测内容变更）
+    // 3) 详情并行抓取
     const workItems = deduped.slice(0, MAX_ITEMS_PER_SITE);
     const tasks = workItems.map((it) =>
       queueFor(it.url).add(async () => {
@@ -120,7 +285,9 @@ export async function runSite(
     );
 
     const results = await Promise.allSettled(tasks);
+    let errorCount = 0;
 
+    const ready: ReadyArticle[] = [];
     for (const r of results) {
       if (r.status === "rejected") {
         errorCount++;
@@ -129,119 +296,35 @@ export async function runSite(
       }
       const val = r.value;
       if (!val) continue;
+      if ("skipped" in val) continue;
 
-      // 内容过短 → 跳过（不区分新/旧）
-      if ("skipped" in val) {
-        skipped++;
-        continue;
-      }
-
-      const prev = existing.get(val.it.url);
-
-      if (prev) {
-        // URL 已存在
-        if (prev.siteId !== site.id) {
-          // 跨站点 URL 冲突：另一站点已采集此文章，跳过
-          duplicateCount++;
-          continue;
-        }
-        // 同站点，对比 contentHash
-        if (prev.hash === val.hash) {
-          // 内容无变化 → 跳过
-          skipped++;
-          continue;
-        }
-        // 内容有变化 → 更新文章并重置为 raw，触发重新 AI 审核
-        try {
-          db.update(schema.articles)
-            .set({
-              title: val.d.title,
-              body: val.d.body,
-              contentHash: val.hash,
-              publishedAt: tryParseDate(val.d.date ?? val.it.date) ?? undefined,
-              status: "raw",
-              fetchedAt: new Date(),
-            })
-            .where(eq(schema.articles.id, prev.id))
-            .run();
-          updated++;
-        } catch (e) {
-          errorCount++;
-          errors.push(`update: ${(e as Error).message}`);
-        }
-      } else {
-        // 新 URL → 插入新文章（容忍 UNIQUE 约束冲突）
-        try {
-          db.insert(schema.articles)
-            .values({
-              siteId: site.id,
-              url: val.it.url,
-              title: val.d.title,
-              body: val.d.body,
-              publishedAt: tryParseDate(val.d.date ?? val.it.date),
-              contentHash: val.hash,
-              status: "raw",
-            })
-            .run();
-          existing.set(val.it.url, { id: -1, siteId: site.id, hash: val.hash });
-          fetched++;
-        } catch (e) {
-          const msg = (e as Error).message;
-          if (msg.includes("UNIQUE constraint")) {
-            duplicateCount++;
-          } else {
-            errorCount++;
-            errors.push(`insert: ${msg}`);
-          }
-        }
-      }
+      const publishedAt = tryParseDate(val.d.date ?? val.it.date);
+      ready.push({
+        url: val.it.url,
+        title: val.d.title,
+        body: val.d.body,
+        contentHash: val.hash,
+        publishedAt,
+      });
     }
 
-    const status: RunResult["status"] =
-      errorCount > 0 && (fetched > 0 || updated > 0) ? "partial"
-      : errorCount > 0 ? "error"
-      : duplicateCount > 0 ? "partial"
-      : "success";
-
-    const summaryParts: string[] = [];
-    if (duplicateCount > 0) summaryParts.push(`dup:${duplicateCount}`);
-    const message = errors.slice(0, 5).join(" | ") || null;
-    const fullMessage = summaryParts.length > 0
-      ? (message ? `${summaryParts.join(" ")} | ${message}` : summaryParts.join(" "))
-      : message;
-
-    db.update(schema.runLogs)
-      .set({
-        endedAt: new Date(),
-        status,
-        fetched,
-        skipped,
-        updated,
-        errorCount,
-        message: fullMessage,
-      })
-      .where(eq(schema.runLogs.id, logId))
-      .run();
-    db.update(schema.sites)
-      .set({ lastRunAt: new Date() })
-      .where(eq(schema.sites.id, site.id))
-      .run();
-
-    return { fetched, skipped, updated, errorCount, status };
+    const dedup = deduplicateAndSave(ready, site.id, existing, errors);
+    dedup.errorCount += errorCount;
+    return finalizeRun(logId, site.id, dedup);
   } catch (e) {
     const msg = (e as Error).message;
     db.update(schema.runLogs)
       .set({
         endedAt: new Date(),
         status: "error",
-        fetched,
-        skipped,
-        updated,
-        errorCount: errorCount + 1,
+        fetched: 0,
+        skipped: 0,
+        updated: 0,
+        errorCount: 1,
         message: msg,
       })
       .where(eq(schema.runLogs.id, logId))
       .run();
-    return { fetched, skipped, updated, errorCount: errorCount + 1, status: "error" };
+    return { fetched: 0, skipped: 0, updated: 0, errorCount: 1, status: "error" };
   }
 }
