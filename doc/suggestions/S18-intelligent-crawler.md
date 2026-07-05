@@ -48,7 +48,7 @@
 【旧架构：静态选择器】
   配置选择器 → 固定路径爬取 → 输出文章
 
-【新架构：LLM 驱动的自适应爬虫】
+【新架构 S18 v1：tool-calling (已弃用)】
   LLM 接收站点 URL
     → 调用 fetch_page tool（获取页面 HTML）
     → 分析 DOM 结构，找到文章列表
@@ -56,73 +56,81 @@
     → 调用 fetch_page tool（获取每篇文章详情）
     → 调用 extract_article tool（提取标题/正文/日期）
     → 返回结构化文章列表
+
+【当前架构 S18 v2：预筛选 + LLM 链接筛选 (当前实现)】
+  fetchHtml(site.url) 抓取首页 HTML
+    → prefilterLinks() 预筛选所有候选链接（去除广告/junk/附件等）
+    → LLM generateText 从紧凑 JSON 链接列表中筛选科技文章
+    → Phase 2: 并行 Promise.allSettled 抓取详情 parseDetail()
+    → 返回文章列表
 ```
 
-### 2.2 核心流程图
-
-```mermaid
-sequenceDiagram
-    participant P as Pipeline (runner.ts)
-    participant AI as generateText (maxSteps=10)
-    participant T1 as fetch_page tool
-    participant T2 as extract_list_items tool
-    participant T3 as extract_article tool
-    participant DB as SQLite
-
-    P->>AI: system + prompt (site URL, scope)
-    
-    Note over AI: Step 1 — 抓取列表页
-    AI->>T1: fetch_page("https://example.com/news")
-    T1->>DB: (可选缓存 HTML)
-    T1-->>AI: {html, title, statusCode}
-
-    Note over AI: Step 2 — 分析并提取链接
-    AI->>T2: extract_list_items(html, {hint: "news list"})
-    T2-->>AI: [{title, url, date}, ...]
-
-    Note over AI: Step 3-5 — 逐篇抓取详情
-    loop 每篇文章 (最多 MAX_ITEMS_PER_SITE=30)
-        AI->>T3: extract_article("https://example.com/news/123")
-        T3->>T1: fetch_page(url) [内部调用]
-        T3-->>AI: {title, body, date}
-    end
-
-    AI-->>P: {articles: [...], extractionMethod: "tool-calling"}
-
-    Note over P: 确定性去重 + 写入 DB
-    P->>DB: INSERT articles (status=raw)
-```
-
-### 2.3 与现有流水线的集成点
-
-改动集中在两个文件：
+### 2.2 执行流程
 
 ```
-src/ai/sandbox.ts          ← 新增 intelligentCrawl() 函数（带 tools 的 generateText）
-src/crawler/intelligent.ts ← 新增 tool 实现（fetch_page, extract_list_items, extract_article）
-src/pipeline/runner.ts     ← runSite() 中添加分支：优先走智能爬虫，回退到选择器
-```
+fetchHtml(site.urls[0])
+  │  含: 3次重试, SSL回退, GBK编码检测
+  │  static→原生http, dynamic→Playwright浏览器
+  │
+  ▼
+prefilterLinks(html, baseUrl, scope)
+  │  Cheerio 解析所有 <a> 标签
+  │  过滤: js/hash/mailto/锚点/非HTML文件/短文本(<4字)/广告关键词
+  │  去重: 按完整URL去重
+  │  返回: CandidateLink[] (index, url, text, parentTag, parentClass)
+  │
+  ▼
+LLM 链接筛选 (max 100 candidate, timeout 30s)
+  │  Prompt: "你是链接筛选器...站点:XX 候选链接:[{i, t, p}, ...]"
+  │  LLM返回: [{i: 5}, {i: 12}, ...] JSON数组
+  │  └─ 超时 → 直接放弃该站点 (不回退, 避免噪声)
+  │
+  ▼
+Phase 2: 并行详情抓取 (1-30篇)
+  │  queueFor(url).add(fetchHtml(url)) × N
+  │  parseDetail(html) × N
+  │  过滤: 正文<50字跳过
+  │  contentHash 计算
+  │
+  ▼
+deduplicateAndSave(articles, siteId, existing, errors)
+  │  同URL+同Hash → skipped
+  │  同URL+不同Hash → UPDATE (status=raw)
+  │  新URL → INSERT (status=raw)
+  │  → finalizeRun() → 写入 run_logs
+  │
+  ▼
+analyzePending() — AI审核
+  │  reviewArticle() → generateText → decideStatus()
+  │  └─ usable=false → rejected (噪声/空壳)
+  │  └─ qualityScore*0.7 + newsScore*0.3 < 0.5 → rejected
+  │  └─ 其余 → published
+  │
+  ▼
+前端轮询 /api/runs/active → LiveProgress 显示进度
 
-`runner.ts` 中的分支逻辑：
+### 2.3 核心实现文件
 
-```typescript
-// src/pipeline/runner.ts — runSite() 内部
-export async function runSite(site: Site, sessionId?: number) {
-  // ...创建 run_log...
+| 文件 | 职责 | 行数 |
+|---|---|---|
+| `src/ai/intelligent-crawl.ts` | 主入口 + prefilterLinks + Phase 1 LLM链接筛选 + Phase 2 并行抓取 | 357 |
+| `src/pipeline/runner.ts` | runSite 编排 → intelligentCrawl → deduplicateAndSave → finalizeRun | 170 |
+| `src/crawler/intelligent.ts` | SessionCache, fetchPageTool, extractLinksTool (保留备用), cleanPageHtml, sanitizeForLLM | 322 |
+| `src/ai/sandbox.ts` | reviewArticle (Zod schema 强校验) + decideStatus (确定性评分闸门) | 135 |
+| `src/ai/analyze.ts` | analyzePending (批量审核 + 写入 ai_reviews) | 129 |
+| `app/api/crawl/route.ts` | Web 入口, 后台异步 PQueue 并行采集 | 161 |
+| **合计** | | **1274** |
 
-  let articles: RawArticle[];
+### 2.4 与旧方案的演进对比
 
-  if (site.listSelector) {
-    // 原有路径：CSS 选择器驱动（不变）
-    articles = await crawlWithSelectors(site);
-  } else {
-    // 新路径：LLM tool-calling 自适应提取
-    articles = await intelligentCrawl(site);
-  }
-
-  // 后续的去重、contentHash、写入 DB 逻辑完全复用
-  // ...
-}
+| 维度 | S18 v1 (原方案, tool-calling) | S18 v2 (当前实现, 预筛选) |
+|---|---|---|
+| **LLM 输入** | 清洗后 HTML (50-100KB) | 紧凑 JSON 链接列表 (2-10KB) |
+| **LLM 耗时** | 120s 超时 (几乎全部失败) | 2-30s |
+| **Token 消耗** | ~100K tokens/站 | ~3-5K tokens/站 |
+| **成功抓取率** | 0% (超时) | 50-60% |
+| **回退策略** | 无 | LLM超时→放弃该站（保守）+ 可选回退 |
+| **通过率** | N/A | 科技媒体 69-82% |
 ```
 
 ### 2.4 渐进式策略
