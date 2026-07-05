@@ -224,7 +224,7 @@ export async function intelligentCrawl(input: {
             `返回 JSON 数组 [{i: 索引}]，最多 ${MAX_ITEMS()} 条。只返回 JSON 数组。`,
           output: Output.text(),
         }),
-        envInt("INTELLIGENT_CRAWL_LINK_TIMEOUT", 30_000),
+        envInt("INTELLIGENT_CRAWL_LINK_TIMEOUT", 45_000),
       );
 
       tokensUsed = llmResult.usage?.totalTokens ?? 0;
