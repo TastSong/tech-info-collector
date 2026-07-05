@@ -140,7 +140,7 @@ export async function runSite(site: Site, crawlSessionId?: number): Promise<RunR
 
     console.log(`  🧠 #${site.id} ${site.name} — 智能爬虫`);
     const result = await intelligentCrawl({
-      siteUrl: site.urls[0],
+      siteUrls: site.urls.length > 0 ? site.urls : [site.name],
       siteName: site.name,
       scope: site.scope,
       render: site.render,

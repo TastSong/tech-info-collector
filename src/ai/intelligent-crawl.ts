@@ -2,17 +2,19 @@
  * 智能爬虫编排 — 自适应内容提取。
  *
  * 流程：
- *   抓取首页 HTML → 预筛选所有候选链接 → LLM 从紧凑链接列表中筛选文章链接
+ *   多URL兜底 → 预筛选所有候选链接 → LLM 从紧凑链接列表中筛选文章链接
  *   → Promise.allSettled 并行抓取详情 → 返回文章列表
+ *
+ * 多URL策略：轮询site.urls，预筛选<10条时自动尝试下一个URL，
+ * 选择候选链接数最多的URL进行LLM筛选。
  *
  * 关键优化：LLM 不再分析原始 HTML（50-100KB），而是筛选预提取的链接列表（2-5KB），
  * 大幅降低延迟和 token 消耗。
  *
  * 环境变量：
  *   INTELLIGENT_CRAWL_ENABLED=true   — 是否启用（默认 false）
- *   INTELLIGENT_CRAWL_TIMEOUT_MS=120000 — 总超时 ms（默认 120s）
  *   INTELLIGENT_CRAWL_MAX_ITEMS=30    — 单站点最多抓取文章数（默认 30）
- *   INTELLIGENT_CRAWL_LINK_TIMEOUT=20000 — LLM 链接筛选超时 ms（默认 20s）
+ *   INTELLIGENT_CRAWL_LINK_TIMEOUT=45000 — LLM 链接筛选超时 ms（默认 45s）
  */
 import "dotenv/config";
 import { generateText, Output } from "ai";
@@ -153,8 +155,11 @@ function prefilterLinks(html: string, baseUrl: string, scope: string): Candidate
 
 // ── 主入口 ──
 
+/** 预筛选太少时尝试下一个 URL 的阈值 */
+const MIN_CANDIDATES = 10;
+
 export async function intelligentCrawl(input: {
-  siteUrl: string;
+  siteUrls: string[];
   siteName: string;
   scope: string | null;
   render: "static" | "dynamic";
@@ -163,7 +168,7 @@ export async function intelligentCrawl(input: {
   const startedAt = Date.now();
   const scope = input.scope ?? "科技情报(泛)";
 
-  // ───── Phase 1: 抓取首页 → 预筛选链接 → LLM 筛选文章链接 ─────
+  // ───── Phase 1: 多 URL 兜底 ─────
 
   console.log(`  🧠 # ${input.siteName} — 智能爬虫`);
   const phase1Start = Date.now();
@@ -172,27 +177,48 @@ export async function intelligentCrawl(input: {
   let pagesFetched = 0;
   let linksRaw = 0;
   let tokensUsed = 0;
+  let bestUrl = input.siteUrls[0] || "";
 
   try {
-    // 1. 抓取列表页 HTML
-    console.log(`    📡 抓取首页...`);
-    const rawHtml = await fetchHtml(
-      input.siteUrl, input.render,
-      { timeoutMs: 15_000 }, input.signal,
-    );
-    pagesFetched = 1;
+    let bestCandidates: CandidateLink[] = [];
 
-    // 2. 预筛选候选链接
-    const candidates = prefilterLinks(rawHtml, input.siteUrl, scope);
-    linksRaw = candidates.length;
-    console.log(`    🔗 预筛选 ${candidates.length} 个候选链接`);
+    // 尝试多个 URL（最多 3 个），取候选链接最多的那个
+    const urls = input.siteUrls.slice(0, 3);
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i];
 
-    if (candidates.length === 0) {
-      console.log(`    ⚠ 未发现候选链接`);
+      try {
+        console.log(`    📡 ${urls.length > 1 ? `[URL ${i + 1}/${urls.length}] ` : ""}抓取: ${url.slice(0, 80)}`);
+        const rawHtml = await fetchHtml(url, input.render, { timeoutMs: 15_000 }, input.signal);
+        pagesFetched++;
+
+        const candidates = prefilterLinks(rawHtml, url, scope);
+        console.log(`      🔗 ${candidates.length} 个候选链接`);
+
+        if (candidates.length > bestCandidates.length) {
+          bestCandidates = candidates;
+          bestUrl = url;
+        }
+
+        // 第一个 URL 已经足够 → 不用继续
+        if (i === 0 && candidates.length >= MIN_CANDIDATES) break;
+      } catch (e) {
+        if (input.signal?.aborted) throw e;
+        console.log(`      ⚠ URL 抓取失败: ${(e as Error).message.slice(0, 80)}`);
+      }
+    }
+
+    linksRaw = bestCandidates.length;
+    console.log(`    🏆 最佳: ${bestUrl.slice(0, 70)} · ${linksRaw} 条候选`);
+
+    if (bestCandidates.length === 0) {
+      console.log(`    ⚠ 所有 URL 均未发现候选链接`);
       return emptyResult(startedAt, pagesFetched, 0, 0);
     }
 
-    // 3. LLM 筛选：候选链接上限 100 条（~5KB JSON），避免超时
+    const candidates = bestCandidates;
+
+    // LLM 筛选
     const MAX_CANDIDATES = 100;
     const linksJson = JSON.stringify(
       candidates.slice(0, MAX_CANDIDATES).map((c) => ({
@@ -219,7 +245,7 @@ export async function intelligentCrawl(input: {
             `- 每条链接的格式 {i:索引, t:标题文本, p:父元素}\n\n` +
             `关注范围：${scope}`,
           prompt:
-            `站点：${input.siteName} (${input.siteUrl})\n\n` +
+            `站点：${input.siteName} (${bestUrl})\n\n` +
             `候选链接：\n${linksJson}\n\n` +
             `返回 JSON 数组 [{i: 索引}]，最多 ${MAX_ITEMS()} 条。只返回 JSON 数组。`,
           output: Output.text(),
@@ -240,8 +266,6 @@ export async function intelligentCrawl(input: {
     } catch (llmErr) {
       const llmMsg = (llmErr as Error).message;
       console.log(`    ⚡ LLM 筛选失败 (${llmMsg})，放弃本站点`);
-
-      // 不回退：预筛选Top30噪声太多，宁可少采也不采错
     }
   } catch (err) {
     const msg = (err as Error).message;
@@ -251,9 +275,6 @@ export async function intelligentCrawl(input: {
       throw new DOMException("用户中止", "AbortError");
     }
 
-    // 链接筛选超时/失败 → 回退：直接用预筛选结果的前 N 条
-    console.log(`    ⚡ 回退到预筛选结果`);
-    // 无法回退（candidates 在这个 catch 作用域之外），先返回空结果
     return emptyResult(startedAt, pagesFetched, linksRaw, 0);
   }
 
