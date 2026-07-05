@@ -60,12 +60,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const ready = targets.filter((s) => s.listSelector);
-  const skipped = targets.filter((s) => !s.listSelector);
+  // 只采集 AI 启用的站点（全部走智能爬虫）
+  const ready = targets.filter((s) => s.aiInvolvement !== "none");
+  const skipped = targets.filter((s) => !ready.includes(s));
 
   if (!ready.length) {
     return NextResponse.json(
-      { error: "所有目标站点均未配置选择器", skipped: skipped.map((s) => ({ id: s.id, name: s.name })) },
+      { error: "所有目标站点均禁用 AI 或未配置", skipped: skipped.map((s) => ({ id: s.id, name: s.name })) },
       { status: 400 },
     );
   }
