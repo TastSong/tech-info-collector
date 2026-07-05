@@ -79,24 +79,58 @@ interface CandidateLink {
 }
 
 /** 从 HTML 中提取所有候选链接，粗过滤、去重，返回紧凑列表供 LLM 筛选 */
-function prefilterLinks(html: string, baseUrl: string): CandidateLink[] {
+function prefilterLinks(html: string, baseUrl: string, scope: string): CandidateLink[] {
   const $ = cheerio.load(html);
   const seen = new Set<string>();
   const candidates: CandidateLink[] = [];
 
+  // URL 安全性检测
+  const isSafeUrl = (url: string): boolean => {
+    try {
+      const u = new URL(url, baseUrl);
+      const ext = u.pathname.toLowerCase();
+      // 跳过非HTML文件
+      if (/\.(pdf|doc|docx|xls|xlsx|zip|rar|jpg|png|gif|mp4|mp3|avi|exe)$/i.test(ext)) return false;
+      return true;
+    } catch { return false; }
+  };
+
+  // 链接文本是否为明显噪声
+  const isNoiseText = (text: string): boolean => {
+    const noisePrefixes = /^(关于|联系|登录|注册|版权|隐私|免责|首页|返回|更多|查看|详情|阅读|点击|查看全文|查看详情|阅读全文|阅读更多)/;
+    if (noisePrefixes.test(text)) return true;
+
+    // 纯数字、纯符号、纯英文缩写（短于4个字符且全ASCII）
+    if (text.length <= 6 && /^[a-zA-Z0-9\s\-_\.]+$/.test(text)) return true;
+
+    // 明显的非文章文本
+    const noisePatterns = /(广告|特价|促销|秒杀|领取|优惠|红包|福利|抽奖|免费|限时|抢购|团购|降价|包邮)/;
+    if (noisePatterns.test(text)) return true;
+
+    return false;
+  };
+
   $("a[href]").each((_, el) => {
     const $el = $(el);
-    const href = $el.attr("href") || "";
+    const href = ($el.attr("href") || "").trim();
     const text = $el.text().trim();
 
-    // 粗过滤
+    // 基础过滤
     if (!text || text.length < 4) return;
-    if (href.startsWith("javascript:") || href === "#") return;
-    if (/^(关于|联系|登录|注册|版权|隐私|免责|首页|返回|更多|查看|详情|阅读|点击)/.test(text)) return;
+    if (href.startsWith("javascript:") || href === "#" || href.startsWith("mailto:")) return;
+    if (isNoiseText(text)) return;
 
     let resolved: string;
     try { resolved = new URL(href, baseUrl).toString(); }
     catch { return; }
+
+    if (!isSafeUrl(resolved)) return;
+    // 跳过锚点链接（同页不同hash）
+    try {
+      const resolvedUrl = new URL(resolved);
+      const baseUrlObj = new URL(baseUrl);
+      if (resolvedUrl.pathname === baseUrlObj.pathname && resolvedUrl.hash) return;
+    } catch {}
 
     if (seen.has(resolved)) return;
     seen.add(resolved);
@@ -148,8 +182,8 @@ export async function intelligentCrawl(input: {
     );
     pagesFetched = 1;
 
-    // 2. 预筛选候选链接（确定性代码，不消耗 token）
-    const candidates = prefilterLinks(rawHtml, input.siteUrl);
+    // 2. 预筛选候选链接
+    const candidates = prefilterLinks(rawHtml, input.siteUrl, scope);
     linksRaw = candidates.length;
     console.log(`    🔗 预筛选 ${candidates.length} 个候选链接`);
 
