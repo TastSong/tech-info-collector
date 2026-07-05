@@ -239,12 +239,9 @@ export async function intelligentCrawl(input: {
       }
     } catch (llmErr) {
       const llmMsg = (llmErr as Error).message;
-      console.log(`    ⚡ LLM 筛选失败 (${llmMsg})，回退到预筛选 Top ${MAX_ITEMS()}`);
+      console.log(`    ⚡ LLM 筛选失败 (${llmMsg})，放弃本站点`);
 
-      // 回退：直接用预筛选结果的前 N 条
-      for (const c of candidates.slice(0, MAX_ITEMS())) {
-        listItems.push({ url: c.url, title: c.text, date: null });
-      }
+      // 不回退：预筛选Top30噪声太多，宁可少采也不采错
     }
   } catch (err) {
     const msg = (err as Error).message;
