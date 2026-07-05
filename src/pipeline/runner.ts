@@ -147,7 +147,7 @@ export async function runSite(site: Site, crawlSessionId?: number): Promise<RunR
       signal,
     });
 
-    console.log(`    → ${result.articles.length} 篇 · ${result.stats.toolCalls} tool调用 · ${result.stats.totalDurationMs}ms`);
+    console.log(`    → ${result.articles.length} 篇 · ${result.stats.tokensUsed} tokens · ${result.stats.totalDurationMs}ms`);
 
     const ready: ReadyArticle[] = result.articles.map((a) => ({
       url: a.url,

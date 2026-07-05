@@ -123,5 +123,10 @@ function extractMainContent($: cheerio.CheerioAPI): string {
       .trim();
     if (text.length > best.length) best = text;
   });
+  // 回退：取 body 纯文本（在找不到含 p 的容器时）
+  if (!best) {
+    $("body").find("script,style,nav,aside,form,.comment").remove();
+    best = $("body").text().replace(/\s+/g, " ").trim();
+  }
   return best;
 }
