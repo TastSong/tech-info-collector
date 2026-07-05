@@ -158,48 +158,57 @@ export async function intelligentCrawl(input: {
       return emptyResult(startedAt, pagesFetched, 0, 0);
     }
 
-    // 3. LLM 从紧凑链接列表中筛选（2-5KB vs 以前 50-100KB HTML）
+    // 3. LLM 筛选：候选链接上限 100 条（~5KB JSON），避免超时
+    const MAX_CANDIDATES = 100;
     const linksJson = JSON.stringify(
-      candidates.slice(0, 200).map((c) => ({
+      candidates.slice(0, MAX_CANDIDATES).map((c) => ({
         i: c.index,
         t: c.text,
         p: c.parentTag + (c.parentClass ? "." + c.parentClass : ""),
       })),
     );
 
-    console.log(`    🤖 LLM 筛选 (${Buffer.byteLength(linksJson, "utf-8")}B)...`);
-    const llmResult = await withTimeout(
-      generateText({
-        model: getModel(),
-        temperature: 0.1,
-        maxRetries: 1,
-        abortSignal: input.signal,
-        system:
-          `你是链接筛选器。从候选链接中选出属于文章/新闻/博客的链接。\n\n` +
-          `规则：\n` +
-          `- 排除导航、广告、侧边栏、页脚、登录/注册/关于\n` +
-          `- 排除"阅读全文""查看详情""点击进入"等非文章文本\n` +
-          `- 选择与科技相关的新闻/文章/博客\n` +
-          `- 每条链接的格式 {i:索引, t:标题文本, p:父元素}\n\n` +
-          `关注范围：${scope}`,
-        prompt:
-          `站点：${input.siteName} (${input.siteUrl})\n\n` +
-          `候选链接：\n${linksJson}\n\n` +
-          `返回 JSON 数组 [{i: 索引}]，最多 ${MAX_ITEMS()} 条。只返回 JSON 数组。`,
-        output: Output.text(),
-      }),
-      envInt("INTELLIGENT_CRAWL_LINK_TIMEOUT", 20_000),
-    );
+    console.log(`    🤖 LLM 筛选 (${candidates.slice(0, MAX_CANDIDATES).length}条, ${Buffer.byteLength(linksJson, "utf-8")}B)...`);
+    try {
+      const llmResult = await withTimeout(
+        generateText({
+          model: getModel(),
+          temperature: 0.1,
+          maxRetries: 1,
+          abortSignal: input.signal,
+          system:
+            `你是链接筛选器。从候选链接中选出属于文章/新闻/博客的链接。\n\n` +
+            `规则：\n` +
+            `- 排除导航、广告、侧边栏、页脚、登录/注册/关于\n` +
+            `- 排除"阅读全文""查看详情""点击进入"等非文章文本\n` +
+            `- 选择与科技相关的新闻/文章/博客\n` +
+            `- 每条链接的格式 {i:索引, t:标题文本, p:父元素}\n\n` +
+            `关注范围：${scope}`,
+          prompt:
+            `站点：${input.siteName} (${input.siteUrl})\n\n` +
+            `候选链接：\n${linksJson}\n\n` +
+            `返回 JSON 数组 [{i: 索引}]，最多 ${MAX_ITEMS()} 条。只返回 JSON 数组。`,
+          output: Output.text(),
+        }),
+        envInt("INTELLIGENT_CRAWL_LINK_TIMEOUT", 30_000),
+      );
 
-    tokensUsed = llmResult.usage?.totalTokens ?? 0;
+      tokensUsed = llmResult.usage?.totalTokens ?? 0;
+      const selected = extractIndexArray(llmResult.text);
+      console.log(`    ✅ LLM 选中 ${selected.length} 篇 · ${tokensUsed} tokens`);
 
-    // 4. 解析 LLM 返回的索引
-    const selected = extractIndexArray(llmResult.text);
-    console.log(`    ✅ LLM 选中 ${selected.length} 篇 · ${tokensUsed} tokens`);
+      for (const idx of selected) {
+        if (idx >= 0 && idx < candidates.length) {
+          const c = candidates[idx];
+          listItems.push({ url: c.url, title: c.text, date: null });
+        }
+      }
+    } catch (llmErr) {
+      const llmMsg = (llmErr as Error).message;
+      console.log(`    ⚡ LLM 筛选失败 (${llmMsg})，回退到预筛选 Top ${MAX_ITEMS()}`);
 
-    for (const idx of selected) {
-      if (idx >= 0 && idx < candidates.length) {
-        const c = candidates[idx];
+      // 回退：直接用预筛选结果的前 N 条
+      for (const c of candidates.slice(0, MAX_ITEMS())) {
         listItems.push({ url: c.url, title: c.text, date: null });
       }
     }
