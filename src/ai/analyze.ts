@@ -10,6 +10,7 @@ import { eq } from "drizzle-orm";
 import PQueue from "p-queue";
 import { db, schema } from "../../db/client";
 import { reviewArticle, decideStatus } from "./sandbox";
+import { tryParseDate } from "../lib/date";
 
 interface Opts {
   limit?: number;
@@ -79,6 +80,18 @@ export async function analyzePending(opts: Opts = {}): Promise<void> {
             tokensUsed: r.tokens,
           })
           .run();
+
+        // LLM 推断的内容日期覆盖 publishedAt（优先于 HTML 解析的日期）
+        if (r.contentDate) {
+          const d = tryParseDate(r.contentDate);
+          if (d) {
+            db.update(schema.articles)
+              .set({ publishedAt: d })
+              .where(eq(schema.articles.id, a.id))
+              .run();
+          }
+        }
+
         db.update(schema.articles)
           .set({ status })
           .where(eq(schema.articles.id, a.id))

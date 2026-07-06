@@ -28,6 +28,12 @@ export const reviewSchema = z.object({
     .max(1)
     .describe("新闻属性评分 0-1：≥0.7为明确新闻；0.4-0.7为模糊/半新闻(评论/观点/分析)；<0.4为非新闻(教程/文档/广告/关于页)"),
   reason: z.string().describe("一句话判断理由"),
+  contentDate: z
+    .string()
+    .nullable()
+    .describe(
+      `从正文推断的内容实际日期(YYYY-MM-DD格式)，以内容所述事件/动态的发生日期为准，而非网站标注的发布日期。若内容无明确时间线索则为null。例如：正文提到"1月5日消息"→2026-01-05；正文提到"上周五"→推算为具体日期；正文无任何时间信息→null`,
+    ),
 });
 
 export type Review = z.infer<typeof reviewSchema>;

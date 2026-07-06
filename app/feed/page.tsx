@@ -1,13 +1,13 @@
 import { db, schema } from "@/db/client";
-import { desc, sql, isNull, and, gte, eq } from "drizzle-orm";
+import { desc, sql, isNull, and, gte, eq, or } from "drizzle-orm";
 import { FeedCard } from "../components/FeedCard";
 
 export const dynamic = "force-dynamic";
 
 export default async function FeedPage() {
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
 
-  // 近7天 + 未查看 + status=published 的文章，JOIN sites + aiReviews 取分类和AI摘要
+  // 近15天 + 未查看 + status=published 的文章，JOIN sites + aiReviews 取分类和AI摘要
   const rows = db
     .select({
       id: schema.articles.id,
@@ -26,11 +26,17 @@ export default async function FeedPage() {
     .where(
       and(
         isNull(schema.articles.viewedAt),
-        gte(schema.articles.fetchedAt, sevenDaysAgo),
+        or(
+          gte(schema.articles.publishedAt, fifteenDaysAgo),
+          and(
+            isNull(schema.articles.publishedAt),
+            gte(schema.articles.fetchedAt, fifteenDaysAgo),
+          ),
+        ),
         eq(schema.articles.status, "published"),
       ),
     )
-    .orderBy(desc(schema.articles.fetchedAt))
+    .orderBy(desc(sql`COALESCE(${schema.articles.publishedAt}, ${schema.articles.fetchedAt})`))
     .limit(100)
     .all();
 
@@ -59,7 +65,7 @@ export default async function FeedPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">资讯流</h1>
         <p className="mt-1 text-sm text-slate-500">
-          近 7 天未读 · {rows.length} 篇 · {ordered.length} 个分类
+          近 15 天未读 · {rows.length} 篇 · {ordered.length} 个分类
         </p>
       </div>
 
