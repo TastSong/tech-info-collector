@@ -157,6 +157,7 @@ export default function Home() {
           </Link>
         </div>
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <div className="max-h-64 overflow-y-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
@@ -200,6 +201,7 @@ export default function Home() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </section>
     </main>
