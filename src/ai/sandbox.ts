@@ -17,6 +17,9 @@ import { reviewSchema, type Review } from "./schemas";
 
 const MAX_INPUT_CHARS = 6000;
 
+/** 今天日期，用于 prompt 提示和确定性日期校验兜底 */
+const todayDateStr = new Date().toISOString().slice(0, 10);
+
 function req(name: string): string {
   const v = process.env[name];
   if (!v) throw new Error(`缺少环境变量 ${name}（请检查 .env）`);
@@ -72,7 +75,7 @@ export async function reviewArticle(input: {
       "qualityScore(number,0-1,情报价值/可用性)；usable(boolean,是否真实可用非噪声/导航/空壳/无关转载)；" +
       "isNews(boolean,是否为新闻/资讯类内容)；newsScore(number,0-1,新闻属性评分)；" +
       "reason(string,一句话理由)。" +
-      "contentDate(string|null, YYYY-MM-DD格式，正文所述事件/动态的实际发生日期，非网站标注时间。优先从正文时间线索推断，如\"1月5日消息\"→该日期、\"上周五\"→推算具体日期；若无任何时间线索则为null)。" +
+      `contentDate(string|null, YYYY-MM-DD格式，正文所述事件/动态的实际发生日期，非网站标注时间。优先从正文时间线索推断，如"1月5日消息"→该日期、"上周五"→推算具体日期。关键约束：日期绝不可能晚于今天(${todayDateStr})，若发现正文时间线索指向未来日期则为误读，应修正为今天或null。若无任何时间线索则为null。` +
       "判定规则：导航/目录页/公告空壳/与范围明显无关 → usable=false 且 qualityScore<0.3；" +
       "真实相关情报 → usable=true，按信息量/时效/影响力给 0.3-1.0。" +
       "时效性考量：若发布时间距今超过30天且内容无持续参考价值→适当降分；" +
@@ -95,10 +98,25 @@ export async function reviewArticle(input: {
     );
   }
   return {
-    ...parsed.data,
+    ...sanitizeDates(parsed.data),
     model: process.env.AI_MODEL!,
     tokens: usage?.totalTokens ?? 0,
   };
+}
+
+/**
+ * 确定性日期校验兜底 —— 防止 LLM 输出未来日期。
+ * 若 contentDate 不可解析或晚于今天，修正为今天。
+ */
+function sanitizeDates(r: Review): Review {
+  if (!r.contentDate) return r;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(r.contentDate + "T00:00:00");
+  if (isNaN(d.getTime()) || d > today) {
+    return { ...r, contentDate: today.toISOString().slice(0, 10) };
+  }
+  return r;
 }
 
 /** 从模型回复中提取首个 JSON 对象（容忍 ```json 代码块与前后多余文字）。 */
