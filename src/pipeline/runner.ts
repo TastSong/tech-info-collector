@@ -4,7 +4,7 @@
  *   → 去重 → contentHash 对比 → 写入 DB (status=raw)
  *   → run_logs 记录；按域名限流。
  */
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db, schema } from "../../db/client";
 import type { Site } from "./types";
 import { getAbortSignal } from "./abort";
@@ -19,6 +19,26 @@ export interface RunResult {
 }
 
 type ExistingEntry = { id: number; siteId: number; hash: string };
+
+/** 批量查询已入库文章（按 URL 列表精确查询，避免全表扫描） */
+function queryExisting(urls: string[]): Map<string, ExistingEntry> {
+  if (!urls.length) return new Map();
+
+  const rows = db
+    .select({
+      url: schema.articles.url,
+      id: schema.articles.id,
+      siteId: schema.articles.siteId,
+      hash: schema.articles.contentHash,
+    })
+    .from(schema.articles)
+    .where(inArray(schema.articles.url, urls))
+    .all();
+
+  return new Map(
+    rows.map((r) => [r.url, { id: r.id, siteId: r.siteId, hash: r.hash ?? "" }]),
+  );
+}
 
 interface ReadyArticle {
   url: string;
@@ -124,12 +144,6 @@ export async function runSite(site: Site, crawlSessionId?: number): Promise<RunR
 
   const errors: string[] = [];
 
-  const existing = new Map<string, ExistingEntry>(
-    db.select({ url: schema.articles.url, id: schema.articles.id, siteId: schema.articles.siteId, hash: schema.articles.contentHash })
-      .from(schema.articles).all()
-      .map((r) => [r.url, { id: r.id, siteId: r.siteId, hash: r.hash ?? "" }]),
-  );
-
   try {
     // aiInvolvement === 'none' 的站点跳过
     if (site.aiInvolvement === "none") {
@@ -156,6 +170,9 @@ export async function runSite(site: Site, crawlSessionId?: number): Promise<RunR
       contentHash: a.contentHash,
       publishedAt: a.publishedAt,
     }));
+
+    // 仅对本批次 URL 精确查询已入库文章，避免全表扫描
+    const existing = queryExisting(ready.map((a) => a.url));
 
     const dedup = deduplicateAndSave(ready, site.id, existing, errors);
     return finalizeRun(logId, site.id, dedup);
