@@ -6,16 +6,15 @@
  *
  * 由 instrumentation hook 在 Next.js 启动时自动调用 startScheduler()；
  * 也可独立运行：pnpm scheduler（用于独立调度进程）。
+ *
+ * 核心采集编排逻辑已提取到 src/pipeline/service.ts。
  */
 
 import cron, { type ScheduledTask } from "node-cron";
-import PQueue from "p-queue";
 import { pathToFileURL } from "node:url";
 import { db, schema } from "../../db/client";
 import { eq } from "drizzle-orm";
-import { runSite } from "../pipeline/runner";
-import { analyzePending } from "../ai/analyze";
-import { closeBrowser } from "../crawler/playwright";
+import { runCrawl } from "../pipeline/service";
 import { fire } from "../notify/notifier";
 
 const DEFAULT_CRON = "0 9 * * *";
@@ -116,91 +115,36 @@ export async function runAll() {
     `[cron ${now}] 开始定时采集+审核（cron: ${interval}）…`,
   );
 
-  const siteRows = db
-    .select()
-    .from(schema.sites)
-    .where(eq(schema.sites.enabled, true))
-    .all();
+  // 记录分析前的 raw 文章数，用于计算分析量
+  const rawBefore = db
+    .select({ id: schema.articles.id })
+    .from(schema.articles)
+    .where(eq(schema.articles.status, "raw"))
+    .all().length;
 
-  const toRun = siteRows.filter((s) => s.aiInvolvement !== "none");
-
-  if (!toRun.length) {
-    console.log("[cron] 无可用站点，跳过");
-    return;
-  }
-
-  // 创建 crawl session，使前端能显示总进度
-  const sessionId = (
-    db
-      .insert(schema.crawlSessions)
-      .values({
-        startedAt: new Date(),
-        status: "running",
-        siteCount: toRun.length,
-      })
-      .run().lastInsertRowid as number
-  ) ?? 1;
-
-  const queue = new PQueue({ concurrency: MAX_CONCURRENT });
   let crawled = 0;
   let errors = 0;
-  let totalUpdated = 0;
-  let totalSkipped = 0;
-
-  for (const s of toRun) {
-    queue.add(async () => {
-      try {
-        const r = await runSite(s, sessionId);
-        crawled += r.fetched;
-        totalUpdated += r.updated;
-        totalSkipped += r.skipped;
-      } catch (e) {
-        errors++;
-        console.error(
-          `  [cron] #${s.id} ${s.name} 采集失败: ${(e as Error).message}`,
-        );
-      }
-    });
-  }
-
-  await queue.onIdle();
-  await closeBrowser().catch(() => {});
-
-  // 汇总 session 结果
-  const sessionStatus: typeof schema.crawlSessions.$inferInsert.status =
-    errors > 0 && crawled === 0 ? "error"
-    : errors > 0 ? "partial"
-    : "success";
-
-  db.update(schema.crawlSessions)
-    .set({
-      endedAt: new Date(),
-      status: sessionStatus,
-      totalFetched: crawled,
-      totalUpdated,
-      totalSkipped,
-      totalErrors: errors,
-    })
-    .where(eq(schema.crawlSessions.id, sessionId))
-    .run();
-
-  // 审核所有 raw
   let analyzed = 0;
+
   try {
-    const before = db
+    const { summary } = await runCrawl({
+      concurrency: MAX_CONCURRENT,
+      autoAnalyze: true,
+    });
+
+    crawled = summary.totalFetched;
+    errors = summary.totalErrors;
+
+    // 计算分析数量
+    const rawAfter = db
       .select({ id: schema.articles.id })
       .from(schema.articles)
       .where(eq(schema.articles.status, "raw"))
       .all().length;
-    await analyzePending({ concurrency: 3 });
-    const after = db
-      .select({ id: schema.articles.id })
-      .from(schema.articles)
-      .where(eq(schema.articles.status, "raw"))
-      .all().length;
-    analyzed = before - after;
+    analyzed = rawBefore - rawAfter;
   } catch (e) {
-    console.error(`  [cron] 审核失败: ${(e as Error).message}`);
+    console.error(`  [cron] 采集失败: ${(e as Error).message}`);
+    errors++;
   }
 
   const duration = ((Date.now() - started) / 1000).toFixed(0);
