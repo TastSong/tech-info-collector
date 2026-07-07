@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { renderBadge } from "./Badges";
 
 interface SiteInfo {
@@ -19,15 +20,35 @@ interface SiteInfo {
 }
 
 export function SiteCard({
-  site,
+  site: initialSite,
   articleCount,
 }: {
   site: SiteInfo;
   articleCount: number;
 }) {
+  const [site, setSite] = useState(initialSite);
+  const [toggling, setToggling] = useState(false);
+
+  async function toggle() {
+    setToggling(true);
+    try {
+      const res = await fetch(`/api/sites/${site.id}/toggle`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSite({ ...site, enabled: data.enabled });
+      }
+    } catch {
+      // 静默
+    } finally {
+      setToggling(false);
+    }
+  }
+
   return (
     <div
-      className={`rounded-xl border bg-white p-5 ${
+      className={`rounded-xl border bg-white p-5 transition-opacity ${
         site.enabled ? "border-slate-200" : "border-slate-100 opacity-60"
       }`}
     >
@@ -36,11 +57,22 @@ export function SiteCard({
           <div className="flex flex-wrap items-center gap-3">
             <span className="font-medium text-slate-900">{site.name}</span>
             {renderBadge(site.render)}
-            {site.enabled ? (
-              <span className="text-xs font-medium text-emerald-600">启用</span>
-            ) : (
-              <span className="text-xs text-slate-400">禁用</span>
-            )}
+            <button
+              onClick={toggle}
+              disabled={toggling}
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors cursor-pointer ${
+                site.enabled
+                  ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                  : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+              }`}
+            >
+              <span
+                className={`inline-block h-2 w-2 rounded-full ${
+                  site.enabled ? "bg-emerald-500" : "bg-slate-400"
+                }`}
+              />
+              {site.enabled ? "启用" : "禁用"}
+            </button>
           </div>
           <div className="mt-1 text-xs text-slate-500">
             {site.category}
