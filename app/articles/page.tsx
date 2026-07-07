@@ -87,9 +87,9 @@ export default async function ArticlesPage(props: {
                   <span>·</span>
                   <span>
                     {a.publishedAt
-                      ? new Date(a.publishedAt).toLocaleDateString("zh-CN")
+                      ? new Date(a.publishedAt).toLocaleDateString("zh-CN", {timeZone: "Asia/Shanghai"})
                       : a.fetchedAt
-                      ? new Date(a.fetchedAt).toLocaleDateString("zh-CN")
+                      ? new Date(a.fetchedAt).toLocaleDateString("zh-CN", {timeZone: "Asia/Shanghai"})
                       : "-"}
                   </span>
                 </div>

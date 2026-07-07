@@ -69,7 +69,7 @@ export function RunsTable({ initialLogs, siteNames, sessionMap }: Props) {
     <div>
       <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-slate-400">
-          自动刷新中 · {lastRefresh.toLocaleTimeString("zh-CN")}
+          自动刷新中 · {lastRefresh.toLocaleTimeString("zh-CN", {timeZone: "Asia/Shanghai"})}
           {runningCount > 0 && (
             <span className="ml-2 inline-flex items-center gap-1 text-indigo-600">
               <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
@@ -110,7 +110,7 @@ export function RunsTable({ initialLogs, siteNames, sessionMap }: Props) {
                 </td>
                 <td className="px-4 py-3 text-slate-500">
                   {r.startedAt
-                    ? new Date(r.startedAt).toLocaleString("zh-CN")
+                    ? new Date(r.startedAt).toLocaleString("zh-CN", {timeZone: "Asia/Shanghai"})
                     : "-"}
                 </td>
                 <td className="px-4 py-3 font-medium">

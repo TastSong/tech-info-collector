@@ -66,10 +66,10 @@ export default async function ArticleDetailPage({
       <div className="mb-6 flex gap-6 text-sm text-slate-500">
         {article.publishedAt ? (
           <span>
-            发布时间：{new Date(article.publishedAt).toLocaleString("zh-CN")}
+            发布时间：{new Date(article.publishedAt).toLocaleString("zh-CN", {timeZone: "Asia/Shanghai"})}
           </span>
         ) : null}
-        <span>采集时间：{new Date(article.fetchedAt!).toLocaleString("zh-CN")}</span>
+        <span>采集时间：{new Date(article.fetchedAt!).toLocaleString("zh-CN", {timeZone: "Asia/Shanghai"})}</span>
       </div>
 
       {/* AI Review Panel (right) + Body (left) */}

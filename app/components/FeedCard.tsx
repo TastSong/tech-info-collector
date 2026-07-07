@@ -57,9 +57,9 @@ export function FeedCard({ article }: { article: ArticleItem }) {
           <span>·</span>
           <span>
             {article.publishedAt
-              ? new Date(article.publishedAt).toLocaleDateString("zh-CN")
+              ? new Date(article.publishedAt).toLocaleDateString("zh-CN", {timeZone: "Asia/Shanghai"})
               : article.fetchedAt
-              ? new Date(article.fetchedAt).toLocaleDateString("zh-CN")
+              ? new Date(article.fetchedAt).toLocaleDateString("zh-CN", {timeZone: "Asia/Shanghai"})
               : "-"}
           </span>
         </div>

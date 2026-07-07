@@ -136,7 +136,7 @@ export function LiveProgress() {
                     <span className="text-red-500 mr-2">错误 {r.errorCount}</span>
                   )}
                   {r.startedAt
-                    ? new Date(r.startedAt).toLocaleTimeString("zh-CN")
+                    ? new Date(r.startedAt).toLocaleTimeString("zh-CN", {timeZone: "Asia/Shanghai"})
                     : "-"}
                 </span>
               </div>

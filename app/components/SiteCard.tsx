@@ -84,7 +84,7 @@ export function SiteCard({
           <div>{articleCount} 篇</div>
           {site.lastRunAt ? (
             <div className="text-xs text-slate-400">
-              上次：{new Date(site.lastRunAt).toLocaleDateString("zh-CN")}
+              上次：{new Date(site.lastRunAt).toLocaleDateString("zh-CN", {timeZone: "Asia/Shanghai"})}
             </div>
           ) : null}
         </div>
