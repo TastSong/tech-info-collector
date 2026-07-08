@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { renderBadge } from "./Badges";
 
 interface SiteInfo {
@@ -55,7 +56,12 @@ export function SiteCard({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <span className="font-medium text-slate-900">{site.name}</span>
+            <Link
+              href={`/sites/${site.id}`}
+              className="font-medium text-slate-900 hover:text-indigo-600 transition-colors"
+            >
+              {site.name}
+            </Link>
             {renderBadge(site.render)}
             <button
               onClick={toggle}
@@ -80,13 +86,21 @@ export function SiteCard({
             AI: {site.aiInvolvement}
           </div>
         </div>
-        <div className="text-right text-sm text-slate-500">
-          <div>{articleCount} 篇</div>
-          {site.lastRunAt ? (
-            <div className="text-xs text-slate-400">
-              上次：{new Date(site.lastRunAt).toLocaleDateString("zh-CN", {timeZone: "Asia/Shanghai"})}
-            </div>
-          ) : null}
+        <div className="flex items-start gap-3">
+          <Link
+            href={`/sites/${site.id}`}
+            className="rounded-lg px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+          >
+            编辑
+          </Link>
+          <div className="text-right text-sm text-slate-500">
+            <div>{articleCount} 篇</div>
+            {site.lastRunAt ? (
+              <div className="text-xs text-slate-400">
+                上次：{new Date(site.lastRunAt).toLocaleDateString("zh-CN", {timeZone: "Asia/Shanghai"})}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 

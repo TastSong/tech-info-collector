@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { db, schema } from "@/db/client";
 import { sql } from "drizzle-orm";
 import { SiteCard } from "../components/SiteCard";
@@ -29,6 +30,12 @@ export default async function SitesPage() {
             {sites.filter((s) => s.enabled).length} / {sites.length} 启用
           </p>
         </div>
+        <Link
+          href="/sites/new"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+        >
+          + 新建站点
+        </Link>
       </div>
 
       <div className="space-y-4">
