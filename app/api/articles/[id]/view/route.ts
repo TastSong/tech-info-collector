@@ -1,9 +1,9 @@
 /**
- * POST /api/articles/[id]/view — 标记文章已查看（仅设置 viewed_at，不做其他操作）。
+ * POST /api/articles/[id]/view — 标记文章已查看，并联动标记同 content_hash 的文章。
  */
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db/client";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,11 @@ export async function POST(
   const { id } = await params;
 
   const article = db
-    .select()
+    .select({
+      id: schema.articles.id,
+      viewedAt: schema.articles.viewedAt,
+      contentHash: schema.articles.contentHash,
+    })
     .from(schema.articles)
     .where(eq(schema.articles.id, Number(id)))
     .get();
@@ -23,12 +27,27 @@ export async function POST(
     return NextResponse.json({ error: "文章不存在" }, { status: 404 });
   }
 
-  // 仅在尚未查看时才更新，避免重复写 timestamp
+  // 仅在尚未查看时才更新
   if (!article.viewedAt) {
+    const now = new Date();
+
     db.update(schema.articles)
-      .set({ viewedAt: new Date() })
+      .set({ viewedAt: now })
       .where(eq(schema.articles.id, Number(id)))
       .run();
+
+    // 联动：同 content_hash 且未查看的文章也标记为已读
+    if (article.contentHash) {
+      db.update(schema.articles)
+        .set({ viewedAt: now })
+        .where(
+          and(
+            eq(schema.articles.contentHash, article.contentHash),
+            isNull(schema.articles.viewedAt),
+          ),
+        )
+        .run();
+    }
   }
 
   return NextResponse.json({ ok: true });

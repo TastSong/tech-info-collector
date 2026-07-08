@@ -22,6 +22,11 @@ sqlite.exec(
   )`,
 );
 
+// 确保 contentHash 索引存在（用于去重和联动查询）
+sqlite.exec(
+  `CREATE INDEX IF NOT EXISTS idx_articles_content_hash ON articles(content_hash)`,
+);
+
 export const db = drizzle(sqlite, { schema });
 export { schema };
 

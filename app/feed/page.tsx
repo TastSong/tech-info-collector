@@ -1,44 +1,80 @@
-import { db, schema } from "@/db/client";
-import { desc, sql, isNull, and, gte, eq, or } from "drizzle-orm";
+import { db } from "@/db/client";
+import { sql } from "drizzle-orm";
 import { FeedCard } from "../components/FeedCard";
 
 export const dynamic = "force-dynamic";
 
-export default async function FeedPage() {
-  const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
+interface FeedRow {
+  id: number;
+  title: string | null;
+  fetchedAt: number;
+  publishedAt: number | null;
+  siteId: number;
+  siteName: string;
+  category: string | null;
+  summary: string | null;
+  headline: string | null;
+}
 
-  // 近15天 + 未查看 + status=published 的文章，JOIN sites + aiReviews 取分类和AI摘要
-  const rows = db
-    .select({
-      id: schema.articles.id,
-      title: schema.articles.title,
-      fetchedAt: schema.articles.fetchedAt,
-      publishedAt: schema.articles.publishedAt,
-      siteId: schema.articles.siteId,
-      siteName: schema.sites.name,
-      category: schema.sites.category,
-      summary: schema.aiReviews.summary,
-      headline: schema.aiReviews.headline,
-    })
-    .from(schema.articles)
-    .innerJoin(schema.sites, sql`${schema.articles.siteId} = ${schema.sites.id}`)
-    .leftJoin(schema.aiReviews, eq(schema.articles.id, schema.aiReviews.articleId))
-    .where(
-      and(
-        isNull(schema.articles.viewedAt),
-        or(
-          gte(schema.articles.publishedAt, fifteenDaysAgo),
-          and(
-            isNull(schema.articles.publishedAt),
-            gte(schema.articles.fetchedAt, fifteenDaysAgo),
-          ),
-        ),
-        eq(schema.articles.status, "published"),
-      ),
-    )
-    .orderBy(desc(sql`COALESCE(${schema.articles.publishedAt}, ${schema.articles.fetchedAt})`))
-    .limit(100)
-    .all();
+export default async function FeedPage() {
+  const fifteenDaysAgoSec = Math.floor(
+    (Date.now() - 15 * 24 * 60 * 60 * 1000) / 1000,
+  );
+
+  // 近15天 + 未查看 + status=published + 按 content_hash 去重
+  // ROW_NUMBER 分区：同 hash 的文章归为一组，优先选有 AI 摘要的，再按发布时间取最新
+  const rawRows = db.all(
+    sql`
+    SELECT
+      id, title,
+      fetched_at  AS "fetchedAt",
+      published_at AS "publishedAt",
+      site_id     AS "siteId",
+      site_name   AS "siteName",
+      category,
+      summary,
+      headline
+    FROM (
+      SELECT
+        a.id, a.title, a.fetched_at, a.published_at, a.site_id,
+        s.name   AS site_name,
+        s.category,
+        r.summary,
+        r.headline,
+        ROW_NUMBER() OVER (
+          PARTITION BY COALESCE(a.content_hash, '#' || a.id)
+          ORDER BY
+            CASE WHEN r.id IS NOT NULL THEN 0 ELSE 1 END,
+            COALESCE(a.published_at, a.fetched_at) DESC
+        ) AS rn
+      FROM articles a
+      INNER JOIN sites s ON a.site_id = s.id
+      LEFT JOIN ai_reviews r ON a.id = r.article_id
+      WHERE a.viewed_at IS NULL
+        AND a.status = 'published'
+        AND (
+          a.published_at >= ${fifteenDaysAgoSec}
+          OR (a.published_at IS NULL AND a.fetched_at >= ${fifteenDaysAgoSec})
+        )
+    ) sub
+    WHERE rn = 1
+    ORDER BY COALESCE(published_at, fetched_at) DESC
+    LIMIT 100
+  `,
+  ) as unknown as FeedRow[];
+
+  // 将 Unix 时间戳转为 Date（还原 Drizzle timestamp mode 的行为）
+  const rows = rawRows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    fetchedAt: new Date(r.fetchedAt * 1000),
+    publishedAt: r.publishedAt ? new Date(r.publishedAt * 1000) : null,
+    siteId: r.siteId,
+    siteName: r.siteName,
+    category: r.category,
+    summary: r.summary,
+    headline: r.headline,
+  }));
 
   // 按 category 分组
   const groups = new Map<string, typeof rows>();
