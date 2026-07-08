@@ -17,7 +17,6 @@ export interface SiteFormData {
   titleSelector: string;
   bodySelector: string;
   dateSelector: string;
-  interval: string;
   aiInvolvement: "none" | "extract" | "extract_judge" | "full";
   scope: string;
   enabled: boolean;
@@ -35,7 +34,6 @@ const EMPTY_FORM: SiteFormData = {
   titleSelector: "",
   bodySelector: "",
   dateSelector: "",
-  interval: "0 */6 * * *",
   aiInvolvement: "extract_judge",
   scope: "",
   enabled: false,
@@ -267,16 +265,6 @@ export function SiteEditForm({
               <span className="text-sm text-slate-500">{form.enabled ? "启用" : "禁用"}</span>
             </div>
           </div>
-        </div>
-
-        <div>
-          <label className={cls.label}>调度 cron</label>
-          <input
-            className={cls.input + " font-mono"}
-            value={form.interval}
-            onChange={(e) => update("interval", e.target.value)}
-            placeholder="0 */6 * * *"
-          />
         </div>
 
         <div>

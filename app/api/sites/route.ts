@@ -64,7 +64,6 @@ export async function POST(req: Request) {
     render,
     aiInvolvement,
     enabled: !!body.enabled,
-    interval: (body.interval as string) || "0 */6 * * *",
     scope: (body.scope as string) || null,
     listSelector: (body.listSelector as string) || null,
     itemSelector: (body.itemSelector as string) || null,

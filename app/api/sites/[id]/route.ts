@@ -24,7 +24,6 @@ const EDITABLE_FIELDS = new Set([
   "titleSelector",
   "bodySelector",
   "dateSelector",
-  "interval",
   "aiInvolvement",
   "scope",
   "enabled",

@@ -49,7 +49,6 @@ export default async function SiteEditPage({
     titleSelector: row.titleSelector ?? "",
     bodySelector: row.bodySelector ?? "",
     dateSelector: row.dateSelector ?? "",
-    interval: row.interval ?? "0 */6 * * *",
     aiInvolvement: row.aiInvolvement as SiteFormData["aiInvolvement"],
     scope: row.scope ?? "",
     enabled: !!row.enabled,

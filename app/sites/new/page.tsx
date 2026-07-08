@@ -15,7 +15,6 @@ const EMPTY_FORM = {
   titleSelector: "",
   bodySelector: "",
   dateSelector: "",
-  interval: "0 */6 * * *",
   aiInvolvement: "extract_judge" as const,
   scope: "",
   enabled: false,
