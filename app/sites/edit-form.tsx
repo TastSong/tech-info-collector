@@ -22,6 +22,30 @@ export interface SiteFormData {
   enabled: boolean;
 }
 
+/** API 返回的分析结果 */
+interface AiAnalyzeResult {
+  category: string;
+  subcategory: string;
+  render: "static" | "dynamic";
+  listSelector: string;
+  itemSelector: string;
+  linkSelector: string;
+  titleSelector: string;
+  bodySelector: string;
+  dateSelector: string;
+  aiInvolvement: "extract_judge";
+  scope: string;
+  sampleLinks: string[];
+  diagnostics: {
+    urlsTested: number;
+    staticWorked: boolean;
+    dynamicWorked: boolean;
+    bestUrl: string;
+    tokensUsed: number;
+    selectorConfidence: "high" | "medium" | "low";
+  };
+}
+
 const EMPTY_FORM: SiteFormData = {
   name: "",
   category: "",
@@ -75,6 +99,10 @@ export function SiteEditForm({
   const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // AI 识别状态
+  const [analyzing, setAnalyzing] = useState(false);
+  const [aiResult, setAiResult] = useState<AiAnalyzeResult | null>(null);
 
   function update<K extends keyof SiteFormData>(key: K, value: SiteFormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -168,6 +196,55 @@ export function SiteEditForm({
     }
   }
 
+  /** AI 识别：分析站点 URL，自动填充表单字段 */
+  async function handleAiAnalyze() {
+    setAnalyzing(true);
+    setMessage(null);
+    setAiResult(null);
+
+    const validUrls = form.urls.filter((u) => u.trim());
+
+    try {
+      const res = await fetch("/api/sites/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: form.name.trim(), urls: validUrls }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage({ type: "error", text: data.error ?? "分析失败" });
+        return;
+      }
+
+      const result = data as AiAnalyzeResult;
+
+      // 合并策略：仅覆盖空字段，已填写的保留
+      setForm((prev) => ({
+        ...prev,
+        category: prev.category || result.category || "",
+        subcategory: prev.subcategory || result.subcategory || "",
+        render: result.render || prev.render,
+        listSelector: prev.listSelector || result.listSelector || "",
+        itemSelector: prev.itemSelector || result.itemSelector || "",
+        linkSelector: prev.linkSelector || result.linkSelector || "",
+        titleSelector: prev.titleSelector || result.titleSelector || "",
+        bodySelector: prev.bodySelector || result.bodySelector || "",
+        dateSelector: prev.dateSelector || result.dateSelector || "",
+        aiInvolvement: result.aiInvolvement || prev.aiInvolvement,
+        scope: prev.scope || result.scope || "",
+      }));
+
+      setAiResult(result);
+      setMessage({ type: "success", text: `AI 分析完成！置信度: ${result.diagnostics.selectorConfidence}` });
+    } catch {
+      setMessage({ type: "error", text: "网络错误，分析失败" });
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
   /* ---------- render ---------- */
 
   return (
@@ -185,20 +262,156 @@ export function SiteEditForm({
         </div>
       )}
 
-      {/* ---- 基础信息 ---- */}
+      {/* ---- 必要字段：名称 + URLs ---- */}
       <section className={cls.section}>
-        <h2 className={cls.sectionTitle}>基础信息</h2>
+        <h2 className={cls.sectionTitle}>必要信息</h2>
+
+        <div>
+          <label className={cls.label}>站点名称 *</label>
+          <input
+            className={cls.input}
+            value={form.name}
+            onChange={(e) => update("name", e.target.value)}
+            placeholder="例：科学技术部"
+          />
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className={cls.label}>URLs *</label>
+            <button type="button" onClick={addUrl} className={cls.btn + " " + cls.btnMuted + " text-xs"}>
+              + 添加
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {form.urls.map((url, i) => (
+              <div key={i} className="flex gap-2">
+                <input
+                  className={cls.input + " flex-1 font-mono text-xs"}
+                  value={url}
+                  onChange={(e) => updateUrl(i, e.target.value)}
+                  placeholder="https://example.com/page"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeUrl(i)}
+                  disabled={form.urls.length <= 1}
+                  className="shrink-0 rounded-lg px-2 py-1 text-xs text-red-500 hover:bg-red-50 disabled:opacity-30 cursor-pointer"
+                  title="删除此 URL"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---- AI 识别按钮 ---- */}
+      <section className={cls.section}>
+        <h2 className={cls.sectionTitle}>AI 智能识别</h2>
+        <p className="text-xs text-slate-500 -mt-3 mb-3">
+          通过 AI 自动分析站点结构，发现 CSS 选择器、分类和渲染模式
+        </p>
+
+        <button
+          type="button"
+          onClick={handleAiAnalyze}
+          disabled={
+            analyzing ||
+            !form.name.trim() ||
+            form.urls.filter((u) => u.trim()).length === 0
+          }
+          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all cursor-pointer
+            ${analyzing
+              ? "bg-indigo-100 text-indigo-500 cursor-wait"
+              : "bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600 shadow-sm hover:shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
+            }`}
+        >
+          {analyzing ? (
+            <>
+              <SpinnerIcon />
+              分析中…（约需 10-30 秒）
+            </>
+          ) : (
+            <>🤖 AI识别 — 自动发现选择器、分类和渲染模式</>
+          )}
+        </button>
+
+        {!analyzing && aiResult && (
+          <p className="mt-1.5 text-xs text-indigo-600">
+            已检测：{aiResult.diagnostics.staticWorked ? "静态可用 ✓" : "需要动态渲染"}
+            {" · "}最佳 URL: {new URL(aiResult.diagnostics.bestUrl).hostname}
+            {" · "}置信度: {aiResult.diagnostics.selectorConfidence === "high" ? "高" : aiResult.diagnostics.selectorConfidence === "medium" ? "中" : "低"}
+          </p>
+        )}
+      </section>
+
+      {/* AI 分析结果摘要 */}
+      {aiResult && (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-indigo-800">
+              🤖 AI 检测结果
+            </h3>
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+              aiResult.diagnostics.selectorConfidence === "high"
+                ? "bg-emerald-100 text-emerald-700"
+                : aiResult.diagnostics.selectorConfidence === "medium"
+                ? "bg-amber-100 text-amber-700"
+                : "bg-red-100 text-red-700"
+            }`}>
+              置信度: {
+                aiResult.diagnostics.selectorConfidence === "high" ? "高" :
+                aiResult.diagnostics.selectorConfidence === "medium" ? "中" : "低"
+              }
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs text-indigo-700">
+            <span>渲染模式：{aiResult.render === "static" ? "静态 🔗" : "动态 🌐"}</span>
+            <span>分类：{aiResult.category || "未识别"}</span>
+            <span>子分类：{aiResult.subcategory || "未识别"}</span>
+            <span>listSelector：<code className="bg-indigo-100 px-1 rounded">{aiResult.listSelector}</code></span>
+            <span>itemSelector：<code className="bg-indigo-100 px-1 rounded">{aiResult.itemSelector}</code></span>
+            <span>linkSelector：<code className="bg-indigo-100 px-1 rounded">{aiResult.linkSelector}</code></span>
+            {aiResult.titleSelector && (
+              <span>titleSelector：<code className="bg-indigo-100 px-1 rounded">{aiResult.titleSelector}</code></span>
+            )}
+            {aiResult.bodySelector && (
+              <span>bodySelector：<code className="bg-indigo-100 px-1 rounded">{aiResult.bodySelector}</code></span>
+            )}
+            {aiResult.dateSelector && (
+              <span>dateSelector：<code className="bg-indigo-100 px-1 rounded">{aiResult.dateSelector}</code></span>
+            )}
+            <span>Token 消耗：{aiResult.diagnostics.tokensUsed}</span>
+          </div>
+
+          {aiResult.sampleLinks.length > 0 && (
+            <details className="mt-2">
+              <summary className="text-xs text-indigo-600 cursor-pointer hover:text-indigo-800">
+                示例文章链接 ({aiResult.sampleLinks.length})
+              </summary>
+              <ul className="mt-1 space-y-0.5">
+                {aiResult.sampleLinks.map((link, i) => (
+                  <li key={i} className="text-xs text-indigo-500 truncate">
+                    <a href={link} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                      {link}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+      )}
+
+      {/* ---- 站点详细配置 ---- */}
+      <section className={cls.section}>
+        <h2 className={cls.sectionTitle}>站点配置</h2>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <label className={cls.label}>站点名称 *</label>
-            <input
-              className={cls.input}
-              value={form.name}
-              onChange={(e) => update("name", e.target.value)}
-              placeholder="例：科学技术部"
-            />
-          </div>
           <div>
             <label className={cls.label}>分类</label>
             <input
@@ -276,38 +489,6 @@ export function SiteEditForm({
             onChange={(e) => update("scope", e.target.value)}
             placeholder="该站点关注什么内容，作为 AI 审核的 scope 输入"
           />
-        </div>
-      </section>
-
-      {/* ---- URLs ---- */}
-      <section className={cls.section}>
-        <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
-          <h2 className="text-sm font-semibold text-slate-700">URLs</h2>
-          <button type="button" onClick={addUrl} className={cls.btn + " " + cls.btnMuted + " text-xs"}>
-            + 添加
-          </button>
-        </div>
-
-        <div className="space-y-2">
-          {form.urls.map((url, i) => (
-            <div key={i} className="flex gap-2">
-              <input
-                className={cls.input + " flex-1 font-mono text-xs"}
-                value={url}
-                onChange={(e) => updateUrl(i, e.target.value)}
-                placeholder="https://example.com/page"
-              />
-              <button
-                type="button"
-                onClick={() => removeUrl(i)}
-                disabled={form.urls.length <= 1}
-                className="shrink-0 rounded-lg px-2 py-1 text-xs text-red-500 hover:bg-red-50 disabled:opacity-30 cursor-pointer"
-                title="删除此 URL"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
         </div>
       </section>
 
@@ -427,5 +608,31 @@ export function SiteEditForm({
         )}
       </div>
     </div>
+  );
+}
+
+/** 加载旋转图标 */
+function SpinnerIcon() {
+  return (
+    <svg
+      className="animate-spin h-4 w-4"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+      />
+    </svg>
   );
 }
