@@ -15,7 +15,7 @@ export default async function ArticleDetailPage({
   searchParams: Promise<{ from?: string }>;
 }) {
   const { id } = await params;
-  const sp = await searchParams; // from=feed → 调整返回链接
+  const sp = await searchParams;
 
   const article = db
     .select()
@@ -53,7 +53,7 @@ export default async function ArticleDetailPage({
       </div>
 
       {/* Title + status */}
-      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <h1 className="flex-1 text-xl font-bold text-slate-900">
           {article.title}
         </h1>
@@ -72,7 +72,68 @@ export default async function ArticleDetailPage({
         <span>采集时间：{new Date(article.fetchedAt!).toLocaleString("zh-CN", {timeZone: "Asia/Shanghai"})}</span>
       </div>
 
-      {/* AI Review Panel (right) + Body (left) */}
+      {/* ---- AI Summary Banner (full-width, prioritized) ---- */}
+      {review ? (
+        <div className="mb-8 rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50/60 to-white p-6">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="text-lg">🤖</span>
+            <h2 className="text-sm font-semibold text-indigo-700">
+              AI 摘要 · {review.model ?? "未知模型"}
+            </h2>
+          </div>
+
+          {review.headline ? (
+            <p className="mb-3 text-base font-semibold text-slate-900">
+              {review.headline}
+            </p>
+          ) : null}
+
+          {review.summary ? (
+            <p className="mb-4 text-sm leading-relaxed text-slate-700">
+              {review.summary}
+            </p>
+          ) : null}
+
+          {review.keyPoints ? (
+            <div className="mb-4">
+              <div className="mb-2 text-xs font-medium text-slate-500">
+                关键点
+              </div>
+              <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+                {review.keyPoints.map((kp: string, i: number) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-sm text-slate-700"
+                  >
+                    <span className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
+                    {kp}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {review.tags ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-slate-400">标签</span>
+              {review.tags.map((t: string) => (
+                <span
+                  key={t}
+                  className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="mb-8 rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-400">
+          🤖 尚未经 AI 分析（文章状态: {article.status}）
+        </div>
+      )}
+
+      {/* ---- Body + Review Metrics ---- */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-8">
         {/* Body */}
         <div className="lg:col-span-2">
@@ -82,23 +143,11 @@ export default async function ArticleDetailPage({
           </div>
         </div>
 
-        {/* AI Review */}
+        {/* Review Metrics (sidebar) */}
         <div className="lg:col-span-1">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">
-            AI 审核 ({review?.model ?? "未分析"})
-          </h2>
+          <h2 className="mb-3 text-sm font-semibold text-slate-700">审核指标</h2>
           {review ? (
             <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
-              {review.headline ? (
-                <div>
-                  <div className="mb-1 text-xs font-medium text-slate-500">
-                    AI 标题
-                  </div>
-                  <p className="text-sm font-medium text-slate-800">
-                    {review.headline}
-                  </p>
-                </div>
-              ) : null}
               <div className="flex flex-col gap-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-slate-400">相关性</span>
@@ -136,48 +185,6 @@ export default async function ArticleDetailPage({
 
               <div>
                 <div className="mb-1 text-xs font-medium text-slate-500">
-                  摘要
-                </div>
-                <p className="text-sm text-slate-700">{review.summary}</p>
-              </div>
-
-              {review.keyPoints ? (
-                <div>
-                  <div className="mb-1 text-xs font-medium text-slate-500">
-                    关键点
-                  </div>
-                  <ul className="list-disc pl-4 text-sm text-slate-700 space-y-0.5">
-                    {review.keyPoints.map(
-                      (kp: string, i: number) => (
-                        <li key={i}>{kp}</li>
-                      ),
-                    )}
-                  </ul>
-                </div>
-              ) : null}
-
-              {review.tags ? (
-                <div>
-                  <div className="mb-1 text-xs font-medium text-slate-500">
-                    标签
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {review.tags.map(
-                      (t: string) => (
-                        <span
-                          key={t}
-                          className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
-                        >
-                          {t}
-                        </span>
-                      ),
-                    )}
-                  </div>
-                </div>
-              ) : null}
-
-              <div>
-                <div className="mb-1 text-xs font-medium text-slate-500">
                   判断理由
                 </div>
                 <p className="text-sm text-slate-600 italic">
@@ -186,9 +193,7 @@ export default async function ArticleDetailPage({
               </div>
             </div>
           ) : (
-            <p className="text-sm text-slate-400">
-              尚未经 AI 分析（文章状态: {article.status}）
-            </p>
+            <p className="text-sm text-slate-400">暂无审核数据</p>
           )}
         </div>
       </div>
