@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { SiteCard } from "@/app/components/SiteCard";
 
 interface SiteInfo {
@@ -22,11 +21,11 @@ interface SiteInfo {
 
 interface Props {
   sites: SiteInfo[];
-  articleCounts: Map<number, number>;
+  articleCounts: Record<number, number>;
 }
 
-export function SitesList({ sites, articleCounts }: Props) {
-  const router = useRouter();
+export function SitesList({ sites: initialSites, articleCounts }: Props) {
+  const [sites, setSites] = useState(initialSites);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [batching, setBatching] = useState(false);
 
@@ -66,8 +65,14 @@ export function SitesList({ sites, articleCounts }: Props) {
         }),
       });
       if (res.ok) {
+        // 直接更新本地状态，被选中的站点 enabled 全部置为目标值
+        const selectedSet = selectedIds;
+        setSites((prev) =>
+          prev.map((s) =>
+            selectedSet.has(s.id) ? { ...s, enabled } : s,
+          ),
+        );
         setSelectedIds(new Set());
-        router.refresh();
       }
     } catch {
       // 静默
@@ -136,7 +141,7 @@ export function SitesList({ sites, articleCounts }: Props) {
           <SiteCard
             key={s.id}
             site={s}
-            articleCount={articleCounts.get(s.id) ?? 0}
+            articleCount={articleCounts[s.id] ?? 0}
             selectable
             selected={selectedIds.has(s.id)}
             onSelect={handleSelect}

@@ -8,18 +8,20 @@ export const dynamic = "force-dynamic";
 export default async function SitesPage() {
   const sites = db.select().from(schema.sites).all();
 
-  // site article counts
-  const counts = new Map(
-    db
-      .select({
-        siteId: schema.articles.siteId,
-        c: sql<number>`COUNT(*)`,
-      })
-      .from(schema.articles)
-      .groupBy(schema.articles.siteId)
-      .all()
-      .map((r) => [r.siteId, r.c]),
-  );
+  // site article counts → plain object for client component
+  const countsArr = db
+    .select({
+      siteId: schema.articles.siteId,
+      c: sql<number>`COUNT(*)`,
+    })
+    .from(schema.articles)
+    .groupBy(schema.articles.siteId)
+    .all();
+
+  const counts: Record<number, number> = {};
+  for (const r of countsArr) {
+    counts[r.siteId] = r.c;
+  }
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
