@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { renderBadge } from "./Badges";
 
@@ -35,6 +35,15 @@ export function SiteCard({
 }) {
   const [site, setSite] = useState(initialSite);
   const [toggling, setToggling] = useState(false);
+
+  // 当外部 props 变化时同步本地状态（批量操作时父组件会传入新的 enabled）
+  const prevEnabled = useRef(initialSite.enabled);
+  useEffect(() => {
+    if (initialSite.enabled !== prevEnabled.current) {
+      setSite((prev) => ({ ...prev, enabled: initialSite.enabled }));
+      prevEnabled.current = initialSite.enabled;
+    }
+  }, [initialSite.enabled]);
 
   async function toggle() {
     setToggling(true);
