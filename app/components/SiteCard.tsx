@@ -23,9 +23,15 @@ interface SiteInfo {
 export function SiteCard({
   site: initialSite,
   articleCount,
+  selectable = false,
+  selected = false,
+  onSelect,
 }: {
   site: SiteInfo;
   articleCount: number;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelect?: (id: number, checked: boolean) => void;
 }) {
   const [site, setSite] = useState(initialSite);
   const [toggling, setToggling] = useState(false);
@@ -49,10 +55,19 @@ export function SiteCard({
 
   return (
     <div
-      className={`rounded-xl border bg-white p-5 transition-opacity ${
+      className={`rounded-xl border bg-white p-5 transition-opacity flex items-start gap-3 ${
         site.enabled ? "border-slate-200" : "border-slate-100 opacity-60"
       }`}
     >
+      {selectable && (
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={(e) => onSelect?.(site.id, e.target.checked)}
+          className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer shrink-0"
+        />
+      )}
+      <div className="flex-1 min-w-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-3">
@@ -121,6 +136,7 @@ export function SiteCard({
           </div>
         ) : null}
         <div>scope：{site.scope ?? "（未设置）"}</div>
+      </div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db, schema } from "@/db/client";
 import { sql } from "drizzle-orm";
-import { SiteCard } from "../components/SiteCard";
+import { SitesList } from "./SitesList";
 
 export const dynamic = "force-dynamic";
 
@@ -38,18 +38,13 @@ export default async function SitesPage() {
         </Link>
       </div>
 
-      <div className="space-y-4">
-        {sites.map((s) => (
-          <SiteCard
-            key={s.id}
-            site={{
-              ...s,
-              urls: s.urls as string[],
-            }}
-            articleCount={counts.get(s.id) ?? 0}
-          />
-        ))}
-      </div>
+      <SitesList
+        sites={sites.map((s) => ({
+          ...s,
+          urls: s.urls as string[],
+        }))}
+        articleCounts={counts}
+      />
     </main>
   );
 }
