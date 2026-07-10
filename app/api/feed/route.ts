@@ -40,6 +40,8 @@ export async function GET(req: Request) {
     siteName: r.siteName,
     category: r.category,
     summary: r.summary,
+    tags: r.tags,
+    qualityScore: r.qualityScore,
   }));
 
   return NextResponse.json({ articles, total, page, pageSize, totalPages });

@@ -11,6 +11,8 @@ interface ArticleItem {
   publishedAt: string | Date | null;
   siteName: string | null;
   summary: string | null;
+  tags?: string[];
+  qualityScore?: number | null;
 }
 
 /**
@@ -77,6 +79,27 @@ export function FeedCard({ article }: { article: ArticleItem }) {
             {article.summary}
           </p>
         ) : null}
+
+        {/* tags + quality score row */}
+        {(article.tags && article.tags.length > 0) || article.qualityScore != null ? (
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            {article.tags?.map((tag) => (
+              <span
+                key={tag}
+                className="inline-block rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-600"
+              >
+                {tag}
+              </span>
+            ))}
+            {article.qualityScore != null && (
+              <span className="inline-flex items-center gap-0.5 text-[11px] text-amber-600">
+                <span className="text-[10px]">★</span>
+                {article.qualityScore.toFixed(1)}
+              </span>
+            )}
+          </div>
+        ) : null}
+
         <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
           <span>{article.siteName}</span>
           <span>·</span>

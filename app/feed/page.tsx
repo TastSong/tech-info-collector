@@ -6,6 +6,16 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 30;
 
+function tryParseTags(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function FeedPage() {
   const total = countFeedArticles();
   const rawRows = queryFeedArticles({ limit: PAGE_SIZE, offset: 0 });
@@ -20,6 +30,8 @@ export default async function FeedPage() {
     siteName: r.siteName,
     category: r.category,
     summary: r.summary,
+    tags: tryParseTags(r.tags),
+    qualityScore: r.qualityScore,
   }));
 
   return (
