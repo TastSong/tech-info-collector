@@ -32,6 +32,7 @@ export default async function FeedPage() {
     summary: r.summary,
     tags: tryParseTags(r.tags),
     qualityScore: r.qualityScore,
+    savedAt: r.savedAt ? new Date(r.savedAt * 1000) : null,
   }));
 
   return (

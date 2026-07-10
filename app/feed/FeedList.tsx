@@ -15,6 +15,7 @@ export interface ArticleItem {
   summary: string | null;
   tags: string[];
   qualityScore: number | null;
+  savedAt: string | Date | null;
 }
 
 /** API 返回的原始格式（时间戳为 Unix 秒数） */
@@ -28,8 +29,9 @@ interface ArticleRaw {
   siteName: string;
   category: string | null;
   summary: string | null;
-  tags: string | null;          // JSON string from SQLite
+  tags: string | null;
   qualityScore: number | null;
+  savedAt: number | null;
 }
 
 function parseTags(raw: string | null): string[] {
@@ -48,6 +50,7 @@ function fromRaw(r: ArticleRaw): ArticleItem {
     fetchedAt: new Date(r.fetchedAt * 1000),
     publishedAt: r.publishedAt ? new Date(r.publishedAt * 1000) : null,
     tags: parseTags(r.tags),
+    savedAt: r.savedAt ? new Date(r.savedAt * 1000) : null,
   };
 }
 
@@ -103,6 +106,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [siteFilter, setSiteFilter] = useState("");
+  const [savedOnly, setSavedOnly] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<Set<number>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
 
@@ -114,11 +118,21 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  // 收藏状态同步：当子组件切换收藏时，同步更新 articles 列表
+  const handleToggleSaved = useCallback((id: number, saved: boolean) => {
+    setArticles((prev) =>
+      prev.map((a) =>
+        a.id === id ? { ...a, savedAt: saved ? new Date() : null } : a,
+      ),
+    );
+  }, []);
+
   // 客户端过滤（排除已 dismiss 的文章）
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return articles.filter((a) => {
       if (dismissedIds.has(a.id)) return false;
+      if (savedOnly && a.savedAt == null) return false;
       if (q) {
         const haystack = [a.title, a.headline, a.summary, a.siteName]
           .filter(Boolean)
@@ -133,7 +147,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
       if (siteFilter && a.siteName !== siteFilter) return false;
       return true;
     });
-  }, [articles, search, categoryFilter, siteFilter, dismissedIds]);
+  }, [articles, search, categoryFilter, siteFilter, dismissedIds, savedOnly]);
 
   // 提取可用选项
   const { categories, sites } = useMemo(() => {
@@ -148,6 +162,11 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
       sites: Array.from(sts).sort((a, b) => a.localeCompare(b, "zh")),
     };
   }, [articles]);
+
+  const savedCount = useMemo(
+    () => articles.filter((a) => a.savedAt != null && !dismissedIds.has(a.id)).length,
+    [articles, dismissedIds],
+  );
 
   // 双层分组：日期桶 → category → articles
   const bucketInfos = useMemo(() => {
@@ -210,7 +229,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
       setArticles(((data.articles ?? []) as ArticleRaw[]).map(fromRaw));
       setPage(data.page);
       setTotal(data.total);
-      setDismissedIds(new Set()); // 翻页后清空本地 dismiss 记录
+      setDismissedIds(new Set());
     } catch {
       // silent
     } finally {
@@ -233,7 +252,6 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
       });
-      // 更新总数（服务端已标记，总数应减少）
       setTotal((prev) => prev - ids.length);
     } catch {
       setDismissedIds((prev) => {
@@ -251,15 +269,16 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
     markBatchRead(ids);
   }, [filtered, markBatchRead]);
 
-  const anyFilterActive = search.trim() !== "" || categoryFilter !== "" || siteFilter !== "";
+  const anyFilterActive = search.trim() !== "" || categoryFilter !== "" || siteFilter !== "" || savedOnly;
 
   function clearFilters() {
     setSearch("");
     setCategoryFilter("");
     setSiteFilter("");
+    setSavedOnly(false);
   }
 
-  const totalDisplayed = total; // 服务端总数（不受当前页筛选影响）
+  const totalDisplayed = total;
   const totalCategories = new Set(filtered.map((r) => r.category ?? "未分类")).size;
 
   return (
@@ -315,6 +334,18 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
               ))}
             </select>
           </div>
+
+          {/* 仅看收藏 */}
+          <button
+            onClick={() => setSavedOnly((v) => !v)}
+            className={`shrink-0 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+              savedOnly
+                ? "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                : "border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50"
+            }`}
+          >
+            ★ 收藏 {savedCount > 0 && `(${savedCount})`}
+          </button>
 
           {anyFilterActive && (
             <button
@@ -393,7 +424,10 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
                       </h3>
                       <div className="space-y-2">
                         {catGroup.articles.map((a) => (
-                          <FeedCard key={a.id} article={a} />
+                          <FeedCard
+                            key={a.id}
+                            article={{ ...a, onToggleSaved: handleToggleSaved }}
+                          />
                         ))}
                       </div>
                     </div>

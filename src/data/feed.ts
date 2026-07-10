@@ -22,6 +22,7 @@ export interface FeedRow {
   headline: string | null;
   tags: string | null;          // JSON array string from SQLite
   qualityScore: number | null;
+  savedAt: number | null;
 }
 
 export interface FeedQueryOptions {
@@ -53,7 +54,8 @@ const FEED_SELECT_BODY = sql`
     summary,
     headline,
     tags,
-    quality_score AS "qualityScore"
+    quality_score AS "qualityScore",
+    saved_at    AS "savedAt"
   FROM (
     SELECT
       a.id, a.title, a.fetched_at, a.published_at, a.site_id,
@@ -63,6 +65,7 @@ const FEED_SELECT_BODY = sql`
       r.headline,
       r.tags,
       r.quality_score,
+      a.saved_at,
       ROW_NUMBER() OVER (
         PARTITION BY COALESCE(a.content_hash, '#' || a.id)
         ORDER BY

@@ -13,15 +13,21 @@ interface ArticleItem {
   summary: string | null;
   tags?: string[];
   qualityScore?: number | null;
+  savedAt?: string | Date | null;
+  /** 收藏回调（从 FeedList 传入，用于统一管理 savedAt 状态） */
+  onToggleSaved?: (id: number, saved: boolean) => void;
 }
 
 /**
- * Feed 文章卡片：AI 生成标题 + 原文标题 + AI 摘要 + 来源信息，右侧"已阅读"按钮带淡出动画。
+ * Feed 文章卡片：AI 生成标题 + 原文标题 + AI 摘要 + 来源信息，
+ * 右侧"已阅读"按钮（带淡出动画），以及"收藏"星标按钮。
  */
 export function FeedCard({ article }: { article: ArticleItem }) {
   const [state, setState] = useState<
     "idle" | "loading" | "dismissing" | "dismissed" | "error"
   >("idle");
+  const [saved, setSaved] = useState(article.savedAt != null);
+  const [saving, setSaving] = useState(false);
 
   async function markRead(e: React.MouseEvent) {
     e.preventDefault();
@@ -33,14 +39,33 @@ export function FeedCard({ article }: { article: ArticleItem }) {
       });
       if (!res.ok) throw new Error("mark read failed");
       setState("dismissing");
-      // 动画持续 300ms，之后移除 DOM
       setTimeout(() => setState("dismissed"), 300);
     } catch {
       setState("error");
-      // 4 秒后错误状态自动恢复
       setTimeout(() => {
         setState((s) => (s === "error" ? "idle" : s));
       }, 4000);
+    }
+  }
+
+  async function toggleSave(e: React.MouseEvent) {
+    e.preventDefault();
+    if (saving) return;
+    setSaving(true);
+    const prev = saved;
+    setSaved(!saved);
+    try {
+      const res = await fetch(`/api/articles/${article.id}/save`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("save failed");
+      const data = await res.json();
+      setSaved(data.saved);
+      article.onToggleSaved?.(article.id, data.saved);
+    } catch {
+      setSaved(prev);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -57,9 +82,25 @@ export function FeedCard({ article }: { article: ArticleItem }) {
           ? "opacity-0 -translate-y-2 blur-[2px] pointer-events-none"
           : isError
           ? "border-red-200 bg-red-50/30"
+          : saved
+          ? "border-amber-200 bg-amber-50/30 hover:border-amber-300"
           : "border-slate-200 bg-white hover:border-indigo-300 hover:shadow-sm"
       }`}
     >
+      {/* 收藏星标 */}
+      <button
+        onClick={toggleSave}
+        disabled={saving}
+        className={`mr-2 shrink-0 text-lg leading-none transition-colors ${
+          saved
+            ? "text-amber-400 hover:text-amber-300"
+            : "text-slate-300 hover:text-amber-400 opacity-0 group-hover:opacity-100"
+        } ${saving ? "animate-pulse" : ""}`}
+        title={saved ? "取消收藏" : "收藏"}
+      >
+        {saved ? "★" : "☆"}
+      </button>
+
       <Link
         href={`/articles/${article.id}?from=feed`}
         className="flex-1 min-w-0"

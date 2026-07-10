@@ -23,7 +23,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT, site_id INTEGER NOT NULL REFERENCES sites(id),
     url TEXT NOT NULL UNIQUE, title TEXT, body TEXT, published_at INTEGER,
     content_hash TEXT, status TEXT NOT NULL DEFAULT 'raw', fetched_at INTEGER NOT NULL DEFAULT (unixepoch()),
-    viewed_at INTEGER
+    viewed_at INTEGER, saved_at INTEGER
   );
   CREATE TABLE IF NOT EXISTS ai_reviews (
     id INTEGER PRIMARY KEY AUTOINCREMENT, article_id INTEGER NOT NULL REFERENCES articles(id),
@@ -52,6 +52,14 @@ db.exec(`
     value TEXT
   );
 `);
+
+try {
+  db.exec(`ALTER TABLE articles ADD COLUMN saved_at INTEGER`);
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) {
+    console.error('ALTER TABLE articles ADD saved_at failed:', e.message);
+  }
+}
 
 // 向已有 run_logs 表添加 crawl_session_id 列（幂等）
 try {

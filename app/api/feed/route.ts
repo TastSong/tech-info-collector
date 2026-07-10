@@ -42,6 +42,7 @@ export async function GET(req: Request) {
     summary: r.summary,
     tags: r.tags,
     qualityScore: r.qualityScore,
+    savedAt: r.savedAt,
   }));
 
   return NextResponse.json({ articles, total, page, pageSize, totalPages });

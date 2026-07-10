@@ -71,6 +71,7 @@ export const articles = sqliteTable("articles", {
     .notNull()
     .default(sql`(unixepoch())`),
   viewedAt: integer("viewed_at", { mode: "timestamp" }),
+  savedAt: integer("saved_at", { mode: "timestamp" }),
   }, (table) => [
     // feed 查询: WHERE viewed_at IS NULL AND status = 'published' ORDER BY published_at DESC
     index("idx_articles_feed").on(table.viewedAt, table.status, table.publishedAt),
