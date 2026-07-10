@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 /** 系统用户（唯一用户，注册后不可再注册） */
@@ -71,7 +71,14 @@ export const articles = sqliteTable("articles", {
     .notNull()
     .default(sql`(unixepoch())`),
   viewedAt: integer("viewed_at", { mode: "timestamp" }),
-});
+  }, (table) => [
+    // feed 查询: WHERE viewed_at IS NULL AND status = 'published' ORDER BY published_at DESC
+    index("idx_articles_feed").on(table.viewedAt, table.status, table.publishedAt),
+    // analyze 批次扫描: WHERE status = 'raw'
+    index("idx_articles_status").on(table.status),
+    // 内容去重 & 已读联动: content_hash 匹配
+    index("idx_articles_content_hash").on(table.contentHash),
+  ]);
 
 /** AI 沙盒对单篇文章的审核结果（审计留痕） */
 export const aiReviews = sqliteTable("ai_reviews", {
