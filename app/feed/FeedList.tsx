@@ -13,6 +13,8 @@ export interface ArticleItem {
   siteName: string;
   category: string | null;
   summary: string | null;
+  tags: string[];
+  qualityScore: number | null;
 }
 
 /** API 返回的原始格式（时间戳为 Unix 秒数） */
@@ -26,10 +28,27 @@ interface ArticleRaw {
   siteName: string;
   category: string | null;
   summary: string | null;
+  tags: string | null;          // JSON string from SQLite
+  qualityScore: number | null;
+}
+
+function parseTags(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 function fromRaw(r: ArticleRaw): ArticleItem {
-  return { ...r, fetchedAt: new Date(r.fetchedAt * 1000), publishedAt: r.publishedAt ? new Date(r.publishedAt * 1000) : null };
+  return {
+    ...r,
+    fetchedAt: new Date(r.fetchedAt * 1000),
+    publishedAt: r.publishedAt ? new Date(r.publishedAt * 1000) : null,
+    tags: parseTags(r.tags),
+  };
 }
 
 interface DateBucket {

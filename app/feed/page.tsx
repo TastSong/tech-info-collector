@@ -1,81 +1,14 @@
-import { db } from "@/db/client";
-import { sql } from "drizzle-orm";
+import { countFeedArticles, queryFeedArticles } from "@/src/data/feed";
 import { FeedList } from "./FeedList";
 import type { ArticleItem } from "./FeedList";
 
 export const dynamic = "force-dynamic";
 
-interface FeedRow {
-  id: number;
-  title: string | null;
-  fetchedAt: number;
-  publishedAt: number | null;
-  siteId: number;
-  siteName: string;
-  category: string | null;
-  summary: string | null;
-  headline: string | null;
-}
-
 const PAGE_SIZE = 30;
-const FEED_WHERE = sql`
-  a.viewed_at IS NULL
-  AND a.status = 'published'
-  AND (
-    a.published_at >= CAST((unixepoch() - 1296000) AS INTEGER)
-    OR (a.published_at IS NULL AND a.fetched_at >= CAST((unixepoch() - 1296000) AS INTEGER))
-  )
-`;
 
 export default async function FeedPage() {
-  // 总数
-  const countResult = db.get(
-    sql`
-    SELECT COUNT(*) AS cnt FROM (
-      SELECT 1 FROM articles a
-      INNER JOIN sites s ON a.site_id = s.id
-      LEFT JOIN ai_reviews r ON a.id = r.article_id
-      WHERE ${FEED_WHERE}
-      GROUP BY COALESCE(a.content_hash, '#' || a.id)
-    )
-  `,
-  ) as { cnt: number } | undefined;
-  const total = countResult?.cnt ?? 0;
-
-  const rawRows = db.all(
-      sql`
-    SELECT
-      id, title,
-      fetched_at  AS "fetchedAt",
-      published_at AS "publishedAt",
-      site_id     AS "siteId",
-      site_name   AS "siteName",
-      category,
-      summary,
-      headline
-    FROM (
-      SELECT
-        a.id, a.title, a.fetched_at, a.published_at, a.site_id,
-        s.name   AS site_name,
-        s.category,
-        r.summary,
-        r.headline,
-        ROW_NUMBER() OVER (
-          PARTITION BY COALESCE(a.content_hash, '#' || a.id)
-          ORDER BY
-            CASE WHEN r.id IS NOT NULL THEN 0 ELSE 1 END,
-            COALESCE(a.published_at, a.fetched_at) DESC
-        ) AS rn
-      FROM articles a
-      INNER JOIN sites s ON a.site_id = s.id
-      LEFT JOIN ai_reviews r ON a.id = r.article_id
-      WHERE ${FEED_WHERE}
-    ) sub
-    WHERE rn = 1
-    ORDER BY COALESCE(published_at, fetched_at) DESC
-    LIMIT ${PAGE_SIZE}
-  `,
-  ) as unknown as FeedRow[];
+  const total = countFeedArticles();
+  const rawRows = queryFeedArticles({ limit: PAGE_SIZE, offset: 0 });
 
   const articles: ArticleItem[] = rawRows.map((r) => ({
     id: r.id,
