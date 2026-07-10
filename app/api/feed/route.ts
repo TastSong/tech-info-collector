@@ -1,7 +1,16 @@
+/**
+ * GET /api/feed — 分页查询资讯流文章（去重后）。
+ *
+ * Query params:
+ *  - page     (default 1)
+ *  - pageSize (default 30, max 100)
+ *
+ * Response: { articles: Array, total: number, page: number, pageSize: number, totalPages: number }
+ * articles 中的日期字段是 Unix 秒数（客户端自行转为 Date）。
+ */
+import { NextResponse } from "next/server";
 import { db } from "@/db/client";
 import { sql } from "drizzle-orm";
-import { FeedList } from "./FeedList";
-import type { ArticleItem } from "./FeedList";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +26,10 @@ interface FeedRow {
   headline: string | null;
 }
 
-const PAGE_SIZE = 30;
+const PAGE_SIZE_MAX = 100;
+const PAGE_SIZE_DEFAULT = 30;
+
+/** 公共的 WHERE 过滤（time window + status + viewed） */
 const FEED_WHERE = sql`
   a.viewed_at IS NULL
   AND a.status = 'published'
@@ -27,20 +39,29 @@ const FEED_WHERE = sql`
   )
 `;
 
-export default async function FeedPage() {
-  // 总数
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const page = Math.max(1, Number(searchParams.get("page")) || 1);
+  const pageSize = Math.min(
+    PAGE_SIZE_MAX,
+    Math.max(1, Number(searchParams.get("pageSize")) || PAGE_SIZE_DEFAULT),
+  );
+  const offset = (page - 1) * pageSize;
+
+  // 去重后的文章总数
   const countResult = db.get(
     sql`
-    SELECT COUNT(*) AS cnt FROM (
-      SELECT 1 FROM articles a
-      INNER JOIN sites s ON a.site_id = s.id
-      LEFT JOIN ai_reviews r ON a.id = r.article_id
-      WHERE ${FEED_WHERE}
-      GROUP BY COALESCE(a.content_hash, '#' || a.id)
-    )
-  `,
+      SELECT COUNT(*) AS cnt FROM (
+        SELECT 1 FROM articles a
+        INNER JOIN sites s ON a.site_id = s.id
+        LEFT JOIN ai_reviews r ON a.id = r.article_id
+        WHERE ${FEED_WHERE}
+        GROUP BY COALESCE(a.content_hash, '#' || a.id)
+      )
+    `,
   ) as { cnt: number } | undefined;
   const total = countResult?.cnt ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const rawRows = db.all(
       sql`
@@ -73,33 +94,21 @@ export default async function FeedPage() {
     ) sub
     WHERE rn = 1
     ORDER BY COALESCE(published_at, fetched_at) DESC
-    LIMIT ${PAGE_SIZE}
+    LIMIT ${pageSize} OFFSET ${offset}
   `,
   ) as unknown as FeedRow[];
 
-  const articles: ArticleItem[] = rawRows.map((r) => ({
+  const articles = rawRows.map((r) => ({
     id: r.id,
     title: r.title,
     headline: r.headline,
-    fetchedAt: new Date(r.fetchedAt * 1000),
-    publishedAt: r.publishedAt ? new Date(r.publishedAt * 1000) : null,
+    fetchedAt: r.fetchedAt,
+    publishedAt: r.publishedAt,
     siteId: r.siteId,
     siteName: r.siteName,
     category: r.category,
     summary: r.summary,
   }));
 
-  return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">资讯流</h1>
-      </div>
-
-      <FeedList
-        initialArticles={articles}
-        initialTotal={total}
-        initialPage={1}
-      />
-    </main>
-  );
+  return NextResponse.json({ articles, total, page, pageSize, totalPages });
 }
