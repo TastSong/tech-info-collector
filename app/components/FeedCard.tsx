@@ -14,27 +14,50 @@ interface ArticleItem {
 }
 
 /**
- * Feed 文章卡片：AI 生成标题 + 原文标题 + AI 摘要 + 来源信息，右侧"已阅读"按钮就地隐藏。
+ * Feed 文章卡片：AI 生成标题 + 原文标题 + AI 摘要 + 来源信息，右侧"已阅读"按钮带淡出动画。
  */
 export function FeedCard({ article }: { article: ArticleItem }) {
-  const [dismissed, setDismissed] = useState(false);
+  const [state, setState] = useState<
+    "idle" | "loading" | "dismissing" | "dismissed" | "error"
+  >("idle");
 
   async function markRead(e: React.MouseEvent) {
-    e.preventDefault(); // 不触发 Link 跳转
+    e.preventDefault();
+    if (state !== "idle" && state !== "error") return;
+    setState("loading");
     try {
-      await fetch(`/api/articles/${article.id}/view`, { method: "POST" });
+      const res = await fetch(`/api/articles/${article.id}/view`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("mark read failed");
+      setState("dismissing");
+      // 动画持续 300ms，之后移除 DOM
+      setTimeout(() => setState("dismissed"), 300);
     } catch {
-      // 静默
+      setState("error");
+      // 4 秒后错误状态自动恢复
+      setTimeout(() => {
+        setState((s) => (s === "error" ? "idle" : s));
+      }, 4000);
     }
-    setDismissed(true);
   }
 
-  if (dismissed) return null;
+  if (state === "dismissed") return null;
 
   const displayTitle = article.headline || article.title || "(无标题)";
+  const isError = state === "error";
+  const isDismissing = state === "dismissing";
 
   return (
-    <div className="group flex items-center rounded-xl border border-slate-200 bg-white p-4 hover:border-indigo-300 hover:shadow-sm transition-all">
+    <div
+      className={`group flex items-center rounded-xl border p-4 transition-all duration-300 ease-out ${
+        isDismissing
+          ? "opacity-0 -translate-y-2 blur-[2px] pointer-events-none"
+          : isError
+          ? "border-red-200 bg-red-50/30"
+          : "border-slate-200 bg-white hover:border-indigo-300 hover:shadow-sm"
+      }`}
+    >
       <Link
         href={`/articles/${article.id}?from=feed`}
         className="flex-1 min-w-0"
@@ -42,7 +65,9 @@ export function FeedCard({ article }: { article: ArticleItem }) {
         <div className="font-medium text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
           {displayTitle}
         </div>
-        {article.headline && article.title && article.headline !== article.title ? (
+        {article.headline &&
+        article.title &&
+        article.headline !== article.title ? (
           <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">
             原文：{article.title}
           </p>
@@ -57,18 +82,27 @@ export function FeedCard({ article }: { article: ArticleItem }) {
           <span>·</span>
           <span>
             {article.publishedAt
-              ? new Date(article.publishedAt).toLocaleDateString("zh-CN", {timeZone: "Asia/Shanghai"})
+              ? new Date(article.publishedAt).toLocaleDateString("zh-CN", {
+                  timeZone: "Asia/Shanghai",
+                })
               : article.fetchedAt
-              ? new Date(article.fetchedAt).toLocaleDateString("zh-CN", {timeZone: "Asia/Shanghai"})
+              ? new Date(article.fetchedAt).toLocaleDateString("zh-CN", {
+                  timeZone: "Asia/Shanghai",
+                })
               : "-"}
           </span>
         </div>
       </Link>
       <button
         onClick={markRead}
-        className="ml-3 shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-400 hover:border-slate-300 hover:text-slate-600 hover:bg-slate-50 transition-colors"
+        disabled={state === "loading" || isDismissing}
+        className={`ml-3 shrink-0 rounded-lg border px-3 py-1.5 text-xs transition-colors ${
+          isError
+            ? "border-red-300 text-red-600 hover:border-red-400 hover:bg-red-50"
+            : "border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-600 hover:bg-slate-50"
+        } ${state === "loading" ? "opacity-50" : ""}`}
       >
-        已阅读
+        {state === "loading" ? "…" : isError ? "重试" : "已阅读"}
       </button>
     </div>
   );
