@@ -32,13 +32,18 @@ export interface FeedQueryOptions {
 
 /* ---------- 公共 WHERE 片段 ---------- */
 
-/** 近 15 天 + 未查看 + 已发布 */
+/**
+ * 近 15 天未查看、已发布，或已收藏（不限已读或时间）。
+ * 收藏的文章无论是否已读、无论发布时间均显示。
+ */
 export const FEED_WHERE = sql`
-  a.viewed_at IS NULL
-  AND a.status = 'published'
+  a.status = 'published'
   AND (
-    a.published_at >= CAST((unixepoch() - 1296000) AS INTEGER)
-    OR (a.published_at IS NULL AND a.fetched_at >= CAST((unixepoch() - 1296000) AS INTEGER))
+    (a.viewed_at IS NULL AND (
+      a.published_at >= CAST((unixepoch() - 1296000) AS INTEGER)
+      OR (a.published_at IS NULL AND a.fetched_at >= CAST((unixepoch() - 1296000) AS INTEGER))
+    ))
+    OR a.saved_at IS NOT NULL
   )
 `;
 

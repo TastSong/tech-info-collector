@@ -364,7 +364,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
           {anyFilterActive ? (
             <>筛选结果 · {filtered.length} 篇（共 {totalDisplayed}）</>
           ) : (
-            <>近 15 天未读 · {totalDisplayed} 篇 · {totalCategories} 个分类</>
+            <>近 15 天未读{savedCount > 0 ? " + 收藏" : ""} · {totalDisplayed} 篇 · {totalCategories} 个分类</>
           )}
         </div>
         <div className="flex items-center gap-3">
