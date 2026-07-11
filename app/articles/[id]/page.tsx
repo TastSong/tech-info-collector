@@ -5,6 +5,7 @@ import { eq, desc } from "drizzle-orm";
 import { statusBadge } from "../../components/Badges";
 import { MarkViewed } from "../../components/MarkViewed";
 import { ReadingProgress } from "../../components/ReadingProgress";
+import { ScoreRing } from "../../components/ScoreRing";
 import { ArrowLeft, Bot, Circle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -153,6 +154,20 @@ export default async function ArticleDetailPage({
           <h2 className="mb-3 text-sm font-semibold text-slate-700">审核指标</h2>
           {review ? (
             <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
+              {/* Score rings */}
+              <div className="flex justify-center gap-6 pb-3 border-b border-slate-100">
+                <ScoreRing
+                  score={review.qualityScore ?? 0}
+                  size={60}
+                  label="质量分"
+                />
+                <ScoreRing
+                  score={review.newsScore ?? 0}
+                  size={60}
+                  label="新闻属性"
+                />
+              </div>
+
               <div className="flex flex-col gap-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-slate-400">相关性</span>
