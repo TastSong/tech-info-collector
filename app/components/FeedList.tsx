@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { FeedCard } from "../components/FeedCard";
+import { FeedCard } from "./FeedCard";
+import { parseTags } from "@/src/lib/parse-tags";
 
 export interface ArticleItem {
   id: number;
@@ -32,16 +33,6 @@ interface ArticleRaw {
   tags: string | null;
   qualityScore: number | null;
   savedAt: number | null;
-}
-
-function parseTags(raw: string | null): string[] {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
 }
 
 function fromRaw(r: ArticleRaw): ArticleItem {

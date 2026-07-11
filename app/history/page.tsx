@@ -1,20 +1,11 @@
 import { countHistoryArticles, queryHistoryArticles } from "@/src/data/feed";
 import { HistoryList } from "./HistoryList";
 import type { HistoryItem } from "./HistoryList";
+import { parseTags } from "@/src/lib/parse-tags";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 30;
-
-function tryParseTags(raw: string | null): string[] {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
 
 export default async function HistoryPage() {
   const total = countHistoryArticles();
@@ -31,7 +22,7 @@ export default async function HistoryPage() {
     siteName: r.siteName,
     category: r.category,
     summary: r.summary,
-    tags: tryParseTags(r.tags),
+    tags: parseTags(r.tags),
     qualityScore: r.qualityScore,
     savedAt: r.savedAt ? new Date(r.savedAt * 1000) : null,
   }));

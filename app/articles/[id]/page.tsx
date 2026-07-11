@@ -37,7 +37,7 @@ export default async function ArticleDetailPage({
     .orderBy(desc(schema.aiReviews.createdAt))
     .get();
 
-  const backHref = sp.from === "feed" ? "/feed" : "/articles";
+  const backHref = sp.from === "feed" ? "/" : "/articles";
   const backLabel = sp.from === "feed" ? "← 返回资讯流" : "← 文章";
 
   return (

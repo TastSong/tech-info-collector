@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { FeedCard } from "../components/FeedCard";
+import { parseTags } from "@/src/lib/parse-tags";
 
 export interface HistoryItem {
   id: number;
@@ -34,16 +35,6 @@ interface HistoryRaw {
   tags: string | null;
   qualityScore: number | null;
   savedAt: number | null;
-}
-
-function parseTags(raw: string | null): string[] {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
 }
 
 function fromRaw(r: HistoryRaw): HistoryItem {
