@@ -206,16 +206,16 @@ export default async function ArticleDetailPage({
               </div>
 
               <div>
-                <div className="mb-1 text-xs font-medium text-slate-500">
+                <div className="mb-1 text-xs font-medium text-slate-500 dark:text-slate-500">
                   判断理由
                 </div>
-                <p className="text-sm text-slate-600 italic">
+                <p className="text-sm text-slate-600 dark:text-slate-400 italic">
                   {review.reason}
                 </p>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-slate-400">暂无审核数据</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">暂无审核数据</p>
           )}
         </div>
       </div>

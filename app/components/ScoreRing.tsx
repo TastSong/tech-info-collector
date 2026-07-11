@@ -35,7 +35,7 @@ export function ScoreRing({
             r={radius}
             fill="none"
             stroke="currentColor"
-            className="text-slate-200"
+            className="text-slate-200 dark:text-slate-700"
             strokeWidth="3"
           />
           {/* Progress arc */}
@@ -53,12 +53,12 @@ export function ScoreRing({
           />
         </svg>
         {/* Center text */}
-        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-700">
+        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-300">
           {pct}
         </span>
       </div>
       {label && (
-        <span className="text-[11px] text-slate-400">{label}</span>
+        <span className="text-[11px] text-slate-400 dark:text-slate-500">{label}</span>
       )}
     </div>
   );
