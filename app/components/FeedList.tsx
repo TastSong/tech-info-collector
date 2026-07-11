@@ -108,7 +108,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
   const [bulkProgress, setBulkProgress] = useState<string>("");
 
   // 防抖搜索
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => setDebouncedSearch(search), 300);
@@ -430,7 +430,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
                 : "border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50"
             }`}
           >
-            <Star className={`h-3.5 w-3.5 ${saved ? "fill-amber-400 text-amber-400" : ""}`} />
+            <Star className={`h-3.5 w-3.5 ${savedOnly ? "fill-amber-400 text-amber-400" : ""}`} />
             收藏 {savedCount > 0 && `(${savedCount})`}
           </button>
 

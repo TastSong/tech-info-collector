@@ -1,7 +1,7 @@
 import { CheckCircle2, XCircle, Loader2, Globe, FileText } from "lucide-react";
 
 /** 站点颜色 + AI 参与度标签 */
-export function badge(label: string, color: "green" | "amber" | "red" | "slate") {
+export function badge(label: React.ReactNode, color: "green" | "amber" | "red" | "slate") {
   const map = {
     green: "bg-emerald-50 text-emerald-700",
     amber: "bg-amber-50 text-amber-700",
