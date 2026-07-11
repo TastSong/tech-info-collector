@@ -86,6 +86,83 @@ const FEED_SELECT_BODY = sql`
   ORDER BY COALESCE(published_at, fetched_at) DESC
 `;
 
+/* ---------- 已读历史 ---------- */
+
+/** 已读历史 WHERE：已查看且已发布 */
+const HISTORY_WHERE = sql`
+  a.status = 'published'
+  AND a.viewed_at IS NOT NULL
+`;
+
+/** 已读历史列（多一个 viewedAt 字段） */
+export interface HistoryRow extends FeedRow {
+  viewedAt: number;
+}
+
+/** SQL 片段：已读历史去重主查询 */
+const HISTORY_SELECT_BODY = sql`
+  SELECT
+    id, title,
+    fetched_at  AS "fetchedAt",
+    published_at AS "publishedAt",
+    viewed_at   AS "viewedAt",
+    site_id     AS "siteId",
+    site_name   AS "siteName",
+    category,
+    summary,
+    headline,
+    tags,
+    quality_score AS "qualityScore",
+    saved_at    AS "savedAt"
+  FROM (
+    SELECT
+      a.id, a.title, a.fetched_at, a.published_at, a.viewed_at, a.site_id,
+      s.name   AS site_name,
+      s.category,
+      r.summary,
+      r.headline,
+      r.tags,
+      r.quality_score,
+      a.saved_at,
+      ROW_NUMBER() OVER (
+        PARTITION BY COALESCE(a.content_hash, '#' || a.id)
+        ORDER BY
+          CASE WHEN r.id IS NOT NULL THEN 0 ELSE 1 END,
+          COALESCE(a.published_at, a.fetched_at) DESC
+      ) AS rn
+    FROM articles a
+    INNER JOIN sites s ON a.site_id = s.id
+    LEFT JOIN ai_reviews r ON a.id = r.article_id
+    WHERE ${HISTORY_WHERE}
+  ) sub
+  WHERE rn = 1
+  ORDER BY viewed_at DESC
+`;
+
+/** 获取已读历史文章总数 */
+export function countHistoryArticles(): number {
+  const result = db.get(
+    sql`
+    SELECT COUNT(*) AS cnt FROM (
+      SELECT 1 FROM articles a
+      INNER JOIN sites s ON a.site_id = s.id
+      LEFT JOIN ai_reviews r ON a.id = r.article_id
+      WHERE ${HISTORY_WHERE}
+      GROUP BY COALESCE(a.content_hash, '#' || a.id)
+    )
+  `,
+  ) as { cnt: number } | undefined;
+  return result?.cnt ?? 0;
+}
+
+/** 分页查询已读历史（按 viewed_at 倒序） */
+export function queryHistoryArticles(opts: FeedQueryOptions): HistoryRow[] {
+  return db.all(
+    sql`${HISTORY_SELECT_BODY}
+    LIMIT ${opts.limit} OFFSET ${opts.offset}`,
+  ) as unknown as HistoryRow[];
+}
+
 /* ---------- queries ---------- */
 
 /** 获取去重后的未读文章总数 */

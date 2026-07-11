@@ -55,6 +55,7 @@ export function NavLinks() {
       <div className="hidden sm:flex items-center gap-1">
         <NavLink href="/">首页</NavLink>
         <NavLink href="/feed">资讯流</NavLink>
+        <NavLink href="/history">历史</NavLink>
         <NavLink href="/articles">文章</NavLink>
         <NavLink href="/sites">站点</NavLink>
         <NavLink href="/runs">日志</NavLink>
@@ -66,6 +67,7 @@ export function NavLinks() {
           <div className="flex flex-col px-4 py-2">
             <NavLink href="/" onClick={close}>首页</NavLink>
             <NavLink href="/feed" onClick={close}>资讯流</NavLink>
+            <NavLink href="/history" onClick={close}>历史</NavLink>
             <NavLink href="/articles" onClick={close}>文章</NavLink>
             <NavLink href="/sites" onClick={close}>站点</NavLink>
             <NavLink href="/runs" onClick={close}>日志</NavLink>
