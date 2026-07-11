@@ -50,8 +50,8 @@ export default async function ArticleDetailPage({
       <ScrollToTop />
       <MarkViewed articleId={article.id} />
 
-      <div className="mb-4 flex items-center gap-3 text-sm text-slate-500">
-        <Link href={backHref} className="inline-flex items-center gap-1 hover:text-slate-900 transition-colors">
+      <div className="mb-4 flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+        <Link href={backHref} className="inline-flex items-center gap-1 hover:text-slate-900 dark:hover:text-slate-200 transition-colors">
           <ArrowLeft className="h-4 w-4" />
           {backLabel}
         </Link>
@@ -61,7 +61,7 @@ export default async function ArticleDetailPage({
 
       {/* Title + status */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <h1 className="flex-1 text-xl font-bold text-slate-900">
+        <h1 className="flex-1 text-xl font-bold text-slate-900 dark:text-slate-100">
           {article.title}
         </h1>
         <div className="flex items-center gap-3 shrink-0">
@@ -70,7 +70,7 @@ export default async function ArticleDetailPage({
       </div>
 
       {/* Meta */}
-      <div className="mb-6 flex gap-6 text-sm text-slate-500">
+      <div className="mb-6 flex gap-6 text-sm text-slate-500 dark:text-slate-500">
         {article.publishedAt ? (
           <span>
             发布时间：{new Date(article.publishedAt).toLocaleString("zh-CN", {timeZone: "Asia/Shanghai"})}
@@ -81,36 +81,36 @@ export default async function ArticleDetailPage({
 
       {/* ---- AI Summary Banner (full-width, prioritized) ---- */}
       {review ? (
-        <div className="mb-8 rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50/60 to-white p-6">
+        <div className="mb-8 rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50/60 to-white p-6 dark:border-indigo-800 dark:from-indigo-950/50 dark:to-slate-900">
           <div className="mb-3 flex items-center gap-2">
             <Bot className="h-5 w-5 text-indigo-500" />
-            <h2 className="text-sm font-semibold text-indigo-700">
+            <h2 className="text-sm font-semibold text-indigo-700 dark:text-indigo-400">
               AI 摘要 · {review.model ?? "未知模型"}
             </h2>
           </div>
 
           {review.headline ? (
-            <p className="mb-3 text-base font-semibold text-slate-900">
+            <p className="mb-3 text-base font-semibold text-slate-900 dark:text-slate-100">
               {review.headline}
             </p>
           ) : null}
 
           {review.summary ? (
-            <p className="mb-4 text-sm leading-relaxed text-slate-700">
+            <p className="mb-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
               {review.summary}
             </p>
           ) : null}
 
           {review.keyPoints ? (
             <div className="mb-4">
-              <div className="mb-2 text-xs font-medium text-slate-500">
+              <div className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-500">
                 关键点
               </div>
               <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
                 {review.keyPoints.map((kp: string, i: number) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2 text-sm text-slate-700"
+                    className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"
                   >
                     <Circle className="mt-1.5 h-1.5 w-1.5 shrink-0 fill-indigo-400 text-indigo-400" />
                     {kp}
@@ -122,11 +122,11 @@ export default async function ArticleDetailPage({
 
           {review.tags ? (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-slate-400">标签</span>
+              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">标签</span>
               {review.tags.map((t: string) => (
                 <span
                   key={t}
-                  className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700"
+                  className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400"
                 >
                   {t}
                 </span>
@@ -135,7 +135,7 @@ export default async function ArticleDetailPage({
           ) : null}
         </div>
       ) : (
-        <div className="mb-8 rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-400">
+        <div className="mb-8 rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-400 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-500">
           <Bot className="h-5 w-5 mx-auto mb-2 text-slate-300" />
           尚未经 AI 分析（文章状态: {article.status}）
         </div>
@@ -145,17 +145,17 @@ export default async function ArticleDetailPage({
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-8">
         {/* Body */}
         <div className="lg:col-span-2">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">正文</h2>
-          <div className="prose prose-slate max-w-none rounded-xl border border-slate-200 bg-white p-6 text-sm leading-relaxed whitespace-pre-line">
+          <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">正文</h2>
+          <div className="prose prose-slate max-w-none rounded-xl border border-slate-200 bg-white p-6 text-sm leading-relaxed whitespace-pre-line dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
             {article.body || "(无正文)"}
           </div>
         </div>
 
         {/* Review Metrics (sidebar) */}
         <div className="lg:col-span-1">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">审核指标</h2>
+          <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">审核指标</h2>
           {review ? (
-            <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
+            <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
               {/* Score rings */}
               <div className="flex justify-center gap-6 pb-3 border-b border-slate-100">
                 <ScoreRing
@@ -172,25 +172,25 @@ export default async function ArticleDetailPage({
 
               <div className="flex flex-col gap-2 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">相关性</span>
+                  <span className="text-slate-400 dark:text-slate-500">相关性</span>
                   <span className={review.relevant ? "text-emerald-600" : "text-red-500"}>
                     {review.relevant ? "✓ 相关" : "✗ 无关"}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">可用性</span>
+                  <span className="text-slate-400 dark:text-slate-500">可用性</span>
                   <span className={review.usable ? "text-emerald-600" : "text-red-500"}>
                     {review.usable ? "✓ 可用" : "✗ 不可用"}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">质量分</span>
+                  <span className="text-slate-400 dark:text-slate-500">质量分</span>
                   <span className="font-medium">
                     {review.qualityScore?.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">新闻属性</span>
+                  <span className="text-slate-400 dark:text-slate-500">新闻属性</span>
                   <span
                     className={`font-medium ${review.isNews ? "text-emerald-600" : "text-red-500"}`}
                   >
@@ -200,7 +200,7 @@ export default async function ArticleDetailPage({
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">tokens</span>
+                  <span className="text-slate-400 dark:text-slate-500">tokens</span>
                   <span>{review.tokensUsed ?? "-"}</span>
                 </div>
               </div>

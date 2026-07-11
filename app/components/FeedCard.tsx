@@ -197,13 +197,13 @@ export function FeedCard({ article }: { article: ArticleItem }) {
         <div
           className={`absolute inset-0 flex items-center transition-colors duration-150 rounded-xl ${
             swipeDir === "left"
-              ? "justify-end pr-6 bg-emerald-500/15"
-              : "justify-start pl-6 bg-amber-400/15"
+              ? "justify-end pr-6 bg-emerald-500/15 dark:bg-emerald-950/30"
+              : "justify-start pl-6 bg-amber-400/15 dark:bg-amber-950/30"
           }`}
         >
           <span
             className={`text-sm font-bold tracking-wide ${
-              swipeDir === "left" ? "text-emerald-600" : "text-amber-600"
+              swipeDir === "left" ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
             }`}
           >
             {swipeIndicatorIcon}
@@ -216,14 +216,14 @@ export function FeedCard({ article }: { article: ArticleItem }) {
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        className={`relative group flex items-center rounded-xl border p-4 transition-all duration-300 ease-out bg-white select-none animate-card-enter ${
+        className={`relative group flex items-center rounded-xl border p-4 transition-all duration-300 ease-out bg-white dark:bg-slate-900 select-none animate-card-enter ${
           isDismissing
             ? "opacity-0 -translate-y-2 blur-[2px] pointer-events-none"
             : isError
-            ? "border-red-200 bg-red-50/30"
+            ? "border-red-200 dark:border-red-800 bg-red-50/30 dark:bg-red-950/30"
             : saved && !isSwiping
-            ? "border-amber-200 bg-amber-50/30 hover:border-amber-300"
-            : "border-slate-200 hover:border-indigo-300 hover:shadow-sm"
+            ? "border-amber-200 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/30 hover:border-amber-300"
+            : "border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-sm"
         } ${swipeCommitted ? "" : ""}`}
         style={
           swipeDelta !== 0 || swipeCommitted
@@ -238,7 +238,7 @@ export function FeedCard({ article }: { article: ArticleItem }) {
           className={`mr-2 shrink-0 leading-none transition-colors ${
             saved
               ? "text-amber-400 hover:text-amber-300"
-              : "text-slate-300 hover:text-amber-400 opacity-0 group-hover:opacity-100"
+              : "text-slate-300 dark:text-slate-600 hover:text-amber-400 opacity-0 group-hover:opacity-100"
           } ${saving ? "animate-pulse" : ""} ${starAnim ? "animate-star-pop" : ""} hidden sm:block`}
           title={saved ? "取消收藏" : "收藏"}
         >
@@ -252,16 +252,16 @@ export function FeedCard({ article }: { article: ArticleItem }) {
           href={`/articles/${article.id}?from=feed`}
           className="flex-1 min-w-0"
         >
-          <div className="font-medium text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
+          <div className="font-medium text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
             {displayTitle}
           </div>
           {article.headline && article.title && article.headline !== article.title ? (
-            <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">
+            <p className="text-xs text-slate-400 dark:text-slate-500 line-clamp-1 mt-0.5">
               原文：{article.title}
             </p>
           ) : null}
           {article.summary ? (
-            <p className="mt-1 text-sm text-slate-500 line-clamp-2">
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
               {article.summary}
             </p>
           ) : null}
@@ -271,7 +271,7 @@ export function FeedCard({ article }: { article: ArticleItem }) {
               {article.tags?.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-block rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-600"
+                  className="inline-block rounded-full bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 text-[11px] font-medium text-indigo-600 dark:text-indigo-400"
                 >
                   {tag}
                 </span>
@@ -285,7 +285,7 @@ export function FeedCard({ article }: { article: ArticleItem }) {
             </div>
           ) : null}
 
-          <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+          <div className="mt-1 flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
             <span>{article.siteName}</span>
             <span>·</span>
             <span>
@@ -306,8 +306,8 @@ export function FeedCard({ article }: { article: ArticleItem }) {
           disabled={state === "loading" || isDismissing}
           className={`ml-3 shrink-0 inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs transition-colors hidden sm:flex ${
             isError
-              ? "border-red-300 text-red-600 hover:border-red-400 hover:bg-red-50"
-              : "border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-600 hover:bg-slate-50"
+              ? "border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-950"
+              : "border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-400 hover:border-slate-300 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
           } ${state === "loading" ? "opacity-50" : ""}`}
         >
           <Eye className="h-3.5 w-3.5" />
@@ -315,7 +315,7 @@ export function FeedCard({ article }: { article: ArticleItem }) {
         </button>
 
         {/* 移动端：滑动提示条 */}
-        <div className="ml-2 shrink-0 text-[10px] text-slate-300 hidden max-sm:block leading-tight text-right">
+        <div className="ml-2 shrink-0 text-[10px] text-slate-300 dark:text-slate-600 hidden max-sm:block leading-tight text-right">
           ← →<br />滑动
         </div>
       </div>

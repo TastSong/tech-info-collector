@@ -151,12 +151,12 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
     <div>
       {/* 状态栏 */}
       <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-400 dark:text-slate-500">
           {page === 1 ? (
             <>
               auto refresh · {lastRefresh.toLocaleTimeString("zh-CN", { timeZone: "Asia/Shanghai" })}
               {runningCount > 0 && (
-                <span className="ml-2 inline-flex items-center gap-1 text-indigo-600">
+                <span className="ml-2 inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400">
                   <Circle className="h-2 w-2 fill-indigo-500 text-indigo-500 animate-pulse" />
                   {runningCount} running
                 </span>
@@ -166,15 +166,15 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
             <>共 {total} 条记录</>
           )}
         </p>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-400 dark:text-slate-500">
           第 {page} / {totalPages} 页
         </p>
       </div>
 
       {/* 表格 */}
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
             <tr>
               <th className="px-4 py-3">采集批次</th>
               <th className="px-4 py-3">开始时间</th>
@@ -188,47 +188,47 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
               <th className="px-4 py-3">说明</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {logs.map((r) => (
               <tr
                 key={r.id}
-                className={`hover:bg-slate-50 ${
-                  r.status === "running" ? "bg-indigo-50/50" : ""
+                className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
+                  r.status === "running" ? "bg-indigo-50/50 dark:bg-indigo-950/30" : ""
                 }`}
               >
-                <td className="px-4 py-3 text-xs text-slate-400">
+                <td className="px-4 py-3 text-xs text-slate-400 dark:text-slate-400">
                   {r.crawlSessionId ? (
-                    <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono">
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono dark:bg-slate-800">
                       #{r.crawlSessionId}
                     </span>
                   ) : "-"}
                 </td>
-                <td className="px-4 py-3 text-slate-500">
+                <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
                   {r.startedAt
                     ? new Date(r.startedAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })
                     : "-"}
                 </td>
-                <td className="px-4 py-3 font-medium">
+                <td className="px-4 py-3 font-medium dark:text-slate-300">
                   {siteNames[r.siteId ?? 0] ?? `站点 #${r.siteId ?? "?"}`}
                 </td>
                 <td className="px-4 py-3 text-emerald-600">{r.fetched}</td>
                 <td className="px-4 py-3 text-indigo-600">{r.updated > 0 ? r.updated : "-"}</td>
-                <td className="px-4 py-3 text-slate-400">{r.skipped}</td>
+                <td className="px-4 py-3 text-slate-400 dark:text-slate-400">{r.skipped}</td>
                 <td className="px-4 py-3 text-red-500">
                   {r.errorCount > 0 ? r.errorCount : "-"}
                 </td>
                 <td className="px-4 py-3">{statusBadge(r.status)}</td>
-                <td className="px-4 py-3 text-xs text-slate-400">
+                <td className="px-4 py-3 text-xs text-slate-400 dark:text-slate-400">
                   {r.endedAt ? formatDuration(r.startedAt, r.endedAt) : (r.status === "running" ? <Loader2 className="h-3 w-3 animate-spin text-indigo-400" /> : "—")}
                 </td>
-                <td className="px-4 py-3 max-w-[200px] truncate text-xs text-slate-400">
+                <td className="px-4 py-3 max-w-[200px] truncate text-xs text-slate-400 dark:text-slate-400">
                   {r.message ?? "-"}
                 </td>
               </tr>
             ))}
             {!logs.length ? (
               <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={10} className="px-4 py-8 text-center text-slate-400 dark:text-slate-400">
                   暂无运行记录
                 </td>
               </tr>
@@ -242,7 +242,7 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
         <button
           onClick={() => goPage(1)}
           disabled={page <= 1 || loading}
-          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 transition-colors cursor-pointer"
         >
           <ChevronsLeft className="h-3.5 w-3.5" />
           首页
@@ -250,7 +250,7 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
         <button
           onClick={() => goPage(page - 1)}
           disabled={page <= 1 || loading}
-          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 transition-colors cursor-pointer"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
           上一页
@@ -270,7 +270,7 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
               className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
                 p === page
                   ? "bg-indigo-600 text-white"
-                  : "text-slate-500 hover:bg-slate-100"
+                  : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"
               }`}
             >
               {p}
@@ -281,7 +281,7 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
         <button
           onClick={() => goPage(page + 1)}
           disabled={page >= totalPages || loading}
-          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 transition-colors cursor-pointer"
         >
           下一页
           <ChevronRight className="h-3.5 w-3.5" />
@@ -289,7 +289,7 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
         <button
           onClick={() => goPage(totalPages)}
           disabled={page >= totalPages || loading}
-          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 transition-colors cursor-pointer"
         >
           末页
           <ChevronsRight className="h-3.5 w-3.5" />
@@ -297,7 +297,7 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
       </div>
 
       {loading && (
-        <p className="mt-2 text-center text-xs text-slate-400">加载中…</p>
+        <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-400">加载中…</p>
       )}
     </div>
   );

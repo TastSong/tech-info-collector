@@ -38,15 +38,15 @@ const ICONS: Record<ToastType, typeof CheckCircle2> = {
 };
 
 const STYLES: Record<ToastType, string> = {
-  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  error: "border-red-200 bg-red-50 text-red-700",
-  info: "border-blue-200 bg-blue-50 text-blue-700",
+  success: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400",
+  error: "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400",
+  info: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400",
 };
 
 const ICON_COLORS: Record<ToastType, string> = {
-  success: "text-emerald-500",
-  error: "text-red-500",
-  info: "text-blue-500",
+  success: "text-emerald-500 dark:text-emerald-400",
+  error: "text-red-500 dark:text-red-400",
+  info: "text-blue-500 dark:text-blue-400",
 };
 
 let nextId = 0;
@@ -88,7 +88,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <span className="flex-1">{t.message}</span>
               <button
                 onClick={() => remove(t.id)}
-                className="shrink-0 rounded p-0.5 hover:bg-black/5 transition-colors cursor-pointer"
+                className="shrink-0 rounded p-0.5 hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
               >
                 <X className="h-3.5 w-3.5" />
               </button>

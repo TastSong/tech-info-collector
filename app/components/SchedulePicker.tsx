@@ -155,18 +155,18 @@ export function SchedulePicker({ currentCron, onSaved, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
-        <h3 className="mb-4 text-lg font-semibold text-slate-900">
+      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+        <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
           定时采集设置
         </h3>
 
         {/* 频率预设 */}
         <div className="mb-4">
-          <label className="mb-1.5 block text-xs font-medium text-slate-500">
+          <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
             频率
           </label>
           <select
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             value={preset}
             onChange={(e) => {
               setPreset(e.target.value as Preset);
@@ -182,11 +182,11 @@ export function SchedulePicker({ currentCron, onSaved, onClose }: Props) {
         {/* 时间选择 */}
         <div className="mb-4 flex gap-3">
           <div className="flex-1">
-            <label className="mb-1.5 block text-xs font-medium text-slate-500">
+            <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
               时
             </label>
             <select
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
               value={hour}
               onChange={(e) => setHour(e.target.value)}
             >
@@ -198,11 +198,11 @@ export function SchedulePicker({ currentCron, onSaved, onClose }: Props) {
             </select>
           </div>
           <div className="flex-1">
-            <label className="mb-1.5 block text-xs font-medium text-slate-500">
+            <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
               分
             </label>
             <select
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
               value={min}
               onChange={(e) => setMin(e.target.value)}
             >
@@ -218,11 +218,11 @@ export function SchedulePicker({ currentCron, onSaved, onClose }: Props) {
         {/* 每月：日期选择 */}
         {preset === "monthly" && (
           <div className="mb-4">
-            <label className="mb-1.5 block text-xs font-medium text-slate-500">
+            <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
               每月几号
             </label>
             <select
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
               value={dom}
               onChange={(e) => setDom(e.target.value)}
             >
@@ -238,7 +238,7 @@ export function SchedulePicker({ currentCron, onSaved, onClose }: Props) {
         {/* 每周：星期多选 */}
         {preset === "weekly" && (
           <div className="mb-4">
-            <label className="mb-1.5 block text-xs font-medium text-slate-500">
+            <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
               星期
             </label>
             <div className="flex flex-wrap gap-2">
@@ -248,8 +248,8 @@ export function SchedulePicker({ currentCron, onSaved, onClose }: Props) {
                   type="button"
                   className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                     dows.includes(n)
-                      ? "bg-indigo-500 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      ? "bg-indigo-500 text-white dark:bg-indigo-600"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                   }`}
                   onClick={() => toggleDow(n)}
                 >
@@ -261,26 +261,26 @@ export function SchedulePicker({ currentCron, onSaved, onClose }: Props) {
         )}
 
         {/* Cron 预览 */}
-        <div className="mb-4 rounded-lg bg-slate-50 px-3 py-2">
-          <span className="text-xs text-slate-400">cron: </span>
-          <code className="text-xs text-slate-700">{cronPreview}</code>
+        <div className="mb-4 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800">
+          <span className="text-xs text-slate-400 dark:text-slate-500">cron: </span>
+          <code className="text-xs text-slate-700 dark:text-slate-300">{cronPreview}</code>
         </div>
 
         {error ? (
-          <p className="mb-3 text-xs text-red-500">{error}</p>
+          <p className="mb-3 text-xs text-red-500 dark:text-red-400">{error}</p>
         ) : null}
 
         <div className="flex justify-end gap-2">
           <button
             type="button"
-            className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
             onClick={onClose}
           >
             取消
           </button>
           <button
             type="button"
-            className="rounded-lg bg-slate-800 px-4 py-2 text-sm text-white hover:bg-slate-900 disabled:opacity-50"
+            className="rounded-lg bg-slate-800 px-4 py-2 text-sm text-white hover:bg-slate-900 disabled:opacity-50 dark:bg-slate-700 dark:hover:bg-slate-600"
             onClick={save}
             disabled={saving}
           >

@@ -32,7 +32,7 @@ export default async function SitesPage() {
             <Globe className="h-5 w-5 text-indigo-500" />
             站点配置
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {sites.filter((s) => s.enabled).length} / {sites.length} 启用
           </p>
         </div>

@@ -55,7 +55,7 @@ export function LiveProgress() {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+      <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400">
         进度拉取失败: {error}
       </div>
     );
@@ -63,7 +63,7 @@ export function LiveProgress() {
 
   if (!data) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-400">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
         加载中...
       </div>
     );
@@ -83,10 +83,10 @@ export function LiveProgress() {
     <div className="space-y-4">
       {/* Running */}
       {running.length > 0 && (
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-950/30">
           <div className="flex items-center gap-2 mb-3">
             <span className="inline-flex h-3 w-3 rounded-full bg-indigo-500 animate-pulse" />
-            <span className="text-sm font-semibold text-indigo-700">
+            <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-400">
               采集进行中
               {session ? (
                 <span> ({sessionDone}/{session.siteCount} 站点)</span>
@@ -107,7 +107,7 @@ export function LiveProgress() {
           </div>
           {/* 进度条 */}
           {session && session.siteCount > 0 && (
-            <div className="mb-3 h-1.5 rounded-full bg-indigo-200 overflow-hidden">
+            <div className="mb-3 h-1.5 rounded-full bg-indigo-200 overflow-hidden dark:bg-indigo-800">
               <div
                 className="h-full rounded-full bg-indigo-500 transition-all duration-500"
                 style={{
@@ -120,12 +120,12 @@ export function LiveProgress() {
             {running.map((r) => (
               <div
                 key={r.id}
-                className="flex items-center justify-between rounded bg-white/60 px-3 py-1.5 text-xs"
+                className="flex items-center justify-between rounded bg-white/60 px-3 py-1.5 text-xs dark:bg-slate-900/60"
               >
-                <span className="text-slate-700 font-medium">
+                <span className="text-slate-700 font-medium dark:text-slate-300">
                   {r.siteName ?? `站点 #${r.siteId ?? "?"}`}
                 </span>
-                <span className="text-slate-500">
+                <span className="text-slate-500 dark:text-slate-400">
                   {r.fetched > 0 && (
                     <span className="text-emerald-600 mr-2">新 {r.fetched}</span>
                   )}
@@ -145,7 +145,7 @@ export function LiveProgress() {
           <div className="mt-2 flex items-center gap-2">
             <Link
               href="/runs"
-              className="text-xs text-indigo-600 hover:text-indigo-800"
+              className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
             >
               查看全部运行日志 →
             </Link>
@@ -155,8 +155,8 @@ export function LiveProgress() {
 
       {/* Recently finished (last batch) */}
       {!running.length && recent.length > 0 && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-emerald-700">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950/30">
+          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
             <span>✓ 最近一轮采集完成</span>
             <span className="text-xs font-normal text-emerald-500">
               {recent.length} 个站点 ·{" "}
@@ -168,7 +168,7 @@ export function LiveProgress() {
             {recent.slice(0, 10).map((r) => (
               <span
                 key={r.id}
-                className="inline-flex items-center rounded bg-emerald-100 px-2 py-1 text-emerald-700"
+                className="inline-flex items-center rounded bg-emerald-100 px-2 py-1 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
               >
                 {r.siteName ?? `站点#${r.siteId ?? "?"}`}: 新+{r.fetched} 变{r.updated > 0 ? `+${r.updated}` : 0}
               </span>

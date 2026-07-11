@@ -67,20 +67,20 @@ const EMPTY_FORM: SiteFormData = {
 /* ---------- helpers ---------- */
 
 const cls = {
-  section: "rounded-xl border border-slate-200 bg-white p-5 space-y-4",
-  sectionTitle: "text-sm font-semibold text-slate-700 border-b border-slate-100 pb-2 mb-3",
-  label: "block text-xs font-medium text-slate-600 mb-1",
+  section: "rounded-xl border border-slate-200 bg-white p-5 space-y-4 dark:border-slate-800 dark:bg-slate-900",
+  sectionTitle: "text-sm font-semibold text-slate-700 border-b border-slate-100 pb-2 mb-3 dark:text-slate-300 dark:border-slate-700",
+  label: "block text-xs font-medium text-slate-600 mb-1 dark:text-slate-400",
   input:
-    "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition",
+    "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder-slate-500",
   select:
-    "rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:outline-none",
+    "rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200",
   btn: "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors cursor-pointer",
   btnPrimary:
     "bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50",
   btnDanger:
-    "bg-red-50 text-red-700 hover:bg-red-100",
+    "bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-950 dark:text-red-400 dark:hover:bg-red-900",
   btnMuted:
-    "bg-slate-100 text-slate-600 hover:bg-slate-200",
+    "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700",
 };
 
 /* ---------- component ---------- */
@@ -271,8 +271,8 @@ export function SiteEditForm({
         <div
           className={`rounded-lg px-4 py-3 text-sm font-medium ${
             message.type === "success"
-              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              : "bg-red-50 text-red-700 border border-red-200"
+              ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-400 dark:border-emerald-800"
+              : "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800"
           }`}
         >
           {message.text}
@@ -314,7 +314,7 @@ export function SiteEditForm({
                   type="button"
                   onClick={() => removeUrl(i)}
                   disabled={form.urls.length <= 1}
-                  className="shrink-0 rounded-lg px-2 py-1 text-xs text-red-500 hover:bg-red-50 disabled:opacity-30 cursor-pointer"
+                  className="shrink-0 rounded-lg px-2 py-1 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-30 cursor-pointer"
                   title="删除此 URL"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -342,7 +342,7 @@ export function SiteEditForm({
           }
           className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all cursor-pointer
             ${analyzing
-              ? "bg-indigo-100 text-indigo-500 cursor-wait"
+              ? "bg-indigo-100 dark:bg-indigo-900 text-indigo-500 cursor-wait dark:bg-indigo-950 dark:text-indigo-400"
               : "bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600 shadow-sm hover:shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
             }`}
         >
@@ -357,7 +357,7 @@ export function SiteEditForm({
         </button>
 
         {!analyzing && aiResult && (
-          <p className="mt-1.5 text-xs text-indigo-600">
+          <p className="mt-1.5 text-xs text-indigo-600 dark:text-indigo-400">
             已检测：{aiResult.diagnostics.staticWorked ? "静态可用 ✓" : "需要动态渲染"}
             {" · "}最佳 URL: {new URL(aiResult.diagnostics.bestUrl).hostname}
             {" · "}置信度: {aiResult.diagnostics.selectorConfidence === "high" ? "高" : aiResult.diagnostics.selectorConfidence === "medium" ? "中" : "低"}
@@ -367,9 +367,9 @@ export function SiteEditForm({
 
       {/* AI 分析结果摘要 */}
       {aiResult && (
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4">
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 dark:border-indigo-800 dark:bg-indigo-950/30">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-indigo-800 flex items-center gap-1.5">
+            <h3 className="text-sm font-semibold text-indigo-800 flex items-center gap-1.5 dark:text-indigo-300">
               <Bot className="h-4 w-4" />
               AI 检测结果
             </h3>
@@ -387,33 +387,33 @@ export function SiteEditForm({
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs text-indigo-700">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs text-indigo-700 dark:text-indigo-400">
             <span>渲染模式：{aiResult.render === "static" ? "静态 🔗" : "动态 🌐"}</span>
             <span>分类：{aiResult.category || "未识别"}</span>
             <span>子分类：{aiResult.subcategory || "未识别"}</span>
-            <span>listSelector：<code className="bg-indigo-100 px-1 rounded">{aiResult.listSelector}</code></span>
-            <span>itemSelector：<code className="bg-indigo-100 px-1 rounded">{aiResult.itemSelector}</code></span>
-            <span>linkSelector：<code className="bg-indigo-100 px-1 rounded">{aiResult.linkSelector}</code></span>
+            <span>listSelector：<code className="bg-indigo-100 dark:bg-indigo-900 px-1 rounded">{aiResult.listSelector}</code></span>
+            <span>itemSelector：<code className="bg-indigo-100 dark:bg-indigo-900 px-1 rounded">{aiResult.itemSelector}</code></span>
+            <span>linkSelector：<code className="bg-indigo-100 dark:bg-indigo-900 px-1 rounded">{aiResult.linkSelector}</code></span>
             {aiResult.titleSelector && (
-              <span>titleSelector：<code className="bg-indigo-100 px-1 rounded">{aiResult.titleSelector}</code></span>
+              <span>titleSelector：<code className="bg-indigo-100 dark:bg-indigo-900 px-1 rounded">{aiResult.titleSelector}</code></span>
             )}
             {aiResult.bodySelector && (
-              <span>bodySelector：<code className="bg-indigo-100 px-1 rounded">{aiResult.bodySelector}</code></span>
+              <span>bodySelector：<code className="bg-indigo-100 dark:bg-indigo-900 px-1 rounded">{aiResult.bodySelector}</code></span>
             )}
             {aiResult.dateSelector && (
-              <span>dateSelector：<code className="bg-indigo-100 px-1 rounded">{aiResult.dateSelector}</code></span>
+              <span>dateSelector：<code className="bg-indigo-100 dark:bg-indigo-900 px-1 rounded">{aiResult.dateSelector}</code></span>
             )}
             <span>Token 消耗：{aiResult.diagnostics.tokensUsed}</span>
           </div>
 
           {aiResult.sampleLinks.length > 0 && (
             <details className="mt-2">
-              <summary className="text-xs text-indigo-600 cursor-pointer hover:text-indigo-800">
+              <summary className="text-xs text-indigo-600 cursor-pointer hover:text-indigo-800 dark:text-indigo-400">
                 示例文章链接 ({aiResult.sampleLinks.length})
               </summary>
               <ul className="mt-1 space-y-0.5">
                 {aiResult.sampleLinks.map((link, i) => (
-                  <li key={i} className="text-xs text-indigo-500 truncate">
+                  <li key={i} className="text-xs text-indigo-500 dark:text-indigo-400 truncate">
                     <a href={link} target="_blank" rel="noopener noreferrer" className="hover:underline">
                       {link}
                     </a>
@@ -493,7 +493,7 @@ export function SiteEditForm({
                   }`}
                 />
               </button>
-              <span className="text-sm text-slate-500">{form.enabled ? "启用" : "禁用"}</span>
+              <span className="text-sm text-slate-500 dark:text-slate-400">{form.enabled ? "启用" : "禁用"}</span>
             </div>
           </div>
         </div>
@@ -595,7 +595,7 @@ export function SiteEditForm({
         {mode === "edit" && (
           <div>
             {showDeleteConfirm ? (
-              <span className="flex items-center gap-2 text-sm text-red-600">
+              <span className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
                 确认删除此站点？
                 <button
                   type="button"
@@ -608,7 +608,7 @@ export function SiteEditForm({
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="rounded bg-slate-100 px-3 py-1 text-xs text-slate-600 hover:bg-slate-200 cursor-pointer"
+                  className="rounded bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
                 >
                   取消
                 </button>

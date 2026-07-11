@@ -3,10 +3,10 @@ import { CheckCircle2, XCircle, Loader2, Globe, FileText } from "lucide-react";
 /** 站点颜色 + AI 参与度标签 */
 export function badge(label: React.ReactNode, color: "green" | "amber" | "red" | "slate") {
   const map = {
-    green: "bg-emerald-50 text-emerald-700",
-    amber: "bg-amber-50 text-amber-700",
-    red: "bg-red-50 text-red-700",
-    slate: "bg-slate-100 text-slate-600",
+    green: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400",
+    amber: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400",
+    red: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400",
+    slate: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
   };
   return <span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${map[color]}`}>{label}</span>;
 }

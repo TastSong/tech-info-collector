@@ -358,10 +358,10 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
   return (
     <>
       {/* 搜索/筛选栏 */}
-      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4">
+      <div className="mb-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-xs font-medium text-slate-500 mb-1">
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
               关键词
             </label>
             <div className="relative">
@@ -371,19 +371,19 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="搜索标题、摘要、站点…"
-                className="w-full rounded-lg border border-slate-200 pl-9 pr-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder-slate-500 dark:focus:border-indigo-500 pl-9 pr-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
               />
             </div>
           </div>
 
           <div className="min-w-[140px]">
-            <label className="block text-xs font-medium text-slate-500 mb-1">
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
               分类
             </label>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder-slate-500 dark:focus:border-indigo-500 px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
             >
               <option value="">全部类别</option>
               {categories.map((c) => (
@@ -395,13 +395,13 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
           </div>
 
           <div className="min-w-[160px]">
-            <label className="block text-xs font-medium text-slate-500 mb-1">
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
               站点
             </label>
             <select
               value={siteFilter}
               onChange={(e) => setSiteFilter(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder-slate-500 dark:focus:border-indigo-500 px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
             >
               <option value="">全部站点</option>
               {sites.map((s) => (
@@ -436,8 +436,8 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
             }}
             className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
               savedOnly
-                ? "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
-                : "border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50"
+                ? "border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 hover:bg-amber-100"
+                : "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 hover:text-slate-700 dark:hover:bg-slate-800 hover:bg-slate-50"
             }`}
           >
             <Star className={`h-3.5 w-3.5 ${savedOnly ? "fill-amber-400 text-amber-400" : ""}`} />
@@ -447,7 +447,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
           {anyFilterActive && (
             <button
               onClick={clearFilters}
-              className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+              className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:border-slate-300 hover:text-slate-700 dark:hover:bg-slate-800 hover:bg-slate-50 transition-colors"
             >
               <X className="h-3.5 w-3.5" />
               清除筛选
@@ -458,7 +458,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
 
       {/* 统计行 + 全部已读 + 分页信息 */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <div className="text-sm text-slate-500">
+        <div className="text-sm text-slate-500 dark:text-slate-400">
           {savedOnly ? (
             <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> 收藏文章 · {totalDisplayed} 篇</span>
           ) : anyFilterActive ? (
@@ -472,7 +472,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
             <button
               onClick={markAllRead}
               disabled={bulkLoading}
-              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50 disabled:opacity-40 transition-colors"
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:border-slate-300 hover:text-slate-700 dark:hover:bg-slate-800 hover:bg-slate-50 disabled:opacity-40 transition-colors"
             >
               {bulkLoading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -480,7 +480,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
               {bulkLoading ? (bulkProgress || "处理中…") : `全部已读 (${filtered.length})`}
             </button>
           )}
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-slate-400 dark:text-slate-500">
             第 {page} / {totalPages} 页
           </span>
         </div>
@@ -488,21 +488,21 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
 
       {/* 文章列表 */}
       {!bucketInfos.length ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-12 text-center">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center">
           {anyFilterActive ? (
             <div className="flex flex-col items-center gap-3">
-              <SearchX className="h-12 w-12 text-slate-200" />
-              <p className="text-slate-400">没有匹配的文章</p>
-              <p className="text-xs text-slate-300">试试调整筛选条件</p>
-              <button onClick={clearFilters} className="mt-1 inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-500 hover:border-slate-300 transition-colors">
+              <SearchX className="h-12 w-12 text-slate-200 dark:text-slate-700" />
+              <p className="text-slate-400 dark:text-slate-500">没有匹配的文章</p>
+              <p className="text-xs text-slate-300 dark:text-slate-500">试试调整筛选条件</p>
+              <button onClick={clearFilters} className="mt-1 inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:bg-slate-800 transition-colors">
                 <X className="h-3.5 w-3.5" /> 清除筛选
               </button>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
-              <Inbox className="h-12 w-12 text-slate-200" />
-              <p className="text-slate-400 font-medium">暂无新资讯 ✓</p>
-              <p className="text-xs text-slate-300">所有文章已读完，干得漂亮 🎉</p>
+              <Inbox className="h-12 w-12 text-slate-200 dark:text-slate-700" />
+              <p className="text-slate-400 dark:text-slate-500 font-medium">暂无新资讯 ✓</p>
+              <p className="text-xs text-slate-300 dark:text-slate-500">所有文章已读完，干得漂亮 🎉</p>
             </div>
           )}
         </div>
@@ -515,10 +515,10 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
 
             return (
               <section key={bucket.key}>
-                <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-slate-800">
+                <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-slate-800 dark:text-slate-200">
                   <Calendar className="h-4 w-4 text-indigo-400" />
                   {bucket.label}
-                  <span className="text-xs font-normal text-slate-400">
+                  <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
                     ({bucketTotal} 篇)
                   </span>
                 </h2>
@@ -531,7 +531,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
                     return (
                     <div key={catGroup.category}>
                       <h3
-                        className="mb-2 flex cursor-pointer select-none items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors"
+                        className="mb-2 flex cursor-pointer select-none items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
                         onClick={() => toggleCategory(catKey)}
                       >
                         <ChevronDown
@@ -541,7 +541,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
                         />
                         <span className="inline-block h-1.5 w-1.5 rounded-full bg-indigo-400" />
                         {catGroup.category}
-                        <span className="text-xs font-normal text-slate-400">
+                        <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
                           ({catGroup.articles.length})
                         </span>
                       </h3>
@@ -582,7 +582,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
           <button
             onClick={() => goPage(1)}
             disabled={page <= 1 || loadingPage}
-            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer"
           >
             <ChevronsLeft className="h-3.5 w-3.5" />
             首页
@@ -590,7 +590,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
           <button
             onClick={() => goPage(page - 1)}
             disabled={page <= 1 || loadingPage}
-            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
             上一页
@@ -609,7 +609,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
                   p === page
                     ? "bg-indigo-600 text-white"
-                    : "text-slate-500 hover:bg-slate-100"
+                    : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 }`}
               >
                 {p}
@@ -620,7 +620,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
           <button
             onClick={() => goPage(page + 1)}
             disabled={page >= totalPages || loadingPage}
-            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer"
           >
             下一页
             <ChevronRight className="h-3.5 w-3.5" />
@@ -628,7 +628,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
           <button
             onClick={() => goPage(totalPages)}
             disabled={page >= totalPages || loadingPage}
-            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer"
           >
             末页
             <ChevronsRight className="h-3.5 w-3.5" />
@@ -637,7 +637,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
       )}
 
       {loadingPage && (
-        <p className="mt-2 text-center text-xs text-slate-400">加载中…</p>
+        <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500">加载中…</p>
       )}
     </>
   );

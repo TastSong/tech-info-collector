@@ -45,7 +45,7 @@ export default function DashboardPage() {
       <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">仪表盘</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             <AnimatedNumber value={total} /> 篇文章 ·{" "}
             <AnimatedNumber value={readyCount} /> 已发布 ·{" "}
             <AnimatedNumber value={rejectedCount} /> 已驳回
@@ -56,28 +56,28 @@ export default function DashboardPage() {
 
       {/* Stats */}
       <section className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 hover:shadow-sm transition-shadow">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 hover:shadow-sm transition-shadow dark:bg-slate-900 dark:border-slate-800">
           <div className="flex items-center gap-2 mb-1">
-            <Newspaper className="h-4 w-4 text-slate-400" />
-            <span className="text-xs text-slate-400">总文章</span>
+            <Newspaper className="h-4 w-4 text-slate-400 dark:text-slate-400" />
+            <span className="text-xs text-slate-400 dark:text-slate-400">总文章</span>
           </div>
-          <div className="text-2xl font-semibold text-slate-900">
+          <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
             <AnimatedNumber value={total} />
           </div>
         </div>
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 hover:shadow-sm transition-shadow">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 hover:shadow-sm transition-shadow dark:bg-emerald-950/30 dark:border-emerald-800">
           <div className="flex items-center gap-2 mb-1">
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            <span className="text-xs text-emerald-600">已发布情报</span>
+            <span className="text-xs text-emerald-600 dark:text-emerald-400">已发布情报</span>
           </div>
           <div className="text-2xl font-semibold text-emerald-700">
             <AnimatedNumber value={readyCount} />
           </div>
         </div>
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 hover:shadow-sm transition-shadow">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 hover:shadow-sm transition-shadow dark:bg-red-950/30 dark:border-red-800">
           <div className="flex items-center gap-2 mb-1">
             <XCircle className="h-4 w-4 text-red-400" />
-            <span className="text-xs text-red-600">AI 已筛除</span>
+            <span className="text-xs text-red-600 dark:text-red-400">AI 已筛除</span>
           </div>
           <div className="text-2xl font-semibold text-red-700">
             <AnimatedNumber value={rejectedCount} />
@@ -93,14 +93,14 @@ export default function DashboardPage() {
 
       {/* Recent Runs */}
       <section className="mb-10">
-        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold dark:text-slate-200">
           <Clock className="h-4 w-4 text-slate-400" />
           最近采集
         </h2>
         {sessions.length ? (
-          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                 <tr>
                   <th className="px-4 py-3">时间</th>
                   <th className="px-4 py-3">站点数</th>
@@ -111,10 +111,10 @@ export default function DashboardPage() {
                   <th className="px-4 py-3">结果</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {sessions.map((s) => (
-                  <tr key={s.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3 text-slate-500">
+                  <tr key={s.id} className="hover:bg-slate-50 transition-colors dark:hover:bg-slate-800/50">
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
                       {s.startedAt
                         ? new Date(s.startedAt).toLocaleString("zh-CN", {
                             month: "short",
@@ -158,25 +158,25 @@ export default function DashboardPage() {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-slate-400">暂无采集记录</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">暂无采集记录</p>
         )}
       </section>
 
       {/* Site Overview */}
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">站点概况</h2>
+          <h2 className="text-lg font-semibold dark:text-slate-200">站点概况</h2>
           <Link
             href="/sites"
-            className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+            className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors dark:hover:text-indigo-400"
           >
             管理站点 <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800">
           <div className="max-h-64 overflow-y-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3">站点</th>
                 <th className="px-4 py-3">分类</th>
@@ -188,7 +188,7 @@ export default function DashboardPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {siteStats.map((s) => (
-                <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                <tr key={s.id} className="hover:bg-slate-50 transition-colors dark:hover:bg-slate-800/50">
                   <td className="px-4 py-3 font-medium text-slate-900">
                     <Link
                       href={`/articles?site=${s.id}`}

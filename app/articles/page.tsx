@@ -37,7 +37,7 @@ export default async function ArticlesPage(props: {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
-      <h1 className="mb-6 text-2xl font-bold tracking-tight">文章流</h1>
+      <h1 className="mb-6 text-2xl font-bold tracking-tight dark:text-slate-100">文章流</h1>
 
       {/* Filters */}
       <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -48,7 +48,7 @@ export default async function ArticlesPage(props: {
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               status === s
                 ? "bg-slate-800 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
             }`}
           >
             {s === "published"
@@ -61,7 +61,7 @@ export default async function ArticlesPage(props: {
           </Link>
         ))}
         {siteId ? (
-          <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-600">
+          <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
             站点 #{siteId}
             <Link href="/articles" className="ml-1 hover:underline">
               ✕
@@ -76,14 +76,14 @@ export default async function ArticlesPage(props: {
           <Link
             key={a.id}
             href={`/articles/${a.id}`}
-            className="block rounded-xl border border-slate-200 bg-white p-4 hover:border-indigo-300 transition-colors"
+            className="block rounded-xl border border-slate-200 bg-white p-4 hover:border-indigo-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-600 transition-colors"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-slate-900 line-clamp-1">
+                <div className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">
                   {a.title || "(无标题)"}
                 </div>
-                <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                <div className="mt-1 flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
                   <span>{nameOf.get(a.siteId) ?? `#${a.siteId}`}</span>
                   <span>·</span>
                   <span>
@@ -100,7 +100,7 @@ export default async function ArticlesPage(props: {
           </Link>
         ))}
         {!articles.length ? (
-          <p className="text-sm text-slate-400">暂无匹配文章</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">暂无匹配文章</p>
         ) : null}
       </div>
     </main>

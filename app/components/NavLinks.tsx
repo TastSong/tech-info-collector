@@ -36,8 +36,8 @@ function NavLink({
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap ${
         isActive
-          ? "bg-indigo-50 text-indigo-700"
-          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400"
+          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
       }`}
     >
       <Icon className="h-4 w-4" />
@@ -60,7 +60,7 @@ export function NavLinks() {
       {/* Hamburger button — visible on mobile */}
       <button
         onClick={() => setOpen(!open)}
-        className="sm:hidden rounded-lg p-2 text-slate-600 hover:bg-slate-100"
+        className="sm:hidden rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
         aria-label="Toggle menu"
       >
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +83,7 @@ export function NavLinks() {
 
       {/* Mobile dropdown */}
       <div
-        className={`absolute top-full left-0 right-0 border-b border-slate-200 bg-white shadow-lg sm:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+        className={`absolute top-full left-0 right-0 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg sm:hidden overflow-hidden transition-all duration-300 ease-in-out ${
           open ? "max-h-80 opacity-100" : "max-h-0 opacity-0"
         }`}
       >

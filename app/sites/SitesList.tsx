@@ -88,8 +88,8 @@ export function SitesList({ sites: initialSites, articleCounts }: Props) {
         <div className={`overflow-hidden transition-all duration-300 ${
           selectedIds.size > 0 ? "max-h-20 opacity-100 mb-4" : "max-h-0 opacity-0 mb-0"
         }`}>
-          <div className="flex items-center gap-3 rounded-lg border border-indigo-200 bg-indigo-50/60 px-4 py-3">
-            <span className="text-sm font-medium text-indigo-800">
+          <div className="flex items-center gap-3 rounded-lg border border-indigo-200 bg-indigo-50/60 px-4 py-3 dark:border-indigo-800 dark:bg-indigo-950/30">
+            <span className="text-sm font-medium text-indigo-800 dark:text-indigo-300">
               已选 {selectedIds.size} 个站点
             </span>
             <div className="flex gap-2">
@@ -113,7 +113,7 @@ export function SitesList({ sites: initialSites, articleCounts }: Props) {
             <button
               type="button"
               onClick={() => setSelectedIds(new Set())}
-              className="ml-auto text-xs text-slate-500 hover:text-slate-700 cursor-pointer"
+              className="ml-auto text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
             >
               取消选择
             </button>
@@ -130,11 +130,11 @@ export function SitesList({ sites: initialSites, articleCounts }: Props) {
             onChange={handleSelectAll}
             className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
           />
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 dark:text-slate-400">
             {allSelected ? "取消全选" : "全选"}
           </span>
         </label>
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-slate-400 dark:text-slate-400">
           {sites.filter((s) => s.enabled).length} / {sites.length} 启用
         </span>
       </div>

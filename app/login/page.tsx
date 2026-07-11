@@ -61,41 +61,41 @@ export default function LoginPage() {
   if (checking) {
     return (
       <main className="mx-auto flex min-h-[60vh] max-w-md items-center justify-center px-6">
-        <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-slate-400 dark:text-slate-400" />
       </main>
     );
   }
 
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-md items-center justify-center px-6">
-      <div className={`w-full rounded-2xl border border-slate-200 bg-white p-8 shadow-sm ${shaking ? "animate-shake" : ""}`}>
+      <div className={`w-full rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:bg-slate-900 dark:border-slate-800 ${shaking ? "animate-shake" : ""}`}>
         {/* Logo & heading */}
         <div className="mb-6 text-center">
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 shadow-md">
             <Bot className="h-7 w-7 text-white" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             科技情报采集器
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             请登录以继续
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="username">
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="username">
               用户名
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
               <input
                 id="username"
                 type="text"
                 autoComplete="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 pl-10 pr-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-lg border border-slate-300 pl-10 pr-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-indigo-500 dark:focus:ring-indigo-800"
                 placeholder="输入用户名"
                 disabled={submitting}
               />
@@ -103,18 +103,18 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="password">
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="password">
               密码
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
               <input
                 id="password"
                 type="password"
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 pl-10 pr-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-lg border border-slate-300 pl-10 pr-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-indigo-500 dark:focus:ring-indigo-800"
                 placeholder="输入密码"
                 disabled={submitting}
               />
@@ -122,7 +122,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <p className="rounded-lg bg-red-50 border border-red-100 px-3 py-2 text-sm text-red-600 animate-slide-down">
+            <p className="rounded-lg bg-red-50 border border-red-100 px-3 py-2 text-sm text-red-600 animate-slide-down dark:bg-red-950/30 dark:border-red-800 dark:text-red-400">
               {error}
             </p>
           )}

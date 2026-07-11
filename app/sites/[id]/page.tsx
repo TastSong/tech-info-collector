@@ -8,8 +8,8 @@ export const dynamic = "force-dynamic";
 function notFound() {
   return (
     <main className="mx-auto max-w-2xl px-6 py-10 text-center">
-      <h1 className="text-xl font-bold text-slate-800">站点不存在</h1>
-      <p className="mt-2 text-sm text-slate-500">
+      <h1 className="text-xl font-bold text-slate-800 dark:text-slate-200">站点不存在</h1>
+      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
         请检查站点 ID 是否正确
       </p>
       <Link
@@ -59,12 +59,12 @@ export default async function SiteEditPage({
       <div className="mb-6">
         <Link
           href="/sites"
-          className="text-sm text-indigo-600 hover:text-indigo-800"
+          className="text-sm text-indigo-600 hover:text-indigo-800 dark:hover:text-indigo-400"
         >
           ← 返回站点列表
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">编辑站点</h1>
-        <p className="mt-1 text-sm text-slate-500">#{row.id} — {row.name}</p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight dark:text-slate-100">编辑站点</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">#{row.id} — {row.name}</p>
       </div>
 
       <SiteEditForm initial={initial} mode="edit" siteId={row.id} />
