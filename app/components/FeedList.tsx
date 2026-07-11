@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { FeedCard } from "./FeedCard";
 import { parseTags } from "@/src/lib/parse-tags";
-import { Calendar, Search, Filter, Star, X, Inbox, SearchX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronDown, Loader2 } from "lucide-react";
+import { Calendar, Search, Filter, Star, X, Inbox, SearchX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronDown, Loader2, Eye } from "lucide-react";
 import { useToast } from "./Toast";
 
 export interface ArticleItem {
@@ -576,9 +576,29 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
         </div>
       )}
 
-      {/* 分页导航 */}
-      {totalPages > 1 && (
-        <div className="mt-8 flex items-center justify-center gap-2">
+      {/* 底部操作栏：分页 + 全部已读 */}
+      <div className="mt-8 space-y-4">
+        {/* 全部已读（单页时与分页并列，多页时在分页下方） */}
+        {filtered.length > 0 && !savedOnly && (
+          <div className="flex justify-center">
+            <button
+              onClick={markAllRead}
+              disabled={bulkLoading}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-indigo-300 hover:text-indigo-600 dark:hover:border-indigo-500 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 transition-colors"
+            >
+              {bulkLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+              {bulkLoading ? (bulkProgress || "处理中…") : `全部已读 (${filtered.length})`}
+            </button>
+          </div>
+        )}
+
+        {/* 分页导航 */}
+        {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => goPage(1)}
             disabled={page <= 1 || loadingPage}
@@ -635,6 +655,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
           </button>
         </div>
       )}
+      </div>
 
       {loadingPage && (
         <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500">加载中…</p>
