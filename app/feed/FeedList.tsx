@@ -406,7 +406,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
           )}
         </div>
         <div className="flex items-center gap-3">
-          {filtered.length > 0 && (
+          {filtered.length > 0 && !savedOnly && (
             <button
               onClick={markAllRead}
               disabled={bulkLoading}
@@ -439,7 +439,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
                   <span className="text-xs font-normal text-slate-400">
                     ({bucketTotal} 篇)
                   </span>
-                  {bucketTotal > 0 && (
+                  {bucketTotal > 0 && !savedOnly && (
                     <button
                       onClick={() => markBatchRead(bIds)}
                       disabled={bulkLoading}
