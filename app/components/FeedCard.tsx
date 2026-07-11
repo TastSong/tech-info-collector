@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import { Star, Eye } from "lucide-react";
 
 interface ArticleItem {
   id: number;
@@ -15,6 +16,8 @@ interface ArticleItem {
   qualityScore?: number | null;
   savedAt?: string | Date | null;
   onToggleSaved?: (id: number, saved: boolean) => void;
+  /** 卡片动画延迟 index（0-based） */
+  animIndex?: number;
 }
 
 const SWIPE_THRESHOLD = 80; // px，触发操作所需的滑动距离
@@ -35,6 +38,7 @@ export function FeedCard({ article }: { article: ArticleItem }) {
   >("idle");
   const [saved, setSaved] = useState(article.savedAt != null);
   const [saving, setSaving] = useState(false);
+  const [starAnim, setStarAnim] = useState(false);
 
   // ---------- swipe ----------
   const touchStartX = useRef(0);
@@ -148,6 +152,11 @@ export function FeedCard({ article }: { article: ArticleItem }) {
     setSaving(true);
     const prev = saved;
     setSaved(!saved);
+    // trigger star pop animation
+    if (!prev) {
+      setStarAnim(true);
+      setTimeout(() => setStarAnim(false), 300);
+    }
     try {
       const res = await fetch(`/api/articles/${article.id}/save`, { method: "POST" });
       if (!res.ok) throw new Error("save failed");
@@ -167,6 +176,7 @@ export function FeedCard({ article }: { article: ArticleItem }) {
   const isError = state === "error";
   const isDismissing = state === "dismissing";
   const isSwiping = swipeDir !== "none" && !swipeCommitted;
+  const animDelay = article.animIndex != null ? `${article.animIndex * 50}ms` : undefined;
 
   // 滑动背景指示器颜色
   const swipeIndicatorColor = swipeDir === "left"
@@ -178,7 +188,7 @@ export function FeedCard({ article }: { article: ArticleItem }) {
   const swipeIndicatorIcon = swipeDir === "left" ? "✓ 已阅读" : swipeDir === "right" ? (saved ? "★ 取消" : "☆ 收藏") : "";
 
   return (
-    <div className="relative overflow-hidden rounded-xl">
+    <div className="relative overflow-hidden rounded-xl" style={animDelay ? { animationDelay: animDelay } : undefined}>
       {/* ---- 滑动背景层 ---- */}
       {isSwiping && (
         <div
@@ -203,7 +213,7 @@ export function FeedCard({ article }: { article: ArticleItem }) {
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        className={`relative group flex items-center rounded-xl border p-4 transition-all duration-300 ease-out bg-white select-none ${
+        className={`relative group flex items-center rounded-xl border p-4 transition-all duration-300 ease-out bg-white select-none animate-card-enter ${
           isDismissing
             ? "opacity-0 -translate-y-2 blur-[2px] pointer-events-none"
             : isError
@@ -215,21 +225,24 @@ export function FeedCard({ article }: { article: ArticleItem }) {
         style={
           swipeDelta !== 0 || swipeCommitted
             ? { transform: `translateX(${swipeDelta}px)`, transition: swipeCommitted ? "none" : undefined }
-            : undefined
+            : animDelay ? { animationDelay: animDelay } : undefined
         }
       >
         {/* 收藏星标 (desktop) */}
         <button
           onClick={toggleSave}
           disabled={saving}
-          className={`mr-2 shrink-0 text-lg leading-none transition-colors ${
+          className={`mr-2 shrink-0 leading-none transition-colors ${
             saved
               ? "text-amber-400 hover:text-amber-300"
               : "text-slate-300 hover:text-amber-400 opacity-0 group-hover:opacity-100"
-          } ${saving ? "animate-pulse" : ""} hidden sm:block`}
+          } ${saving ? "animate-pulse" : ""} ${starAnim ? "animate-star-pop" : ""} hidden sm:block`}
           title={saved ? "取消收藏" : "收藏"}
         >
-          {saved ? "★" : "☆"}
+          <Star
+            className="h-[18px] w-[18px]"
+            fill={saved ? "currentColor" : "none"}
+          />
         </button>
 
         <Link
@@ -262,7 +275,7 @@ export function FeedCard({ article }: { article: ArticleItem }) {
               ))}
               {article.qualityScore != null && (
                 <span className="inline-flex items-center gap-0.5 text-[11px] text-amber-600">
-                  <span className="text-[10px]">★</span>
+                  <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
                   {article.qualityScore.toFixed(1)}
                 </span>
               )}
@@ -280,7 +293,7 @@ export function FeedCard({ article }: { article: ArticleItem }) {
                 : "-"}
             </span>
             {/* 移动端：已收藏小标记 */}
-            {saved && <span className="text-amber-400 sm:hidden">★</span>}
+            {saved && <span className="text-amber-400 sm:hidden"><Star className="h-3 w-3 fill-amber-400" /></span>}
           </div>
         </Link>
 
@@ -288,12 +301,13 @@ export function FeedCard({ article }: { article: ArticleItem }) {
         <button
           onClick={markRead}
           disabled={state === "loading" || isDismissing}
-          className={`ml-3 shrink-0 rounded-lg border px-3 py-1.5 text-xs transition-colors hidden sm:block ${
+          className={`ml-3 shrink-0 inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs transition-colors hidden sm:flex ${
             isError
               ? "border-red-300 text-red-600 hover:border-red-400 hover:bg-red-50"
               : "border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-600 hover:bg-slate-50"
           } ${state === "loading" ? "opacity-50" : ""}`}
         >
+          <Eye className="h-3.5 w-3.5" />
           {state === "loading" ? "…" : isError ? "重试" : "已阅读"}
         </button>
 

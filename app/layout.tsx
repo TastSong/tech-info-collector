@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { verifySignedToken } from "@/src/lib/password";
 import { NavLinks } from "./components/NavLinks";
 import { UserMenu } from "./components/UserMenu";
+import { ToastProvider } from "./components/Toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -57,7 +58,7 @@ export default async function RootLayout({
             </div>
           </div>
         </nav>
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );

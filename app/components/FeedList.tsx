@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { FeedCard } from "./FeedCard";
 import { parseTags } from "@/src/lib/parse-tags";
+import { Calendar, Search, Filter, Star, X, Inbox, SearchX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2 } from "lucide-react";
+import { useToast } from "./Toast";
 
 export interface ArticleItem {
   id: number;
@@ -73,8 +75,8 @@ function getDateBucket(ts: Date): DateBucket {
     (todayDate.getTime() - articleDate.getTime()) / 86400000,
   );
 
-  if (diffDays === 0) return { key: "today", label: "📅 今天", sort: 0 };
-  if (diffDays === 1) return { key: "yesterday", label: "📅 昨天", sort: 1 };
+  if (diffDays === 0) return { key: "today", label: "今天", sort: 0 };
+  if (diffDays === 1) return { key: "yesterday", label: "昨天", sort: 1 };
 
   const dayOfWeek = todayDate.getDay();
   const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -82,9 +84,9 @@ function getDateBucket(ts: Date): DateBucket {
   mondayDate.setDate(todayDate.getDate() - daysSinceMonday);
 
   if (articleDate >= mondayDate) {
-    return { key: "thisWeek", label: "📅 本周", sort: 2 };
+    return { key: "thisWeek", label: "本周", sort: 2 };
   }
-  return { key: "earlier", label: "📅 更早", sort: 3 };
+  return { key: "earlier", label: "更早", sort: 3 };
 }
 
 interface Props {
@@ -95,12 +97,23 @@ interface Props {
 }
 
 export function FeedList({ initialArticles, initialTotal, initialPage, initialSavedCount }: Props) {
+  const toast = useToast();
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [siteFilter, setSiteFilter] = useState("");
   const [savedOnly, setSavedOnly] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<Set<number>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<string>("");
+
+  // 防抖搜索
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [search]);
 
   // 分页
   const [articles, setArticles] = useState<ArticleItem[]>(initialArticles);
@@ -111,10 +124,9 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  // 收藏状态同步：当子组件切换收藏时，同步更新 articles 列表
+  // 收藏状态同步
   const handleToggleSaved = useCallback((id: number, saved: boolean) => {
     if (savedOnly && !saved) {
-      // 收藏模式下取消收藏 → 从列表中移除
       setArticles((prev) => prev.filter((a) => a.id !== id));
       setTotal((prev) => prev - 1);
     } else {
@@ -129,7 +141,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
 
   // 客户端过滤（排除已 dismiss 的文章）
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = debouncedSearch.trim().toLowerCase();
     return articles.filter((a) => {
       if (dismissedIds.has(a.id)) return false;
       if (q) {
@@ -146,7 +158,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
       if (siteFilter && a.siteName !== siteFilter) return false;
       return true;
     });
-  }, [articles, search, categoryFilter, siteFilter, dismissedIds]);
+  }, [articles, debouncedSearch, categoryFilter, siteFilter, dismissedIds]);
 
   // 提取可用选项
   const { categories, sites } = useMemo(() => {
@@ -242,37 +254,69 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
         body: JSON.stringify({ ids }),
       });
       setTotal((prev) => prev - ids.length);
+      toast.success(`已标记 ${ids.length} 篇为已读`);
     } catch {
       setDismissedIds((prev) => {
         const next = new Set(prev);
         for (const id of ids) next.delete(id);
         return next;
       });
+      toast.error("标记失败，请重试");
     } finally {
       setBulkLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   const markAllRead = useCallback(async () => {
     const ids = filtered.map((a) => a.id);
-    await markBatchRead(ids);
-    // 标记完当前页全部已读 → 刷新当前页，拉取新一批未读文章
-    setLoadingPage(true);
+    // 分批标记，每 10 条一批
+    const BATCH = 10;
+    setBulkLoading(true);
+    let done = 0;
+    setDismissedIds((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) next.add(id);
+      return next;
+    });
     try {
-      const savedParam = savedOnly ? "&saved=1" : "";
-      const res = await fetch(`/api/feed?page=1&pageSize=${PAGE_SIZE}${savedParam}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      setArticles(((data.articles ?? []) as ArticleRaw[]).map(fromRaw));
-      setPage(1);
-      setTotal(data.total);
-      setDismissedIds(new Set());
+      for (let i = 0; i < ids.length; i += BATCH) {
+        const batch = ids.slice(i, i + BATCH);
+        await fetch("/api/articles/view-batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: batch }),
+        });
+        done += batch.length;
+        setBulkProgress(`${done}/${ids.length}`);
+      }
+      toast.success(`已标记 ${ids.length} 篇为已读`);
+      // 刷新页面拉取新文章
+      setLoadingPage(true);
+      try {
+        const savedParam = savedOnly ? "&saved=1" : "";
+        const res = await fetch(`/api/feed?page=1&pageSize=${PAGE_SIZE}${savedParam}`);
+        if (res.ok) {
+          const data = await res.json();
+          setArticles(((data.articles ?? []) as ArticleRaw[]).map(fromRaw));
+          setPage(1);
+          setTotal(data.total);
+          setDismissedIds(new Set());
+        }
+      } catch {
+        // silent
+      }
     } catch {
-      // silent
+      setDismissedIds((prev) => {
+        const next = new Set(prev);
+        for (const id of ids) next.delete(id);
+        return next;
+      });
+      toast.error("标记失败，请重试");
     } finally {
-      setLoadingPage(false);
+      setBulkLoading(false);
+      setBulkProgress("");
     }
-  }, [filtered, markBatchRead, savedOnly]);
+  }, [filtered, markBatchRead, savedOnly, toast]);
 
   const anyFilterActive = search.trim() !== "" || categoryFilter !== "" || siteFilter !== "" || savedOnly;
 
@@ -281,7 +325,6 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
     setCategoryFilter("");
     setSiteFilter("");
     if (savedOnly) {
-      // 从收藏模式切回默认 feed，重新从服务端拉取
       setSavedOnly(false);
       setLoadingPage(true);
       fetch(`/api/feed?page=1&pageSize=${PAGE_SIZE}`)
@@ -299,6 +342,9 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
   const totalDisplayed = total;
   const totalCategories = new Set(filtered.map((r) => r.category ?? "未分类")).size;
 
+  // 为文章分配全局递增 index（用于 animation-delay）
+  let animCounter = 0;
+
   return (
     <>
       {/* 搜索/筛选栏 */}
@@ -308,13 +354,16 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
             <label className="block text-xs font-medium text-slate-500 mb-1">
               关键词
             </label>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="搜索标题、摘要、站点…"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-            />
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="搜索标题、摘要、站点…"
+                className="w-full rounded-lg border border-slate-200 pl-9 pr-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              />
+            </div>
           </div>
 
           <div className="min-w-[140px]">
@@ -370,25 +419,27 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
                 setSavedCount(data.savedOnly ? data.total : initialSavedCount);
                 setDismissedIds(new Set());
               } catch {
-                setSavedOnly(!next); // revert on error
+                setSavedOnly(!next);
               } finally {
                 setLoadingPage(false);
               }
             }}
-            className={`shrink-0 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+            className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
               savedOnly
                 ? "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
                 : "border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50"
             }`}
           >
-            ★ 收藏 {savedCount > 0 && `(${savedCount})`}
+            <Star className={`h-3.5 w-3.5 ${saved ? "fill-amber-400 text-amber-400" : ""}`} />
+            收藏 {savedCount > 0 && `(${savedCount})`}
           </button>
 
           {anyFilterActive && (
             <button
               onClick={clearFilters}
-              className="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+              className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50 transition-colors"
             >
+              <X className="h-3.5 w-3.5" />
               清除筛选
             </button>
           )}
@@ -399,7 +450,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="text-sm text-slate-500">
           {savedOnly ? (
-            <>★ 收藏文章 · {totalDisplayed} 篇</>
+            <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> 收藏文章 · {totalDisplayed} 篇</span>
           ) : anyFilterActive ? (
             <>筛选结果 · {filtered.length} 篇（共 {totalDisplayed}）</>
           ) : (
@@ -411,9 +462,12 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
             <button
               onClick={markAllRead}
               disabled={bulkLoading}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50 disabled:opacity-40 transition-colors"
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50 disabled:opacity-40 transition-colors"
             >
-              {bulkLoading ? "处理中…" : `全部已读 (${filtered.length})`}
+              {bulkLoading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : null}
+              {bulkLoading ? (bulkProgress || "处理中…") : `全部已读 (${filtered.length})`}
             </button>
           )}
           <span className="text-xs text-slate-400">
@@ -424,8 +478,23 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
 
       {/* 文章列表 */}
       {!bucketInfos.length ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-12 text-center text-slate-400">
-          {anyFilterActive ? "没有匹配的文章" : "暂无新资讯 ✓"}
+        <div className="rounded-xl border border-slate-200 bg-white p-12 text-center">
+          {anyFilterActive ? (
+            <div className="flex flex-col items-center gap-3">
+              <SearchX className="h-12 w-12 text-slate-200" />
+              <p className="text-slate-400">没有匹配的文章</p>
+              <p className="text-xs text-slate-300">试试调整筛选条件</p>
+              <button onClick={clearFilters} className="mt-1 inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-500 hover:border-slate-300 transition-colors">
+                <X className="h-3.5 w-3.5" /> 清除筛选
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-3">
+              <Inbox className="h-12 w-12 text-slate-200" />
+              <p className="text-slate-400 font-medium">暂无新资讯 ✓</p>
+              <p className="text-xs text-slate-300">所有文章已读完，干得漂亮 🎉</p>
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-10">
@@ -437,6 +506,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
             return (
               <section key={bucket.key}>
                 <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-slate-800">
+                  <Calendar className="h-4 w-4 text-indigo-400" />
                   {bucket.label}
                   <span className="text-xs font-normal text-slate-400">
                     ({bucketTotal} 篇)
@@ -454,12 +524,19 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
                         </span>
                       </h3>
                       <div className="space-y-2">
-                        {catGroup.articles.map((a) => (
-                          <FeedCard
-                            key={a.id}
-                            article={{ ...a, onToggleSaved: handleToggleSaved }}
-                          />
-                        ))}
+                        {catGroup.articles.map((a) => {
+                          const idx = animCounter++;
+                          return (
+                            <FeedCard
+                              key={a.id}
+                              article={{
+                                ...a,
+                                onToggleSaved: handleToggleSaved,
+                                animIndex: idx,
+                              }}
+                            />
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
@@ -476,15 +553,17 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
           <button
             onClick={() => goPage(1)}
             disabled={page <= 1 || loadingPage}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
           >
+            <ChevronsLeft className="h-3.5 w-3.5" />
             首页
           </button>
           <button
             onClick={() => goPage(page - 1)}
             disabled={page <= 1 || loadingPage}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
           >
+            <ChevronLeft className="h-3.5 w-3.5" />
             上一页
           </button>
 
@@ -512,16 +591,18 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
           <button
             onClick={() => goPage(page + 1)}
             disabled={page >= totalPages || loadingPage}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
           >
             下一页
+            <ChevronRight className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => goPage(totalPages)}
             disabled={page >= totalPages || loadingPage}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
           >
             末页
+            <ChevronsRight className="h-3.5 w-3.5" />
           </button>
         </div>
       )}
