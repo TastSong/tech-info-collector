@@ -152,14 +152,22 @@ export async function runSite(site: Site, crawlSessionId?: number): Promise<RunR
 
     const signal = getAbortSignal();
 
+    // ── 站点级总超时（默认 5 分钟），防止大站阻塞同域名组 ──
+    const SITE_TIMEOUT_MS = Number(process.env.CRAWL_SITE_TIMEOUT_MS ?? 300_000);
+
     console.log(`  🧠 #${site.id} ${site.name} — 智能爬虫`);
-    const result = await intelligentCrawl({
-      siteUrls: site.urls.length > 0 ? site.urls : [site.name],
-      siteName: site.name,
-      scope: site.scope,
-      render: site.render,
-      signal,
-    });
+    const result = await Promise.race([
+      intelligentCrawl({
+        siteUrls: site.urls.length > 0 ? site.urls : [site.name],
+        siteName: site.name,
+        scope: site.scope,
+        render: site.render,
+        signal,
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`站点采集超时 (${SITE_TIMEOUT_MS / 1000}s)`)), SITE_TIMEOUT_MS),
+      ),
+    ]);
 
     console.log(`    → ${result.articles.length} 篇 · ${result.stats.tokensUsed} tokens · ${result.stats.totalDurationMs}ms`);
 
