@@ -323,7 +323,7 @@ export function FeedCard({ article }: { article: ArticleItem }) {
               {article.qualityScore != null && (
                 <span className="inline-flex items-center gap-0.5 text-[11px] text-amber-600">
                   <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-                  {article.qualityScore.toFixed(1)}
+                  {Math.round(article.qualityScore * 10)}
                 </span>
               )}
             </div>
