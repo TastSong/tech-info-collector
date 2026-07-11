@@ -262,10 +262,26 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
     }
   }, []);
 
-  const markAllRead = useCallback(() => {
+  const markAllRead = useCallback(async () => {
     const ids = filtered.map((a) => a.id);
-    markBatchRead(ids);
-  }, [filtered, markBatchRead]);
+    await markBatchRead(ids);
+    // 标记完当前页全部已读 → 刷新当前页，拉取新一批未读文章
+    setLoadingPage(true);
+    try {
+      const savedParam = savedOnly ? "&saved=1" : "";
+      const res = await fetch(`/api/feed?page=1&pageSize=${PAGE_SIZE}${savedParam}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setArticles(((data.articles ?? []) as ArticleRaw[]).map(fromRaw));
+      setPage(1);
+      setTotal(data.total);
+      setDismissedIds(new Set());
+    } catch {
+      // silent
+    } finally {
+      setLoadingPage(false);
+    }
+  }, [filtered, markBatchRead, savedOnly]);
 
   const anyFilterActive = search.trim() !== "" || categoryFilter !== "" || siteFilter !== "" || savedOnly;
 
