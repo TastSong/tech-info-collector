@@ -38,35 +38,60 @@ export async function getLightpandaBrowser(): Promise<Browser> {
   return browser;
 }
 
-/** 使用 Lightpanda 抓取页面 HTML */
+/** 使用 Lightpanda 抓取页面 HTML，支持连接断开后自动重连一次 */
 export async function fetchWithLightpanda(
   url: string,
   opts: { timeoutMs?: number; waitSelector?: string } = {},
   externalSignal?: AbortSignal,
 ): Promise<string> {
-  const browser = await getLightpandaBrowser();
-  // Lightpanda 不支持 locale/geolocation/timezone 等 Emulation 域
-  const context = await browser.newContext({ userAgent: UA });
-  const page = await context.newPage();
-  try {
-    await page.goto(url, {
-      waitUntil: "domcontentloaded",
-      timeout: opts.timeoutMs ?? 30_000,
-    });
-    if (opts.waitSelector) {
-      await page
-        .waitForSelector(opts.waitSelector, { timeout: 10_000 })
-        .catch(() => {});
-    } else {
-      await page
-        .waitForLoadState("networkidle", { timeout: 10_000 })
-        .catch(() => {});
+  const doFetch = async (): Promise<string> => {
+    const browser = await getLightpandaBrowser();
+    // Lightpanda 不支持 locale/geolocation/timezone 等 Emulation 域
+    const context = await browser.newContext({ userAgent: UA });
+    const page = await context.newPage();
+    try {
+      await page.goto(url, {
+        waitUntil: "domcontentloaded",
+        timeout: opts.timeoutMs ?? 30_000,
+      });
+      if (opts.waitSelector) {
+        await page
+          .waitForSelector(opts.waitSelector, { timeout: 10_000 })
+          .catch(() => {});
+      } else {
+        await page
+          .waitForLoadState("networkidle", { timeout: 10_000 })
+          .catch(() => {});
+      }
+      await page.waitForTimeout(300);
+      return await page.content();
+    } finally {
+      await context.close();
     }
-    await page.waitForTimeout(300);
-    return await page.content();
-  } finally {
-    await context.close();
+  };
+
+  try {
+    return await doFetch();
+  } catch (e) {
+    // ── 连接断开时自动重连一次 ──
+    if (isConnectionError(e) && !externalSignal?.aborted) {
+      console.log(`  🔌 Lightpanda 连接断开，尝试重连...`);
+      // 清除旧连接，强制下次 getLightpandaBrowser 重新建立 CDP 连接
+      if (browser) {
+        await browser.close().catch(() => {});
+        browser = null;
+      }
+      // 重试一次
+      return await doFetch();
+    }
+    throw e;
   }
+}
+
+/** 判断是否为连接层错误（browser/page 已断开），可触发重连 */
+function isConnectionError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /(Target closed|Browser closed|Protocol error|Connection closed|WebSocket|ECONNREFUSED|socket hang up)/i.test(msg);
 }
 
 /** 断开 Lightpanda CDP 连接 */
