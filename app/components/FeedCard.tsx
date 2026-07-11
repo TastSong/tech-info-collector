@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Star, Eye } from "lucide-react";
+import { useToast } from "./Toast";
 
 interface ArticleItem {
   id: number;
@@ -33,6 +34,7 @@ type SwipeDir = "none" | "left" | "right";
  * 移动端：左滑标记已读（绿色提示），右滑切换收藏（金色提示）。
  */
 export function FeedCard({ article }: { article: ArticleItem }) {
+  const toast = useToast();
   const [state, setState] = useState<
     "idle" | "loading" | "dismissing" | "dismissed" | "error"
   >("idle");
@@ -163,6 +165,7 @@ export function FeedCard({ article }: { article: ArticleItem }) {
       const data = await res.json();
       setSaved(data.saved);
       article.onToggleSaved?.(article.id, data.saved);
+      toast.success(data.saved ? "已收藏" : "已取消收藏");
     } catch {
       setSaved(prev);
     } finally {

@@ -3,12 +3,13 @@
 import { useState, useTransition, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Play, Square, Loader2 } from "lucide-react";
+import { useToast } from "./Toast";
 
 /** 仪表盘上的"立即采集 / 停止采集"按钮。 */
 export function CrawlTrigger() {
   const router = useRouter();
+  const toast = useToast();
   const [pending, startTransition] = useTransition();
-  const [msg, setMsg] = useState("");
   const [crawling, setCrawling] = useState(false);
   const [stopping, setStopping] = useState(false);
 
@@ -31,7 +32,6 @@ export function CrawlTrigger() {
   }, [checkRunning]);
 
   async function trigger(siteId?: number) {
-    setMsg("");
     startTransition(async () => {
       try {
         const res = await fetch("/api/crawl", {
@@ -42,36 +42,33 @@ export function CrawlTrigger() {
         if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
         if (data.started) {
-          setMsg(
-            `✓ 已启动 ${data.targetCount} 站 (${data.groupCount} 域名组, 并发${data.concurrency})`,
-          );
+          toast.success(`已启动采集：${data.targetCount} 站 · 并发 ${data.concurrency}`);
           setCrawling(true);
         } else {
-          setMsg(`✓ 采集已开始`);
+          toast.info("采集已开始");
         }
         router.refresh();
       } catch (e) {
-        setMsg(`失败: ${(e as Error).message}`);
+        toast.error(`采集失败: ${(e as Error).message}`);
       }
     });
   }
 
   async function stop() {
-    setMsg("");
     setStopping(true);
     try {
       const res = await fetch("/api/crawl/stop", { method: "POST" });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       if (data.stopped) {
-        setMsg(`⊘ 已中止，${data.abortedTasks} 个运行中任务已标记为停止`);
+        toast.success(`已中止，${data.abortedTasks} 个任务已标记为停止`);
         setCrawling(false);
       } else {
-        setMsg(`当前无运行中的采集任务`);
+        toast.info("当前无运行中的采集任务");
       }
       router.refresh();
     } catch (e) {
-      setMsg(`停止失败: ${(e as Error).message}`);
+      toast.error(`停止失败: ${(e as Error).message}`);
     } finally {
       setStopping(false);
     }
@@ -106,9 +103,6 @@ export function CrawlTrigger() {
           立即采集全部
         </button>
       )}
-      {msg ? (
-        <span className="text-xs text-slate-500 animate-fade-in">{msg}</span>
-      ) : null}
     </div>
   );
 }
