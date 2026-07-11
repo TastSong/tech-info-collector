@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CheckCircle2, AlertTriangle, XCircle, Loader2, Circle } from "lucide-react";
 
 /* ---------- types ---------- */
 
@@ -116,15 +117,15 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
   function statusBadge(status: string) {
     switch (status) {
       case "success":
-        return <span className="text-xs font-medium text-emerald-600">成功</span>;
+        return <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600"><CheckCircle2 className="h-3 w-3" /> 成功</span>;
       case "partial":
-        return <span className="text-xs font-medium text-amber-600">部分</span>;
+        return <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600"><AlertTriangle className="h-3 w-3" /> 部分</span>;
       case "error":
-        return <span className="text-xs font-medium text-red-600">失败</span>;
+        return <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600"><XCircle className="h-3 w-3" /> 失败</span>;
       case "running":
         return (
           <span className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600">
-            <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+            <Loader2 className="h-3 w-3 animate-spin" />
             运行中
           </span>
         );
@@ -142,11 +143,11 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
         <p className="text-xs text-slate-400">
           {page === 1 ? (
             <>
-              自动刷新中 · {lastRefresh.toLocaleTimeString("zh-CN", { timeZone: "Asia/Shanghai" })}
+              auto refresh · {lastRefresh.toLocaleTimeString("zh-CN", { timeZone: "Asia/Shanghai" })}
               {runningCount > 0 && (
                 <span className="ml-2 inline-flex items-center gap-1 text-indigo-600">
-                  <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-                  {runningCount} 项进行中
+                  <Circle className="h-2 w-2 fill-indigo-500 text-indigo-500 animate-pulse" />
+                  {runningCount} running
                 </span>
               )}
             </>
@@ -226,15 +227,17 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
         <button
           onClick={() => goPage(1)}
           disabled={page <= 1 || loading}
-          className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
         >
+          <ChevronsLeft className="h-3.5 w-3.5" />
           首页
         </button>
         <button
           onClick={() => goPage(page - 1)}
           disabled={page <= 1 || loading}
-          className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
         >
+          <ChevronLeft className="h-3.5 w-3.5" />
           上一页
         </button>
 
@@ -263,16 +266,18 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
         <button
           onClick={() => goPage(page + 1)}
           disabled={page >= totalPages || loading}
-          className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
         >
           下一页
+          <ChevronRight className="h-3.5 w-3.5" />
         </button>
         <button
           onClick={() => goPage(totalPages)}
           disabled={page >= totalPages || loading}
-          className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
         >
           末页
+          <ChevronsRight className="h-3.5 w-3.5" />
         </button>
       </div>
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { renderBadge } from "./Badges";
+import { Edit3, Circle, Eye, EyeOff } from "lucide-react";
 
 interface SiteInfo {
   id: number;
@@ -64,7 +65,7 @@ export function SiteCard({
 
   return (
     <div
-      className={`rounded-xl border bg-white p-5 transition-opacity flex items-start gap-3 ${
+      className={`rounded-xl border bg-white p-5 transition-all duration-300 flex items-start gap-3 ${
         site.enabled ? "border-slate-200" : "border-slate-100 opacity-60"
       }`}
     >
@@ -90,18 +91,25 @@ export function SiteCard({
             <button
               onClick={toggle}
               disabled={toggling}
-              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-all cursor-pointer ${
                 site.enabled
                   ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                   : "bg-slate-100 text-slate-500 hover:bg-slate-200"
               }`}
             >
-              <span
-                className={`inline-block h-2 w-2 rounded-full ${
-                  site.enabled ? "bg-emerald-500" : "bg-slate-400"
-                }`}
-              />
-              {site.enabled ? "启用" : "禁用"}
+              {site.enabled ? (
+                <>
+                  <Circle className="h-2 w-2 fill-emerald-500 text-emerald-500" />
+                  <Eye className="h-3 w-3" />
+                  启用
+                </>
+              ) : (
+                <>
+                  <Circle className="h-2 w-2 fill-slate-400 text-slate-400" />
+                  <EyeOff className="h-3 w-3" />
+                  禁用
+                </>
+              )}
             </button>
           </div>
           <div className="mt-1 text-xs text-slate-500">
@@ -113,8 +121,9 @@ export function SiteCard({
         <div className="flex items-start gap-3">
           <Link
             href={`/sites/${site.id}`}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+            className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors"
           >
+            <Edit3 className="h-3.5 w-3.5" />
             编辑
           </Link>
           <div className="text-right text-sm text-slate-500">

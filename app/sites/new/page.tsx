@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteEditForm } from "../edit-form";
+import { ArrowLeft, Globe } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -26,11 +27,15 @@ export default function NewSitePage() {
       <div className="mb-6">
         <Link
           href="/sites"
-          className="text-sm text-indigo-600 hover:text-indigo-800"
+          className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 transition-colors"
         >
-          ← 返回站点列表
+          <ArrowLeft className="h-4 w-4" />
+          返回站点列表
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">新建站点</h1>
+        <h1 className="mt-2 flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <Globe className="h-5 w-5 text-indigo-500" />
+          新建站点
+        </h1>
         <p className="mt-1 text-sm text-slate-500">
           填写表单创建新的采集站点，创建后可在列表页启用
         </p>

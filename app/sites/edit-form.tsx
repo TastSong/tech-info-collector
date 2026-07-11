@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2, Bot, X, Trash2 } from "lucide-react";
 
 /* ---------- types ---------- */
 
@@ -300,7 +301,7 @@ export function SiteEditForm({
                   className="shrink-0 rounded-lg px-2 py-1 text-xs text-red-500 hover:bg-red-50 disabled:opacity-30 cursor-pointer"
                   title="删除此 URL"
                 >
-                  ✕
+                  <X className="h-3.5 w-3.5" />
                 </button>
               </div>
             ))}
@@ -331,11 +332,11 @@ export function SiteEditForm({
         >
           {analyzing ? (
             <>
-              <SpinnerIcon />
+              <Loader2 className="h-4 w-4 animate-spin" />
               分析中…（约需 10-30 秒）
             </>
           ) : (
-            <>🤖 AI识别 — 自动发现选择器、分类和渲染模式</>
+            <><Bot className="h-4 w-4" /> AI识别 — 自动发现选择器、分类和渲染模式</>
           )}
         </button>
 
@@ -352,8 +353,9 @@ export function SiteEditForm({
       {aiResult && (
         <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-indigo-800">
-              🤖 AI 检测结果
+            <h3 className="text-sm font-semibold text-indigo-800 flex items-center gap-1.5">
+              <Bot className="h-4 w-4" />
+              AI 检测结果
             </h3>
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
               aiResult.diagnostics.selectorConfidence === "high"
@@ -601,6 +603,7 @@ export function SiteEditForm({
                 onClick={() => setShowDeleteConfirm(true)}
                 className={cls.btn + " " + cls.btnDanger}
               >
+                <Trash2 className="h-4 w-4" />
                 删除站点
               </button>
             )}
@@ -611,28 +614,3 @@ export function SiteEditForm({
   );
 }
 
-/** 加载旋转图标 */
-function SpinnerIcon() {
-  return (
-    <svg
-      className="animate-spin h-4 w-4"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-      />
-    </svg>
-  );
-}

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { db, schema } from "@/db/client";
 import { eq, desc, sql } from "drizzle-orm";
-import { statusBadge } from "../components/Badges";
+import { statusBadge, badge } from "../components/Badges";
+import { CheckCircle2, XCircle, Loader2, Circle, FileText } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -44,19 +45,19 @@ export default async function ArticlesPage(props: {
           <Link
             key={s}
             href={`/articles?status=${s}${siteId ? `&site=${siteId}` : ""}`}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               status === s
                 ? "bg-slate-800 text-white"
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
             {s === "published"
-              ? "已发布"
+              ? <><CheckCircle2 className="h-3 w-3" /> 已发布</>
               : s === "rejected"
-              ? "已驳回"
+              ? <><XCircle className="h-3 w-3" /> 已驳回</>
               : s === "analyzing"
-              ? "审核中"
-              : "原始"}
+              ? <><Loader2 className="h-3 w-3" /> 审核中</>
+              : <><Circle className="h-3 w-3" /> 原始</>}
           </Link>
         ))}
         {siteId ? (

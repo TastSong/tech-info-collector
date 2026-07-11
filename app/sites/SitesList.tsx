@@ -85,35 +85,39 @@ export function SitesList({ sites: initialSites, articleCounts }: Props) {
     <div>
       {/* 批量操作栏 */}
       {selectedIds.size > 0 && (
-        <div className="mb-4 flex items-center gap-3 rounded-lg border border-indigo-200 bg-indigo-50/60 px-4 py-3">
-          <span className="text-sm font-medium text-indigo-800">
-            已选 {selectedIds.size} 个站点
-          </span>
-          <div className="flex gap-2">
+        <div className={`overflow-hidden transition-all duration-300 ${
+          selectedIds.size > 0 ? "max-h-20 opacity-100 mb-4" : "max-h-0 opacity-0 mb-0"
+        }`}>
+          <div className="flex items-center gap-3 rounded-lg border border-indigo-200 bg-indigo-50/60 px-4 py-3">
+            <span className="text-sm font-medium text-indigo-800">
+              已选 {selectedIds.size} 个站点
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => batchToggle(true)}
+                disabled={batching}
+                className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors cursor-pointer"
+              >
+                {batching ? "处理中…" : "批量启用"}
+              </button>
+              <button
+                type="button"
+                onClick={() => batchToggle(false)}
+                disabled={batching}
+                className="inline-flex items-center gap-1 rounded-md bg-slate-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-600 disabled:opacity-50 transition-colors cursor-pointer"
+              >
+                {batching ? "处理中…" : "批量禁用"}
+              </button>
+            </div>
             <button
               type="button"
-              onClick={() => batchToggle(true)}
-              disabled={batching}
-              className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors cursor-pointer"
+              onClick={() => setSelectedIds(new Set())}
+              className="ml-auto text-xs text-slate-500 hover:text-slate-700 cursor-pointer"
             >
-              {batching ? "处理中…" : "批量启用"}
-            </button>
-            <button
-              type="button"
-              onClick={() => batchToggle(false)}
-              disabled={batching}
-              className="inline-flex items-center gap-1 rounded-md bg-slate-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-600 disabled:opacity-50 transition-colors cursor-pointer"
-            >
-              {batching ? "处理中…" : "批量禁用"}
+              取消选择
             </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setSelectedIds(new Set())}
-            className="ml-auto text-xs text-slate-500 hover:text-slate-700 cursor-pointer"
-          >
-            取消选择
-          </button>
         </div>
       )}
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db, schema } from "@/db/client";
 import { sql } from "drizzle-orm";
 import { SitesList } from "./SitesList";
+import { Plus, Globe } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -27,16 +28,20 @@ export default async function SitesPage() {
     <main className="mx-auto max-w-5xl px-6 py-10">
       <div className="mb-6 flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">站点配置</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+            <Globe className="h-5 w-5 text-indigo-500" />
+            站点配置
+          </h1>
           <p className="mt-1 text-sm text-slate-500">
             {sites.filter((s) => s.enabled).length} / {sites.length} 启用
           </p>
         </div>
         <Link
           href="/sites/new"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors hover:shadow-md"
         >
-          + 新建站点
+          <Plus className="h-4 w-4" />
+          新建站点
         </Link>
       </div>
 
