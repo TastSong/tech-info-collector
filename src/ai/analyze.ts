@@ -6,7 +6,7 @@
  *   不带 siteId：审核全部 raw（且站点 aiInvolvement != none）的文章
  */
 import { pathToFileURL } from "node:url";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import PQueue from "p-queue";
 import { db, schema } from "../../db/client";
 import { reviewArticle, decideStatus } from "./sandbox";
@@ -16,6 +16,59 @@ interface Opts {
   limit?: number;
   concurrency?: number;
   siteId?: number;
+}
+
+/** 内容去重：查找相同 contentHash 的已审核文章，复用其审核结果。
+ *  返回 null 表示无可用缓存，需正常审核。 */
+function tryReuseReview(
+  contentHash: string | null,
+  currentArticleId: number,
+): { status: "published" | "rejected"; tokens: number; reviewId: number } | null {
+  if (!contentHash) return null;
+
+  // 查找相同 contentHash 且已有审核记录的其他文章
+  const row = db
+    .select({
+      reviewId: schema.aiReviews.id,
+      articleId: schema.aiReviews.articleId,
+      usable: schema.aiReviews.usable,
+      qualityScore: schema.aiReviews.qualityScore,
+      newsScore: schema.aiReviews.newsScore,
+      tokensUsed: schema.aiReviews.tokensUsed,
+    })
+    .from(schema.aiReviews)
+    .innerJoin(
+      schema.articles,
+      and(
+        eq(schema.aiReviews.articleId, schema.articles.id),
+        eq(schema.articles.contentHash, contentHash),
+      ),
+    )
+    .where(eq(schema.articles.status, "published"))
+    .limit(1)
+    .all()
+    .at(0);
+
+  if (!row || row.articleId === currentArticleId) return null;
+
+  // 使用相同的判定逻辑决定状态
+  const status: "published" | "rejected" = row.usable ? "published" : "rejected";
+
+  // 将复用的审核记录也插入 aiReviews（关联当前文章，审计留痕）
+  db.insert(schema.aiReviews)
+    .values({
+      articleId: currentArticleId,
+      model: "reused",
+      relevant: true,
+      usable: row.usable,
+      qualityScore: row.qualityScore,
+      newsScore: row.newsScore,
+      reason: `复用自 review #${row.reviewId} (article #${row.articleId}, 相同 contentHash)`,
+      tokensUsed: 0,
+    })
+    .run();
+
+  return { status, tokens: 0, reviewId: row.reviewId };
 }
 
 export async function analyzePending(opts: Opts = {}): Promise<void> {
@@ -56,6 +109,23 @@ export async function analyzePending(opts: Opts = {}): Promise<void> {
         .where(eq(schema.articles.id, a.id))
         .run();
       try {
+        // ── 内容去重：相同 contentHash 的已审核结果可直接复用 ──
+        const reused = tryReuseReview(a.contentHash, a.id);
+        if (reused) {
+          db.update(schema.articles)
+            .set({ status: reused.status })
+            .where(eq(schema.articles.id, a.id))
+            .run();
+          tokens += reused.tokens;
+          if (reused.status === "published") published++;
+          else rejected++;
+          const tag = reused.status === "published" ? "⇄" : "⇄✗";
+          console.log(
+            `  ${tag} #${a.id} (复用 #${reused.reviewId}) ${(a.title ?? "").slice(0, 38)}`,
+          );
+          return;
+        }
+
         const r = await reviewArticle({
           title: a.title ?? "",
           body: a.body ?? "",
