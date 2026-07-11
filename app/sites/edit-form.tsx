@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Bot, X, Trash2 } from "lucide-react";
 
@@ -103,6 +103,22 @@ export function SiteEditForm({
 
   // AI 识别状态
   const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeElapsed, setAnalyzeElapsed] = useState(0);
+  const analyzeStartRef = useRef<number>(0);
+
+  // AI 分析计时器
+  useEffect(() => {
+    if (!analyzing) {
+      setAnalyzeElapsed(0);
+      return;
+    }
+    analyzeStartRef.current = Date.now();
+    setAnalyzeElapsed(0);
+    const t = setInterval(() => {
+      setAnalyzeElapsed(Math.round((Date.now() - analyzeStartRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [analyzing]);
   const [aiResult, setAiResult] = useState<AiAnalyzeResult | null>(null);
 
   function update<K extends keyof SiteFormData>(key: K, value: SiteFormData[K]) {
@@ -333,7 +349,7 @@ export function SiteEditForm({
           {analyzing ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              分析中…（约需 10-30 秒）
+              分析中… {analyzeElapsed}s（约需 10-30 秒）
             </>
           ) : (
             <><Bot className="h-4 w-4" /> AI识别 — 自动发现选择器、分类和渲染模式</>
