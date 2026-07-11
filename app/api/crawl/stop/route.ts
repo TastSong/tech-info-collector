@@ -8,6 +8,7 @@ import { db, schema } from "@/db/client";
 import { eq } from "drizzle-orm";
 import { abortCrawl } from "@/src/pipeline/abort";
 import { closeBrowser } from "@/src/crawler/playwright";
+import { closeLightpanda } from "@/src/crawler/lightpanda";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,7 @@ export async function POST() {
 
   // 关掉浏览器
   await closeBrowser().catch(() => {});
+  await closeLightpanda().catch(() => {});
 
   return NextResponse.json({
     stopped: true,

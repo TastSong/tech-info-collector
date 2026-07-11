@@ -9,6 +9,7 @@
  *   且无法禁用 ECDHE 密码套件（stic.sz.gov.cn 的 bad ecpoint 会被 OpenSSL 3.x 拒绝）。
  */
 import { fetchDynamic } from "./playwright";
+import { fetchWithLightpanda } from "./lightpanda";
 import * as http from "http";
 import * as https from "https";
 
@@ -16,7 +17,7 @@ const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
-export type RenderMode = "static" | "dynamic";
+export type RenderMode = "static" | "dynamic" | "lightpanda";
 
 export interface FetchOpts {
   timeoutMs?: number;
@@ -61,6 +62,7 @@ export async function fetchHtml(
   opts: FetchOpts = {},
   externalSignal?: AbortSignal,
 ): Promise<string> {
+  if (mode === "lightpanda") return fetchWithLightpanda(url, opts, externalSignal);
   if (mode === "dynamic") return fetchDynamic(url, opts, externalSignal);
 
   const maxRetries = opts.maxRetries ?? 3;

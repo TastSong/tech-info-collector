@@ -162,7 +162,7 @@ export async function intelligentCrawl(input: {
   siteUrls: string[];
   siteName: string;
   scope: string | null;
-  render: "static" | "dynamic";
+  render: "static" | "dynamic" | "lightpanda";
   signal?: AbortSignal;
 }): Promise<IntelligentCrawlResult> {
   const startedAt = Date.now();

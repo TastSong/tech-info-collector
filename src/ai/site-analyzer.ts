@@ -100,12 +100,14 @@ function isMeaningfulHtml(html: string): boolean {
 
 /** 合并模式 → 人类可读标签 */
 function modeLabel(m: RenderMode): string {
-  return m === "static" ? "静态" : "动态";
+  if (m === "static") return "静态";
+  if (m === "lightpanda") return "Lightpanda";
+  return "动态";
 }
 
 /**
- * 对多个 URL 逐一尝试静态/动态抓取，选择最优渲染模式。
- * 策略：每个 URL 先试静态，失败或无意义则试动态；优先选静态。
+ * 对多个 URL 逐一尝试静态→Lightpanda→动态抓取，选择最优渲染模式。
+ * 策略：优先静态 → 静态失败试 Lightpanda → Lightpanda 失败试动态（Playwright）。
  */
 async function detectRenderMode(
   urls: string[],
@@ -142,7 +144,27 @@ async function detectRenderMode(
       console.log(`  ⚠ 静态抓取失败: ${(e as Error).message.slice(0, 80)}`);
     }
 
-    // 2) 尝试动态抓取
+    // 2) 尝试 Lightpanda 抓取
+    try {
+      console.log(`  📡 [lightpanda] 尝试: ${url.slice(0, 80)}`);
+      const html = await fetchHtml(url, "lightpanda", { timeoutMs: 20_000 }, signal);
+      if (isMeaningfulHtml(html)) {
+        dynamicWorked = true;
+        console.log(`  ✅ Lightpanda 抓取成功 (${html.length}B)`);
+        if (!bestHtml || html.length > bestHtml.length) {
+          bestHtml = html;
+          bestUrl = url;
+          bestRender = "lightpanda";
+        }
+      } else {
+        console.log(`  ⚠ Lightpanda HTML 无意义`);
+      }
+    } catch (e) {
+      if (signal?.aborted) throw e;
+      console.log(`  ⚠ Lightpanda 抓取失败: ${(e as Error).message.slice(0, 80)}`);
+    }
+
+    // 3) 尝试动态抓取（Playwright，最终回退）
     try {
       console.log(`  📡 [dynamic] 尝试: ${url.slice(0, 80)}`);
       const html = await fetchHtml(url, "dynamic", { timeoutMs: 30_000 }, signal);
@@ -154,7 +176,6 @@ async function detectRenderMode(
           bestUrl = url;
           bestRender = "dynamic";
         }
-        // 动态也能工作，继续尝试其他 URL 看是否有更好的
       } else {
         console.log(`  ⚠ 动态 HTML 无意义`);
       }
@@ -165,7 +186,7 @@ async function detectRenderMode(
   }
 
   if (!bestHtml) {
-    throw new Error("所有 URL 均无法抓取（静态+动态均失败）");
+    throw new Error("所有 URL 均无法抓取（静态+Lightpanda+动态均失败）");
   }
 
   return { bestHtml, bestUrl, render: bestRender, staticWorked, dynamicWorked };

@@ -15,7 +15,7 @@ type SeedSite = {
   category: string | null;
   subcategory: string | null;
   urls: string[];
-  render: "static" | "dynamic";
+  render: "static" | "dynamic" | "lightpanda";
   list_selector?: string | null;
   link_selector?: string | null;
   title_selector?: string | null;

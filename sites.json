@@ -26,7 +26,7 @@
       "urls": [
         "https://www.nsfc.gov.cn/publish/portal0/tab434/module1886/more.htm"
       ],
-      "render": "dynamic",
+      "render": "lightpanda",
       "list_selector": "ul",
       "link_selector": "a",
       "ai_involvement": "extract_judge",
@@ -133,7 +133,7 @@
       "urls": [
         "https://www.huxiu.com/"
       ],
-      "render": "dynamic",
+      "render": "lightpanda",
       "list_selector": "div.card-article__other",
       "link_selector": "a.article-title",
       "ai_involvement": "extract_judge",
@@ -208,7 +208,7 @@
       "urls": [
         "https://tech.qq.com/"
       ],
-      "render": "dynamic",
+      "render": "lightpanda",
       "list_selector": "div.S_YqZLSGnCHwtjaXFvtP",
       "link_selector": "a.article-title",
       "ai_involvement": "extract_judge",
@@ -253,7 +253,7 @@
       "urls": [
         "https://www.jiqizhixin.com/"
       ],
-      "render": "dynamic",
+      "render": "lightpanda",
       "list_selector": "div.nav-list",
       "link_selector": "a.sidebar__item",
       "ai_involvement": "extract_judge",
@@ -268,7 +268,7 @@
       "urls": [
         "https://www.leiphone.com/"
       ],
-      "render": "dynamic",
+      "render": "lightpanda",
       "list_selector": "div.tags",
       "link_selector": "a",
       "ai_involvement": "extract_judge",
@@ -328,7 +328,7 @@
       "urls": [
         "https://juejin.cn/"
       ],
-      "render": "dynamic",
+      "render": "lightpanda",
       "list_selector": "div.title-row",
       "link_selector": "a.jj-link",
       "ai_involvement": "extract_judge",
@@ -343,7 +343,7 @@
       "urls": [
         "https://www.instrument.com.cn/"
       ],
-      "render": "dynamic",
+      "render": "lightpanda",
       "list_selector": "div.flex",
       "link_selector": "a",
       "ai_involvement": "extract_judge",
@@ -540,7 +540,7 @@
       "urls": [
         "https://www.vision-systems-china.com/"
       ],
-      "render": "dynamic",
+      "render": "lightpanda",
       "list_selector": "h2",
       "link_selector": "a.new02",
       "ai_involvement": "extract_judge",
@@ -600,7 +600,7 @@
       "urls": [
         "http://gxq.qingdao.gov.cn/xxgk_113/zwzx_113/gxdt_113/"
       ],
-      "render": "dynamic",
+      "render": "lightpanda",
       "list_selector": "li",
       "link_selector": "a",
       "ai_involvement": "extract_judge",
@@ -1152,7 +1152,7 @@
       "urls": [
         "http://www.szns.gov.cn/"
       ],
-      "render": "dynamic",
+      "render": "lightpanda",
       "list_selector": "li",
       "link_selector": "a",
       "ai_involvement": "extract_judge",
@@ -1379,7 +1379,7 @@
         "http://www.stsa.org.cn/",
         "http://www.cxsd.org.cn/"
       ],
-      "render": "dynamic",
+      "render": "lightpanda",
       "list_selector": "div",
       "link_selector": "a",
       "ai_involvement": "extract_judge",
@@ -1394,7 +1394,7 @@
       "urls": [
         "https://robot.ofweek.com/"
       ],
-      "render": "dynamic",
+      "render": "lightpanda",
       "ai_involvement": "extract_judge",
       "interval": "0 */6 * * *",
       "enabled": true,
@@ -1455,7 +1455,7 @@
       "urls": [
         "https://www.vbdata.cn/"
       ],
-      "render": "dynamic",
+      "render": "lightpanda",
       "list_selector": "div",
       "link_selector": "a",
       "ai_involvement": "extract_judge",
@@ -1470,7 +1470,7 @@
       "urls": [
         "https://www.cn-healthcare.com/"
       ],
-      "render": "dynamic",
+      "render": "lightpanda",
       "list_selector": "div.RQcode-item-link",
       "link_selector": "a",
       "ai_involvement": "extract_judge",
@@ -1515,7 +1515,7 @@
       "urls": [
         "https://www.pharmacodia.com/"
       ],
-      "render": "dynamic",
+      "render": "lightpanda",
       "list_selector": "span",
       "link_selector": "a",
       "ai_involvement": "extract_judge",

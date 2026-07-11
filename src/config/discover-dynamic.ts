@@ -1,9 +1,8 @@
 /**
- * 批量选择器发现脚本（仅处理动态渲染失败的站点）
+ * 批量选择器发现脚本（对静态失败的站点用 Lightpanda/动态渲染重新探测）
  * pnpm tsx src/config/discover-dynamic.ts [--write]
  *
- * 将 list_selector IS NULL 的站点全部改为 Playwright 动态渲染抓取，
- * 再重新探测。适用于首次静态抓取被屏蔽 / 超时的站点。
+ * 策略：对 list_selector IS NULL 的站点，先试 Lightpanda，失败再试 Playwright 动态渲染。
  */
 import "dotenv/config";
 import * as cheerio from "cheerio";
@@ -12,6 +11,7 @@ import PQueue from "p-queue";
 import { db, schema } from "../../db/client";
 import { fetchHtml } from "../crawler/fetcher";
 import { closeBrowser } from "../crawler/playwright";
+import { closeLightpanda } from "../crawler/lightpanda";
 
 function looksLikeArticle(t: string, h: string): boolean {
   const tt = t.trim();
@@ -58,7 +58,7 @@ async function main() {
   const write = process.argv.includes("--write");
   const sites = db.select().from(schema.sites).where(isNull(schema.sites.listSelector)).all();
   if (!sites.length) { console.log("所有站点均已有选择器。"); return; }
-  console.log(`剩余未配选择器：${sites.length} 站（全部用 Playwright 动态渲染探测）\n`);
+  console.log(`剩余未配选择器：${sites.length} 站（Lightpanda → Playwright 动态渲染探测）\n`);
 
   let ok = 0, fail = 0;
   const q = new PQueue({ concurrency: 3, interval: 2000, intervalCap: 2 });
@@ -66,12 +66,23 @@ async function main() {
     q.add(async () => {
       const url = s.urls[0];
       let html: string;
+      let renderUsed = "dynamic";
+
+      // 优先试 Lightpanda
       try {
-        html = await fetchHtml(url, "dynamic");
+        html = await fetchHtml(url, "lightpanda");
+        renderUsed = "lightpanda";
+        console.log(`  ✅ #${s.id} ${s.name} Lightpanda 抓取成功`);
       } catch (e) {
-        fail++;
-        console.log(`✗ #${s.id} ${s.name.padEnd(20)} dynamic 也失败`);
-        return;
+        // 回退到 Playwright
+        console.log(`  ⚠ #${s.id} ${s.name} Lightpanda 失败，回退 Playwright: ${(e as Error).message.slice(0,60)}`);
+        try {
+          html = await fetchHtml(url, "dynamic");
+        } catch (e2) {
+          fail++;
+          console.log(`✗ #${s.id} ${s.name.padEnd(20)} dynamic 也失败`);
+          return;
+        }
       }
       const cs = discover(html, url);
       if (!cs.length) {
@@ -81,10 +92,10 @@ async function main() {
       }
       const best = cs[0];
       const conf = best.n >= 8 ? "★" : best.n >= 5 ? "○" : "·";
-      console.log(`${conf} #${s.id} ${s.name.padEnd(20)} list=${best.itemKey.padEnd(24)} link=${best.linkKey} ×${best.n}`);
+      console.log(`${conf} #${s.id} ${s.name.padEnd(20)} [${renderUsed}] list=${best.itemKey.padEnd(24)} link=${best.linkKey} ×${best.n}`);
       if (write) {
         db.update(schema.sites)
-          .set({ listSelector: best.itemKey, linkSelector: best.linkKey, render: "dynamic" })
+          .set({ listSelector: best.itemKey, linkSelector: best.linkKey, render: renderUsed })
           .where(eq(schema.sites.id, s.id)).run();
         ok++;
       }
@@ -92,6 +103,7 @@ async function main() {
   }
   await q.onIdle();
   await closeBrowser().catch(() => {});
+  await closeLightpanda().catch(() => {});
   console.log(`\n完成：成功=${ok} 失败=${fail}`);
 }
 main();

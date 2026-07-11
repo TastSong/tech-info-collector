@@ -6,7 +6,9 @@
       "name": "科学技术部",
       "category": "国家级科技部门",
       "subcategory": "科学技术部",
-      "urls": ["https://www.most.gov.cn/index.html"],
+      "urls": [
+        "https://www.most.gov.cn/index.html"
+      ],
       "render": "static",
       "list_selector": "li.mhide",
       "link_selector": "a",
@@ -19,7 +21,9 @@
       "name": "青岛市科技局",
       "category": "地方科技部门（山东省）",
       "subcategory": "市级",
-      "urls": ["http://qdstc.qingdao.gov.cn/"],
+      "urls": [
+        "http://qdstc.qingdao.gov.cn/"
+      ],
       "render": "static",
       "list_selector": "div.swiper-slide",
       "link_selector": "a",
@@ -32,7 +36,9 @@
       "name": "青岛高新区——高新动态",
       "category": "科技园区",
       "subcategory": null,
-      "urls": ["http://gxq.qingdao.gov.cn/xxgk_113/zwzx_113/gxdt_113/"],
+      "urls": [
+        "http://gxq.qingdao.gov.cn/xxgk_113/zwzx_113/gxdt_113/"
+      ],
       "render": "static",
       "list_selector": "td",
       "link_selector": "a",
@@ -45,7 +51,9 @@
       "name": "青岛能源所官网",
       "category": "科研院所",
       "subcategory": null,
-      "urls": ["http://www.qibebt.cas.cn/"],
+      "urls": [
+        "http://www.qibebt.cas.cn/"
+      ],
       "render": "static",
       "list_selector": "h4",
       "link_selector": "a",
@@ -58,7 +66,9 @@
       "name": "科技日报",
       "category": "科技媒体",
       "subcategory": "中央级媒体（推荐优先访问）",
-      "urls": ["https://www.stdaily.com/"],
+      "urls": [
+        "https://www.stdaily.com/"
+      ],
       "render": "static",
       "list_selector": "div.kjxwTit",
       "link_selector": "a",
@@ -71,7 +81,9 @@
       "name": "新浪科技",
       "category": "科技媒体",
       "subcategory": "综合科技媒体（推荐优先访问）",
-      "urls": ["https://tech.sina.com.cn/"],
+      "urls": [
+        "https://tech.sina.com.cn/"
+      ],
       "render": "static",
       "list_selector": "ul.news-list li",
       "link_selector": "a",
@@ -84,7 +96,9 @@
       "name": "36氪",
       "category": "科技媒体",
       "subcategory": "综合科技媒体（推荐优先访问）",
-      "urls": ["https://36kr.com/"],
+      "urls": [
+        "https://36kr.com/"
+      ],
       "render": "dynamic",
       "list_selector": "p.title-wrapper",
       "link_selector": "a",
@@ -97,7 +111,9 @@
       "name": "IT之家",
       "category": "科技媒体",
       "subcategory": "综合科技媒体（推荐优先访问）",
-      "urls": ["https://www.ithome.com/"],
+      "urls": [
+        "https://www.ithome.com/"
+      ],
       "render": "static",
       "list_selector": "li.n",
       "link_selector": "a",
@@ -110,7 +126,9 @@
       "name": "量子位",
       "category": "科技媒体",
       "subcategory": "AI与前沿科技媒体",
-      "urls": ["https://www.qbitai.com/"],
+      "urls": [
+        "https://www.qbitai.com/"
+      ],
       "render": "static",
       "list_selector": "h4",
       "link_selector": "a",
@@ -123,8 +141,10 @@
       "name": "机器之心",
       "category": "科技媒体",
       "subcategory": "AI与前沿科技媒体",
-      "urls": ["https://www.jiqizhixin.com/"],
-      "render": "dynamic",
+      "urls": [
+        "https://www.jiqizhixin.com/"
+      ],
+      "render": "lightpanda",
       "list_selector": null,
       "link_selector": null,
       "ai_involvement": "extract_judge",

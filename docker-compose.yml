@@ -10,6 +10,9 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=4040
+      - LIGHTPANDA_WS_ENDPOINT=ws://lightpanda:9222
+    depends_on:
+      - lightpanda
     volumes:
       - collector_data:/app/data
     restart: unless-stopped
@@ -19,6 +22,20 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+
+  lightpanda:
+    image: lightpanda/browser:nightly
+    container_name: tech-info-lightpanda
+    command: ["/bin/lightpanda", "serve", "--host", "0.0.0.0", "--port", "9222", "--obey-robots"]
+    ports:
+      - "127.0.0.1:9222:9222"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/bin/lightpanda", "version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
 
 volumes:
   collector_data:

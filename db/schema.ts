@@ -28,7 +28,7 @@ export const sites = sqliteTable("sites", {
     .$type<string[]>()
     .notNull()
     .default([]),
-  render: text("render", { enum: ["static", "dynamic"] })
+  render: text("render", { enum: ["static", "dynamic", "lightpanda"] })
     .notNull()
     .default("static"),
   // 列表/详情页 CSS 选择器（阶段 2 填充）

@@ -9,6 +9,7 @@ import { db, schema } from "../../db/client";
 import type { Site } from "./types";
 import { runSite, type RunResult } from "./runner";
 import { closeBrowser } from "../crawler/playwright";
+import { closeLightpanda } from "../crawler/lightpanda";
 import { analyzePending } from "../ai/analyze";
 
 export interface CrawlOptions {
@@ -119,6 +120,7 @@ export async function runCrawl(opts: CrawlOptions = {}): Promise<{
   // 4. 关闭浏览器
   if (!opts.signal?.aborted) {
     await closeBrowser().catch(() => {});
+    await closeLightpanda().catch(() => {});
   }
 
   // 5. 汇总 session 结果

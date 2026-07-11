@@ -39,7 +39,7 @@ const FETCH_PAGE_TIMEOUT = 15_000;
 export interface CachedPage {
   url: string;
   title: string;
-  actualRender: "static" | "dynamic";
+  actualRender: "static" | "dynamic" | "lightpanda";
   statusCode: number;
   truncated: boolean;
   byteLength: number;
@@ -202,7 +202,7 @@ export function createFetchPage(opts: {
   sessionCache: SessionCache;
   abortSignal?: AbortSignal;
   logger?: typeof console;
-  defaultRender?: "static" | "dynamic";
+  defaultRender?: "static" | "dynamic" | "lightpanda";
 }) {
   const { sessionCache, abortSignal, logger } = opts;
   const defaultRender = opts.defaultRender ?? "static";
@@ -217,9 +217,9 @@ export function createFetchPage(opts: {
     inputSchema: z.object({
       url: z.string().url().describe("要抓取的网页 URL"),
       render: z
-        .enum(["static", "dynamic"])
+        .enum(["static", "dynamic", "lightpanda"])
         .default(defaultRender)
-        .describe("static=HTTP请求（服务端渲染页面）；dynamic=Playwright浏览器渲染"),
+        .describe("static=HTTP请求；lightpanda=Lightpanda浏览器；dynamic=Playwright浏览器"),
     }),
 
     execute: async ({ url, render }): Promise<CachedPage> => {
