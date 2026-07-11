@@ -18,6 +18,17 @@ interface Opts {
   siteId?: number;
 }
 
+/** Promise 超时包装器 */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`操作超时 (${ms}ms)`)), ms);
+    promise.then(
+      (val) => { clearTimeout(timer); resolve(val); },
+      (err) => { clearTimeout(timer); reject(err); },
+    );
+  });
+}
+
 /** 内容去重：查找相同 contentHash 的已审核文章，复用其审核结果。
  *  返回 null 表示无可用缓存，需正常审核。 */
 function tryReuseReview(
@@ -126,12 +137,17 @@ export async function analyzePending(opts: Opts = {}): Promise<void> {
           return;
         }
 
-        const r = await reviewArticle({
-          title: a.title ?? "",
-          body: a.body ?? "",
-          scope: s.scope,
-          publishedAt: a.publishedAt,
-        });
+        // ── 单篇审核超时控制（默认 60s），防止 LLM 响应缓慢卡死队列槽位 ──
+        const REVIEW_TIMEOUT_MS = Number(process.env.AI_REVIEW_TIMEOUT_MS ?? 60_000);
+        const r = await withTimeout(
+          reviewArticle({
+            title: a.title ?? "",
+            body: a.body ?? "",
+            scope: s.scope,
+            publishedAt: a.publishedAt,
+          }),
+          REVIEW_TIMEOUT_MS,
+        );
         const status = decideStatus(r);
         db.insert(schema.aiReviews)
           .values({
