@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { FeedCard } from "./FeedCard";
 import { parseTags } from "@/src/lib/parse-tags";
-import { Calendar, Search, Filter, Star, X, Inbox, SearchX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2 } from "lucide-react";
+import { Calendar, Search, Filter, Star, X, Inbox, SearchX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronDown, Loader2 } from "lucide-react";
 import { useToast } from "./Toast";
 
 export interface ArticleItem {
@@ -106,6 +106,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
   const [dismissedIds, setDismissedIds] = useState<Set<number>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<string>("");
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
 
   // 防抖搜索
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -345,6 +346,15 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
   // 为文章分配全局递增 index（用于 animation-delay）
   let animCounter = 0;
 
+  function toggleCategory(catKey: string) {
+    setCollapsedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(catKey)) next.delete(catKey);
+      else next.add(catKey);
+      return next;
+    });
+  }
+
   return (
     <>
       {/* 搜索/筛选栏 */}
@@ -514,32 +524,51 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
                 </h2>
 
                 <div className="space-y-6">
-                  {bucket.categories.map((catGroup) => (
+                  {bucket.categories.map((catGroup) => {
+                    const catKey = `${bucket.key}::${catGroup.category}`;
+                    const isCollapsed = collapsedCategories.has(catKey);
+
+                    return (
                     <div key={catGroup.category}>
-                      <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-600">
+                      <h3
+                        className="mb-2 flex cursor-pointer select-none items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors"
+                        onClick={() => toggleCategory(catKey)}
+                      >
+                        <ChevronDown
+                          className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${
+                            isCollapsed ? "-rotate-90" : ""
+                          }`}
+                        />
                         <span className="inline-block h-1.5 w-1.5 rounded-full bg-indigo-400" />
                         {catGroup.category}
                         <span className="text-xs font-normal text-slate-400">
                           ({catGroup.articles.length})
                         </span>
                       </h3>
-                      <div className="space-y-2">
-                        {catGroup.articles.map((a) => {
-                          const idx = animCounter++;
-                          return (
-                            <FeedCard
-                              key={a.id}
-                              article={{
-                                ...a,
-                                onToggleSaved: handleToggleSaved,
-                                animIndex: idx,
-                              }}
-                            />
-                          );
-                        })}
+                      <div
+                        className={`overflow-hidden transition-all duration-300 ${
+                          isCollapsed ? "max-h-0 opacity-0" : "max-h-[5000px] opacity-100"
+                        }`}
+                      >
+                        <div className="space-y-2 pb-2">
+                          {catGroup.articles.map((a) => {
+                            const idx = animCounter++;
+                            return (
+                              <FeedCard
+                                key={a.id}
+                                article={{
+                                  ...a,
+                                  onToggleSaved: handleToggleSaved,
+                                  animIndex: isCollapsed ? undefined : idx,
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             );
