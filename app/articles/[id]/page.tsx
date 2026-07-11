@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db, schema } from "@/db/client";
 import { eq, desc } from "drizzle-orm";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { statusBadge } from "../../components/Badges";
 import { MarkViewed } from "../../components/MarkViewed";
 import { ReadingProgress } from "../../components/ReadingProgress";
@@ -146,8 +148,14 @@ export default async function ArticleDetailPage({
         {/* Body */}
         <div className="lg:col-span-2">
           <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">正文</h2>
-          <div className="prose prose-slate max-w-none rounded-xl border border-slate-200 bg-white p-6 text-sm leading-relaxed whitespace-pre-line dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-            {article.body || "(无正文)"}
+          <div className="prose prose-slate max-w-none dark:prose-invert prose-sm rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+            {article.body ? (
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {article.body}
+              </ReactMarkdown>
+            ) : (
+              "(无正文)"
+            )}
           </div>
         </div>
 

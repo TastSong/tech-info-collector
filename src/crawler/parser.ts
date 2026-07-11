@@ -5,6 +5,7 @@
  * 选择器来自 sites 表（listSelector / linkSelector / titleSelector / bodySelector / dateSelector）。
  */
 import * as cheerio from "cheerio";
+import { htmlToMarkdown } from "./html-to-markdown";
 
 export interface Selectors {
   listSelector: string | null;
@@ -92,11 +93,7 @@ export function parseDetail(html: string, s: Selectors): Detail {
     if ($b.length) {
       const $c = $b.clone();
       $c.find("script,style,nav,aside,form,.comment,.share,.breadcrumb").remove();
-      body = $c
-        .text()
-        .replace(/[ \t]{2,}/g, " ")
-        .replace(/\n{3,}/g, "\n\n")
-        .trim();
+      body = htmlToMarkdown($c.html() ?? "");
     }
   }
   if (!body) body = extractMainContent($);
@@ -116,17 +113,14 @@ function extractMainContent($: cheerio.CheerioAPI): string {
     if ($el.find("p").length < 2) return;
     const $c = $el.clone();
     $c.find("script,style,nav,aside,form,.comment,.share,.breadcrumb").remove();
-    const text = $c
-      .text()
-      .replace(/[ \t]{2,}/g, " ")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
+    const text = htmlToMarkdown($c.html() ?? "");
     if (text.length > best.length) best = text;
   });
   // 回退：取 body 纯文本（在找不到含 p 的容器时）
   if (!best) {
-    $("body").find("script,style,nav,aside,form,.comment").remove();
-    best = $("body").text().replace(/\s+/g, " ").trim();
+    const $b = $("body").clone();
+    $b.find("script,style,nav,aside,form,.comment").remove();
+    best = htmlToMarkdown($b.html() ?? "").replace(/\n{3,}/g, "\n\n").trim();
   }
   return best;
 }
