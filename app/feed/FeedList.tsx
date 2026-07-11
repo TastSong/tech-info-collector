@@ -215,12 +215,6 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
       });
   }, [filtered]);
 
-  function bucketIds(bucketKey: string): number[] {
-    const info = bucketInfos.find((b) => b.key === bucketKey);
-    if (!info) return [];
-    return info.categories.flatMap((c) => c.articles.map((a) => a.id));
-  }
-
   // 跳转分页
   const goPage = useCallback(async (target: number) => {
     if (target < 1 || target > totalPages || target === page) return;
@@ -429,8 +423,9 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
       ) : (
         <div className="space-y-10">
           {bucketInfos.map((bucket) => {
-            const bIds = bucketIds(bucket.key);
-            const bucketTotal = bIds.length;
+            const bucketTotal = bucket.categories.reduce(
+              (sum, c) => sum + c.articles.length, 0,
+            );
 
             return (
               <section key={bucket.key}>
@@ -439,15 +434,6 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
                   <span className="text-xs font-normal text-slate-400">
                     ({bucketTotal} 篇)
                   </span>
-                  {bucketTotal > 0 && !savedOnly && (
-                    <button
-                      onClick={() => markBatchRead(bIds)}
-                      disabled={bulkLoading}
-                      className="ml-1 rounded px-1.5 py-0.5 text-xs text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 disabled:opacity-30 transition-colors"
-                    >
-                      全部已读
-                    </button>
-                  )}
                 </h2>
 
                 <div className="space-y-6">
