@@ -15,18 +15,25 @@
 
 ## 常用命令
 
+> **⚠️ 测试与运行原则：所有命令默认在 Docker 容器内执行，除非用户明确要求本地运行。**
+
 ```bash
+# 本地开发（仅在用户明确说"本地开发"/"不用 docker"时使用）
 pnpm dev              # 开发服务器 (端口 4040)
-pnpm build            # 生产构建
-pnpm start            # 生产启动
 pnpm typecheck        # TypeScript 类型检查
-pnpm db:push          # 数据库 schema 推送
-pnpm db:studio        # Drizzle Studio
-pnpm seed             # 初始化种子数据
-pnpm crawl            # 执行站点采集
-pnpm analyze          # 触发 AI 分析
-pnpm run              # crawl + analyze 一次执行
-pnpm scheduler        # 启动定时调度器
+
+# Docker 部署与测试（默认方式）
+docker compose up -d --build   # 构建并启动容器
+docker compose exec app pnpm build    # 容器内构建
+docker compose exec app pnpm db:push  # 容器内数据库 schema 推送
+docker compose exec app pnpm db:studio   # 容器内 Drizzle Studio
+docker compose exec app pnpm seed     # 容器内初始化种子数据
+docker compose exec app pnpm crawl    # 容器内执行站点采集
+docker compose exec app pnpm analyze  # 容器内触发 AI 分析
+docker compose exec app pnpm run      # 容器内 crawl + analyze
+docker compose exec app pnpm scheduler  # 容器内启动定时调度器
+docker compose logs -f                # 查看日志
+docker compose restart                # 重启容器
 ```
 
 ## 目录结构
@@ -53,13 +60,14 @@ SQLite 文件: `data/collector.db`（含 WAL 文件 `collector.db-wal`, `collect
 
 ### 🐳 部署与测试策略
 
-**默认使用 Docker 进行所有部署和测试，除非用户明确要求本地部署。**
+**默认使用 Docker 进行所有部署、运行和测试，除非用户明确要求本地部署。**
 
-- 部署：`docker compose up -d --build` 或先 `docker build` 再 `docker compose up -d`
-- 测试：在容器内执行命令，如 `docker compose exec app pnpm crawl`
-- 日志：`docker compose logs -f`
-- 重启：`docker compose restart`
-- 仅在用户明确说"本地部署"、"本地运行"、"不用 docker"时，才使用 `pnpm dev` / `pnpm start`
+- **测试/运行命令**：始终通过 `docker compose exec app pnpm <command>` 在容器内执行，包括 `crawl`、`analyze`、`run`、`scheduler`、`seed`、`db:push`、`db:studio` 等
+- **部署**：`docker compose up -d --build` 或先 `docker build` 再 `docker compose up -d`
+- **验证**：先 `docker compose logs` 确认容器已启动，再 `docker compose exec app pnpm <command>` 执行测试
+- **日志**：`docker compose logs -f`
+- **重启**：`docker compose restart`
+- **仅在用户明确说"本地部署"、"本地运行"、"不用 docker"时**，才使用 `pnpm dev` / `pnpm start` / `pnpm crawl` 等本地命令
 
 ---
 
