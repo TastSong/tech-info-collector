@@ -86,8 +86,8 @@ export async function PATCH(
   }
 
   if (updates.render !== undefined) {
-    if (!["static", "dynamic"].includes(updates.render as string)) {
-      return NextResponse.json({ error: "render 必须是 static 或 dynamic" }, { status: 400 });
+    if (!["static", "dynamic", "lightpanda"].includes(updates.render as string)) {
+      return NextResponse.json({ error: "render 必须是 static、dynamic 或 lightpanda" }, { status: 400 });
     }
   }
 

@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle, Loader2, Globe, FileText } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Globe, FileText, Zap } from "lucide-react";
 
 /** 站点颜色 + AI 参与度标签 */
 export function badge(label: React.ReactNode, color: "green" | "amber" | "red" | "slate") {
@@ -21,7 +21,9 @@ export function statusBadge(s: string) {
 }
 
 export function renderBadge(r: string) {
-  return r === "dynamic"
-    ? badge(<><Globe className="h-3 w-3" /> 动态</>, "amber")
-    : badge(<><FileText className="h-3 w-3" /> 静态</>, "slate");
+  if (r === "dynamic")
+    return badge(<><Globe className="h-3 w-3" /> 动态</>, "amber");
+  if (r === "lightpanda")
+    return badge(<><Zap className="h-3 w-3" /> Lightpanda</>, "green");
+  return badge(<><FileText className="h-3 w-3" /> 静态</>, "slate");
 }

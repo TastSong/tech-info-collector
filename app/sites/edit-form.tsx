@@ -11,7 +11,7 @@ export interface SiteFormData {
   category: string;
   subcategory: string;
   urls: string[];
-  render: "static" | "dynamic";
+  render: "static" | "dynamic" | "lightpanda";
   listSelector: string;
   itemSelector: string;
   linkSelector: string;
@@ -27,7 +27,7 @@ export interface SiteFormData {
 interface AiAnalyzeResult {
   category: string;
   subcategory: string;
-  render: "static" | "dynamic";
+  render: "static" | "dynamic" | "lightpanda";
   listSelector: string;
   itemSelector: string;
   linkSelector: string;
@@ -52,7 +52,7 @@ const EMPTY_FORM: SiteFormData = {
   category: "",
   subcategory: "",
   urls: [""],
-  render: "static",
+  render: "static" as const,
   listSelector: "",
   itemSelector: "",
   linkSelector: "",
@@ -358,7 +358,7 @@ export function SiteEditForm({
 
         {!analyzing && aiResult && (
           <p className="mt-1.5 text-xs text-indigo-600 dark:text-indigo-400">
-            已检测：{aiResult.diagnostics.staticWorked ? "静态可用 ✓" : "需要动态渲染"}
+            已检测：{aiResult.diagnostics.staticWorked ? "静态可用 ✓" : aiResult.render === "lightpanda" ? "Lightpanda ✓" : "需要动态渲染"}
             {" · "}最佳 URL: {new URL(aiResult.diagnostics.bestUrl).hostname}
             {" · "}置信度: {aiResult.diagnostics.selectorConfidence === "high" ? "高" : aiResult.diagnostics.selectorConfidence === "medium" ? "中" : "低"}
           </p>
@@ -388,7 +388,7 @@ export function SiteEditForm({
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs text-indigo-700 dark:text-indigo-400">
-            <span>渲染模式：{aiResult.render === "static" ? "静态 🔗" : "动态 🌐"}</span>
+            <span>渲染模式：{aiResult.render === "static" ? "静态 🔗" : aiResult.render === "lightpanda" ? "Lightpanda ⚡" : "动态 🌐"}</span>
             <span>分类：{aiResult.category || "未识别"}</span>
             <span>子分类：{aiResult.subcategory || "未识别"}</span>
             <span>listSelector：<code className="bg-indigo-100 dark:bg-indigo-900 px-1 rounded">{aiResult.listSelector}</code></span>
@@ -456,9 +456,10 @@ export function SiteEditForm({
             <select
               className={cls.select + " w-full"}
               value={form.render}
-              onChange={(e) => update("render", e.target.value as "static" | "dynamic")}
+              onChange={(e) => update("render", e.target.value as "static" | "dynamic" | "lightpanda")}
             >
               <option value="static">static (静态)</option>
+              <option value="lightpanda">lightpanda (⚡ 推荐)</option>
               <option value="dynamic">dynamic (动态)</option>
             </select>
           </div>

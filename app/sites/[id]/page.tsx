@@ -42,7 +42,7 @@ export default async function SiteEditPage({
     category: row.category ?? "",
     subcategory: row.subcategory ?? "",
     urls: (row.urls as string[]).length ? (row.urls as string[]) : [""],
-    render: row.render as "static" | "dynamic",
+    render: row.render as "static" | "dynamic" | "lightpanda",
     listSelector: row.listSelector ?? "",
     itemSelector: row.itemSelector ?? "",
     linkSelector: row.linkSelector ?? "",

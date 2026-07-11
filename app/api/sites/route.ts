@@ -47,9 +47,9 @@ export async function POST(req: Request) {
   }
 
   const urls: string[] = Array.isArray(body.urls) ? body.urls.filter((u: unknown) => typeof u === "string" && u.trim()) : [];
-  const render = (["static", "dynamic"].includes(body.render as string)
+  const render = (["static", "dynamic", "lightpanda"].includes(body.render as string)
     ? body.render
-    : "static") as "static" | "dynamic";
+    : "static") as "static" | "dynamic" | "lightpanda";
   const aiInvolvement = (["none", "extract", "extract_judge", "full"].includes(
     body.aiInvolvement as string,
   )
