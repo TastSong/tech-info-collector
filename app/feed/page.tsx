@@ -1,4 +1,4 @@
-import { countFeedArticles, queryFeedArticles } from "@/src/data/feed";
+import { countFeedArticles, queryFeedArticles, countSavedArticles } from "@/src/data/feed";
 import { FeedList } from "./FeedList";
 import type { ArticleItem } from "./FeedList";
 
@@ -18,6 +18,7 @@ function tryParseTags(raw: string | null): string[] {
 
 export default async function FeedPage() {
   const total = countFeedArticles();
+  const savedCount = countSavedArticles();
   const rawRows = queryFeedArticles({ limit: PAGE_SIZE, offset: 0 });
 
   const articles: ArticleItem[] = rawRows.map((r) => ({
@@ -45,6 +46,7 @@ export default async function FeedPage() {
         initialArticles={articles}
         initialTotal={total}
         initialPage={1}
+        initialSavedCount={savedCount}
       />
     </main>
   );

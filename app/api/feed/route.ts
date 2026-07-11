@@ -4,12 +4,13 @@
  * Query params:
  *  - page     (default 1)
  *  - pageSize (default 30, max 100)
+ *  - saved    (1 = 仅收藏)
  *
  * Response: { articles, total, page, pageSize, totalPages }
  * articles 中的日期字段是 Unix 秒数（客户端自行转为 Date）。
  */
 import { NextResponse } from "next/server";
-import { countFeedArticles, queryFeedArticles } from "@/src/data/feed";
+import { countFeedArticles, queryFeedArticles, countSavedArticles, querySavedArticles } from "@/src/data/feed";
 
 export const dynamic = "force-dynamic";
 
@@ -24,11 +25,14 @@ export async function GET(req: Request) {
     Math.max(1, Number(searchParams.get("pageSize")) || PAGE_SIZE_DEFAULT),
   );
   const offset = (page - 1) * pageSize;
+  const savedOnly = searchParams.get("saved") === "1";
 
-  const total = countFeedArticles();
+  const total = savedOnly ? countSavedArticles() : countFeedArticles();
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  const rawRows = queryFeedArticles({ limit: pageSize, offset });
+  const rawRows = savedOnly
+    ? querySavedArticles({ limit: pageSize, offset })
+    : queryFeedArticles({ limit: pageSize, offset });
 
   const articles = rawRows.map((r) => ({
     id: r.id,
@@ -45,5 +49,5 @@ export async function GET(req: Request) {
     savedAt: r.savedAt,
   }));
 
-  return NextResponse.json({ articles, total, page, pageSize, totalPages });
+  return NextResponse.json({ articles, total, page, pageSize, totalPages, savedOnly });
 }

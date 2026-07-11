@@ -100,9 +100,10 @@ interface Props {
   initialArticles: ArticleItem[];
   initialTotal: number;
   initialPage: number;
+  initialSavedCount: number;
 }
 
-export function FeedList({ initialArticles, initialTotal, initialPage }: Props) {
+export function FeedList({ initialArticles, initialTotal, initialPage, initialSavedCount }: Props) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [siteFilter, setSiteFilter] = useState("");
@@ -115,16 +116,24 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
   const [page, setPage] = useState(initialPage);
   const [total, setTotal] = useState(initialTotal);
   const [loadingPage, setLoadingPage] = useState(false);
+  const [savedCount, setSavedCount] = useState(initialSavedCount);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   // 收藏状态同步：当子组件切换收藏时，同步更新 articles 列表
   const handleToggleSaved = useCallback((id: number, saved: boolean) => {
-    setArticles((prev) =>
-      prev.map((a) =>
-        a.id === id ? { ...a, savedAt: saved ? new Date() : null } : a,
-      ),
-    );
+    if (savedOnly && !saved) {
+      // 收藏模式下取消收藏 → 从列表中移除
+      setArticles((prev) => prev.filter((a) => a.id !== id));
+      setTotal((prev) => prev - 1);
+    } else {
+      setArticles((prev) =>
+        prev.map((a) =>
+          a.id === id ? { ...a, savedAt: saved ? new Date() : null } : a,
+        ),
+      );
+    }
+    setSavedCount((prev) => prev + (saved ? 1 : -1));
   }, []);
 
   // 客户端过滤（排除已 dismiss 的文章）
@@ -132,7 +141,6 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
     const q = search.trim().toLowerCase();
     return articles.filter((a) => {
       if (dismissedIds.has(a.id)) return false;
-      if (savedOnly && a.savedAt == null) return false;
       if (q) {
         const haystack = [a.title, a.headline, a.summary, a.siteName]
           .filter(Boolean)
@@ -147,7 +155,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
       if (siteFilter && a.siteName !== siteFilter) return false;
       return true;
     });
-  }, [articles, search, categoryFilter, siteFilter, dismissedIds, savedOnly]);
+  }, [articles, search, categoryFilter, siteFilter, dismissedIds]);
 
   // 提取可用选项
   const { categories, sites } = useMemo(() => {
@@ -162,11 +170,6 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
       sites: Array.from(sts).sort((a, b) => a.localeCompare(b, "zh")),
     };
   }, [articles]);
-
-  const savedCount = useMemo(
-    () => articles.filter((a) => a.savedAt != null && !dismissedIds.has(a.id)).length,
-    [articles, dismissedIds],
-  );
 
   // 双层分组：日期桶 → category → articles
   const bucketInfos = useMemo(() => {
@@ -223,7 +226,8 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
     if (target < 1 || target > totalPages || target === page) return;
     setLoadingPage(true);
     try {
-      const res = await fetch(`/api/feed?page=${target}&pageSize=${PAGE_SIZE}`);
+      const savedParam = savedOnly ? "&saved=1" : "";
+      const res = await fetch(`/api/feed?page=${target}&pageSize=${PAGE_SIZE}${savedParam}`);
       if (!res.ok) return;
       const data = await res.json();
       setArticles(((data.articles ?? []) as ArticleRaw[]).map(fromRaw));
@@ -235,7 +239,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
     } finally {
       setLoadingPage(false);
     }
-  }, [page, totalPages]);
+  }, [page, totalPages, savedOnly]);
 
   // 批量标记已读
   const markBatchRead = useCallback(async (ids: number[]) => {
@@ -275,7 +279,20 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
     setSearch("");
     setCategoryFilter("");
     setSiteFilter("");
-    setSavedOnly(false);
+    if (savedOnly) {
+      // 从收藏模式切回默认 feed，重新从服务端拉取
+      setSavedOnly(false);
+      setLoadingPage(true);
+      fetch(`/api/feed?page=1&pageSize=${PAGE_SIZE}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setArticles(((data.articles ?? []) as ArticleRaw[]).map(fromRaw));
+          setPage(1);
+          setTotal(data.total);
+          setDismissedIds(new Set());
+        })
+        .finally(() => setLoadingPage(false));
+    }
   }
 
   const totalDisplayed = total;
@@ -337,7 +354,26 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
 
           {/* 仅看收藏 */}
           <button
-            onClick={() => setSavedOnly((v) => !v)}
+            onClick={async () => {
+              const next = !savedOnly;
+              setSavedOnly(next);
+              setLoadingPage(true);
+              try {
+                const savedParam = next ? "&saved=1" : "";
+                const res = await fetch(`/api/feed?page=1&pageSize=${PAGE_SIZE}${savedParam}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                setArticles(((data.articles ?? []) as ArticleRaw[]).map(fromRaw));
+                setPage(1);
+                setTotal(data.total);
+                setSavedCount(data.savedOnly ? data.total : initialSavedCount);
+                setDismissedIds(new Set());
+              } catch {
+                setSavedOnly(!next); // revert on error
+              } finally {
+                setLoadingPage(false);
+              }
+            }}
             className={`shrink-0 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
               savedOnly
                 ? "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
@@ -361,10 +397,12 @@ export function FeedList({ initialArticles, initialTotal, initialPage }: Props) 
       {/* 统计行 + 全部已读 + 分页信息 */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="text-sm text-slate-500">
-          {anyFilterActive ? (
+          {savedOnly ? (
+            <>★ 收藏文章 · {totalDisplayed} 篇</>
+          ) : anyFilterActive ? (
             <>筛选结果 · {filtered.length} 篇（共 {totalDisplayed}）</>
           ) : (
-            <>近 15 天未读{savedCount > 0 ? " + 收藏" : ""} · {totalDisplayed} 篇 · {totalCategories} 个分类</>
+            <>近 15 天未读 · {totalDisplayed} 篇 · {totalCategories} 个分类</>
           )}
         </div>
         <div className="flex items-center gap-3">

@@ -33,17 +33,15 @@ export interface FeedQueryOptions {
 /* ---------- 公共 WHERE 片段 ---------- */
 
 /**
- * 近 15 天未查看、已发布，或已收藏（不限已读或时间）。
- * 收藏的文章无论是否已读、无论发布时间均显示。
+ * 近 15 天未查看、已发布。
+ * 收藏文章不再常驻 feed，点击"收藏"按钮单独查询。
  */
 export const FEED_WHERE = sql`
   a.status = 'published'
+  AND a.viewed_at IS NULL
   AND (
-    (a.viewed_at IS NULL AND (
-      a.published_at >= CAST((unixepoch() - 1296000) AS INTEGER)
-      OR (a.published_at IS NULL AND a.fetched_at >= CAST((unixepoch() - 1296000) AS INTEGER))
-    ))
-    OR a.saved_at IS NOT NULL
+    a.published_at >= CAST((unixepoch() - 1296000) AS INTEGER)
+    OR (a.published_at IS NULL AND a.fetched_at >= CAST((unixepoch() - 1296000) AS INTEGER))
   )
 `;
 
@@ -185,6 +183,77 @@ export function countFeedArticles(): number {
 export function queryFeedArticles(opts: FeedQueryOptions): FeedRow[] {
   return db.all(
     sql`${FEED_SELECT_BODY}
+    LIMIT ${opts.limit} OFFSET ${opts.offset}`,
+  ) as unknown as FeedRow[];
+}
+
+/* ---------- 收藏文章查询 ---------- */
+
+/** 收藏文章 WHERE：已发布且已收藏（不限制已读状态或时间） */
+const SAVED_WHERE = sql`
+  a.status = 'published'
+  AND a.saved_at IS NOT NULL
+`;
+
+/** 收藏文章去重主查询 */
+const SAVED_SELECT_BODY = sql`
+  SELECT
+    id, title,
+    fetched_at  AS "fetchedAt",
+    published_at AS "publishedAt",
+    site_id     AS "siteId",
+    site_name   AS "siteName",
+    category,
+    summary,
+    headline,
+    tags,
+    quality_score AS "qualityScore",
+    saved_at    AS "savedAt"
+  FROM (
+    SELECT
+      a.id, a.title, a.fetched_at, a.published_at, a.site_id,
+      s.name   AS site_name,
+      s.category,
+      r.summary,
+      r.headline,
+      r.tags,
+      r.quality_score,
+      a.saved_at,
+      ROW_NUMBER() OVER (
+        PARTITION BY COALESCE(a.content_hash, '#' || a.id)
+        ORDER BY
+          CASE WHEN r.id IS NOT NULL THEN 0 ELSE 1 END,
+          COALESCE(a.published_at, a.fetched_at) DESC
+      ) AS rn
+    FROM articles a
+    INNER JOIN sites s ON a.site_id = s.id
+    LEFT JOIN ai_reviews r ON a.id = r.article_id
+    WHERE ${SAVED_WHERE}
+  ) sub
+  WHERE rn = 1
+  ORDER BY saved_at DESC
+`;
+
+/** 获取收藏文章总数 */
+export function countSavedArticles(): number {
+  const result = db.get(
+    sql`
+    SELECT COUNT(*) AS cnt FROM (
+      SELECT 1 FROM articles a
+      INNER JOIN sites s ON a.site_id = s.id
+      LEFT JOIN ai_reviews r ON a.id = r.article_id
+      WHERE ${SAVED_WHERE}
+      GROUP BY COALESCE(a.content_hash, '#' || a.id)
+    )
+  `,
+  ) as { cnt: number } | undefined;
+  return result?.cnt ?? 0;
+}
+
+/** 分页查询收藏文章（按收藏时间倒序） */
+export function querySavedArticles(opts: FeedQueryOptions): FeedRow[] {
+  return db.all(
+    sql`${SAVED_SELECT_BODY}
     LIMIT ${opts.limit} OFFSET ${opts.offset}`,
   ) as unknown as FeedRow[];
 }
