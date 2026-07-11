@@ -6,6 +6,7 @@ import { statusBadge } from "../../components/Badges";
 import { MarkViewed } from "../../components/MarkViewed";
 import { ReadingProgress } from "../../components/ReadingProgress";
 import { ScoreRing } from "../../components/ScoreRing";
+import { ScrollToTop } from "../../components/ScrollToTop";
 import { ArrowLeft, Bot, Circle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +47,7 @@ export default async function ArticleDetailPage({
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
       <ReadingProgress />
+      <ScrollToTop />
       <MarkViewed articleId={article.id} />
 
       <div className="mb-4 flex items-center gap-3 text-sm text-slate-500">
