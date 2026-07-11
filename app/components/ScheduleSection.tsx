@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { SchedulePicker, describeCron } from "./SchedulePicker";
+import { Clock, Edit3 } from "lucide-react";
 
 export function ScheduleSection() {
   const [cron, setCron] = useState<string>("");
@@ -32,19 +33,7 @@ export function ScheduleSection() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50">
-              <svg
-                className="h-5 w-5 text-indigo-500"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                />
-              </svg>
+              <Clock className="h-5 w-5 text-indigo-500" />
             </div>
             <div>
               <div className="text-sm font-medium text-slate-700">

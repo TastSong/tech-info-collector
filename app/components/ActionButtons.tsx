@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { Play, Square, Loader2 } from "lucide-react";
 
 /** 仪表盘上的"立即采集 / 停止采集"按钮。 */
 export function CrawlTrigger() {
@@ -82,21 +83,31 @@ export function CrawlTrigger() {
         <button
           onClick={stop}
           disabled={stopping}
-          className="rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-50 transition-colors"
         >
+          {stopping ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Square className="h-4 w-4" />
+          )}
           {stopping ? "正在停止..." : "停止采集"}
         </button>
       ) : (
         <button
           onClick={() => trigger()}
           disabled={pending}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 hover:shadow-md disabled:opacity-50 transition-all"
         >
+          {pending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Play className="h-4 w-4 fill-white text-white" />
+          )}
           立即采集全部
         </button>
       )}
       {msg ? (
-        <span className="text-xs text-slate-500">{msg}</span>
+        <span className="text-xs text-slate-500 animate-fade-in">{msg}</span>
       ) : null}
     </div>
   );

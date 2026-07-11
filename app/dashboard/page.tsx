@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { db, schema } from "@/db/client";
 import { count, eq, sql } from "drizzle-orm";
-import { Stat } from "../components/Stat";
 import { CrawlTrigger } from "../components/ActionButtons";
 import { statusBadge, renderBadge } from "../components/Badges";
 import { LiveProgress } from "../components/LiveProgress";
 import { ScheduleSection } from "../components/ScheduleSection";
+import { AnimatedNumber } from "../components/AnimatedNumber";
+import { Newspaper, CheckCircle2, XCircle, ArrowRight, Clock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -45,8 +46,9 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">仪表盘</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {total} 篇文章 · {readyCount} 已发布 ·{" "}
-            {rejectedCount} 已驳回
+            <AnimatedNumber value={total} /> 篇文章 ·{" "}
+            <AnimatedNumber value={readyCount} /> 已发布 ·{" "}
+            <AnimatedNumber value={rejectedCount} /> 已驳回
           </p>
         </div>
         <CrawlTrigger />
@@ -54,21 +56,32 @@ export default function DashboardPage() {
 
       {/* Stats */}
       <section className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <div className="text-2xl font-semibold text-slate-900">{total}</div>
-          <div className="mt-1 text-sm text-slate-500">总文章</div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 hover:shadow-sm transition-shadow">
+          <div className="flex items-center gap-2 mb-1">
+            <Newspaper className="h-4 w-4 text-slate-400" />
+            <span className="text-xs text-slate-400">总文章</span>
+          </div>
+          <div className="text-2xl font-semibold text-slate-900">
+            <AnimatedNumber value={total} />
+          </div>
         </div>
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 hover:shadow-sm transition-shadow">
+          <div className="flex items-center gap-2 mb-1">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            <span className="text-xs text-emerald-600">已发布情报</span>
+          </div>
           <div className="text-2xl font-semibold text-emerald-700">
-            {readyCount}
+            <AnimatedNumber value={readyCount} />
           </div>
-          <div className="mt-1 text-sm text-emerald-600">已发布情报</div>
         </div>
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-          <div className="text-2xl font-semibold text-red-700">
-            {rejectedCount}
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 hover:shadow-sm transition-shadow">
+          <div className="flex items-center gap-2 mb-1">
+            <XCircle className="h-4 w-4 text-red-400" />
+            <span className="text-xs text-red-600">AI 已筛除</span>
           </div>
-          <div className="mt-1 text-sm text-red-600">AI 已筛除</div>
+          <div className="text-2xl font-semibold text-red-700">
+            <AnimatedNumber value={rejectedCount} />
+          </div>
         </div>
       </section>
 
@@ -80,7 +93,10 @@ export default function DashboardPage() {
 
       {/* Recent Runs */}
       <section className="mb-10">
-        <h2 className="mb-3 text-lg font-semibold">最近采集</h2>
+        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+          <Clock className="h-4 w-4 text-slate-400" />
+          最近采集
+        </h2>
         {sessions.length ? (
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
             <table className="w-full text-sm">
@@ -97,7 +113,7 @@ export default function DashboardPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {sessions.map((s) => (
-                  <tr key={s.id} className="hover:bg-slate-50">
+                  <tr key={s.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3 text-slate-500">
                       {s.startedAt
                         ? new Date(s.startedAt).toLocaleString("zh-CN", {
@@ -152,9 +168,9 @@ export default function DashboardPage() {
           <h2 className="text-lg font-semibold">站点概况</h2>
           <Link
             href="/sites"
-            className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+            className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
           >
-            管理站点 →
+            管理站点 <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
@@ -172,11 +188,11 @@ export default function DashboardPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {siteStats.map((s) => (
-                <tr key={s.id} className="hover:bg-slate-50">
+                <tr key={s.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3 font-medium text-slate-900">
                     <Link
                       href={`/articles?site=${s.id}`}
-                      className="hover:text-indigo-600"
+                      className="hover:text-indigo-600 transition-colors"
                     >
                       {s.name}
                     </Link>

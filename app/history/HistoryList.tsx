@@ -3,6 +3,9 @@
 import { useState, useMemo, useCallback } from "react";
 import { FeedCard } from "../components/FeedCard";
 import { parseTags } from "@/src/lib/parse-tags";
+import { Calendar, Search, Star, X, Inbox, BookOpen, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 export interface HistoryItem {
   id: number;
@@ -76,8 +79,8 @@ function getDateBucket(ts: Date): DateBucket {
     (todayDate.getTime() - articleDate.getTime()) / 86400000,
   );
 
-  if (diffDays === 0) return { key: "today", label: "📅 今天", sort: 0 };
-  if (diffDays === 1) return { key: "yesterday", label: "📅 昨天", sort: 1 };
+  if (diffDays === 0) return { key: "today", label: "今天", sort: 0 };
+  if (diffDays === 1) return { key: "yesterday", label: "昨天", sort: 1 };
 
   const dayOfWeek = todayDate.getDay();
   const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -85,9 +88,9 @@ function getDateBucket(ts: Date): DateBucket {
   mondayDate.setDate(todayDate.getDate() - daysSinceMonday);
 
   if (articleDate >= mondayDate) {
-    return { key: "thisWeek", label: "📅 本周", sort: 2 };
+    return { key: "thisWeek", label: "本周", sort: 2 };
   }
-  return { key: "earlier", label: "📅 更早", sort: 3 };
+  return { key: "earlier", label: "更早", sort: 3 };
 }
 
 interface Props {
@@ -231,6 +234,8 @@ export function HistoryList({ initialArticles, initialTotal, initialPage }: Prop
 
   const totalCategories = new Set(filtered.map((r) => r.category ?? "未分类")).size;
 
+  let animCounter = 0;
+
   return (
     <>
       {/* 搜索/筛选栏 */}
@@ -240,13 +245,16 @@ export function HistoryList({ initialArticles, initialTotal, initialPage }: Prop
             <label className="block text-xs font-medium text-slate-500 mb-1">
               关键词
             </label>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="搜索标题、摘要、站点…"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-            />
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="搜索标题、摘要、站点…"
+                className="w-full rounded-lg border border-slate-200 pl-9 pr-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              />
+            </div>
           </div>
 
           <div className="min-w-[140px]">
@@ -288,20 +296,22 @@ export function HistoryList({ initialArticles, initialTotal, initialPage }: Prop
           {/* 仅看收藏 */}
           <button
             onClick={() => setSavedOnly((v) => !v)}
-            className={`shrink-0 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+            className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
               savedOnly
                 ? "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
                 : "border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50"
             }`}
           >
-            ★ 收藏 {savedCount > 0 && `(${savedCount})`}
+            <Star className={`h-3.5 w-3.5 ${savedOnly ? "fill-amber-400 text-amber-400" : ""}`} />
+            收藏 {savedCount > 0 && `(${savedCount})`}
           </button>
 
           {anyFilterActive && (
             <button
               onClick={clearFilters}
-              className="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+              className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50 transition-colors"
             >
+              <X className="h-3.5 w-3.5" />
               清除筛选
             </button>
           )}
@@ -325,13 +335,20 @@ export function HistoryList({ initialArticles, initialTotal, initialPage }: Prop
       {/* 文章列表 */}
       {!bucketInfos.length ? (
         <div className="rounded-xl border border-slate-200 bg-white p-12 text-center">
-          <p className="text-slate-400">
-            {anyFilterActive ? "没有匹配的文章" : "暂无已读记录"}
-          </p>
-          {!anyFilterActive && total === 0 && (
-            <p className="mt-2 text-sm text-slate-400">
-              在<a href="/feed" className="text-indigo-500 hover:text-indigo-600 underline mx-0.5">资讯流</a>中标记文章为"已阅读"后会出现在这里
-            </p>
+          {anyFilterActive ? (
+            <div className="flex flex-col items-center gap-2">
+              <Inbox className="h-12 w-12 text-slate-200" />
+              <p className="text-slate-400">没有匹配的文章</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <BookOpen className="h-12 w-12 text-slate-200" />
+              <p className="text-slate-400 font-medium">暂无已读记录</p>
+              <p className="text-sm text-slate-300">在资讯流中标记文章为"已阅读"后会出现在这里</p>
+              <Link href="/" className="mt-2 inline-flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 transition-colors">
+                前往资讯流 <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
           )}
         </div>
       ) : (
@@ -344,6 +361,7 @@ export function HistoryList({ initialArticles, initialTotal, initialPage }: Prop
             return (
               <section key={bucket.key}>
                 <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-slate-800">
+                  <Calendar className="h-4 w-4 text-slate-400" />
                   {bucket.label}
                   <span className="text-xs font-normal text-slate-400">
                     ({bucketTotal} 篇)
@@ -361,24 +379,28 @@ export function HistoryList({ initialArticles, initialTotal, initialPage }: Prop
                         </span>
                       </h3>
                       <div className="space-y-2">
-                        {catGroup.articles.map((a) => (
-                          <FeedCard
-                            key={a.id}
-                            article={{
-                              id: a.id,
-                              title: a.title,
-                              headline: a.headline,
-                              fetchedAt: a.fetchedAt,
-                              publishedAt: a.publishedAt,
-                              siteName: a.siteName,
-                              summary: a.summary,
-                              tags: a.tags,
-                              qualityScore: a.qualityScore,
-                              savedAt: a.savedAt,
-                              onToggleSaved: handleToggleSaved,
-                            }}
-                          />
-                        ))}
+                        {catGroup.articles.map((a) => {
+                          const idx = animCounter++;
+                          return (
+                            <FeedCard
+                              key={a.id}
+                              article={{
+                                id: a.id,
+                                title: a.title,
+                                headline: a.headline,
+                                fetchedAt: a.fetchedAt,
+                                publishedAt: a.publishedAt,
+                                siteName: a.siteName,
+                                summary: a.summary,
+                                tags: a.tags,
+                                qualityScore: a.qualityScore,
+                                savedAt: a.savedAt,
+                                onToggleSaved: handleToggleSaved,
+                                animIndex: idx,
+                              }}
+                            />
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
@@ -395,15 +417,17 @@ export function HistoryList({ initialArticles, initialTotal, initialPage }: Prop
           <button
             onClick={() => goPage(1)}
             disabled={page <= 1 || loadingPage}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
           >
+            <ChevronsLeft className="h-3.5 w-3.5" />
             首页
           </button>
           <button
             onClick={() => goPage(page - 1)}
             disabled={page <= 1 || loadingPage}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
           >
+            <ChevronLeft className="h-3.5 w-3.5" />
             上一页
           </button>
 
@@ -431,16 +455,18 @@ export function HistoryList({ initialArticles, initialTotal, initialPage }: Prop
           <button
             onClick={() => goPage(page + 1)}
             disabled={page >= totalPages || loadingPage}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
           >
             下一页
+            <ChevronRight className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => goPage(totalPages)}
             disabled={page >= totalPages || loadingPage}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors cursor-pointer"
           >
             末页
+            <ChevronsRight className="h-3.5 w-3.5" />
           </button>
         </div>
       )}

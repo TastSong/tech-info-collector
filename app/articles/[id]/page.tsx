@@ -4,6 +4,8 @@ import { db, schema } from "@/db/client";
 import { eq, desc } from "drizzle-orm";
 import { statusBadge } from "../../components/Badges";
 import { MarkViewed } from "../../components/MarkViewed";
+import { ReadingProgress } from "../../components/ReadingProgress";
+import { ArrowLeft, Bot, Circle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -42,10 +44,12 @@ export default async function ArticleDetailPage({
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
+      <ReadingProgress />
       <MarkViewed articleId={article.id} />
 
       <div className="mb-4 flex items-center gap-3 text-sm text-slate-500">
-        <Link href={backHref} className="hover:text-slate-900">
+        <Link href={backHref} className="inline-flex items-center gap-1 hover:text-slate-900 transition-colors">
+          <ArrowLeft className="h-4 w-4" />
           {backLabel}
         </Link>
         <span>·</span>
@@ -76,7 +80,7 @@ export default async function ArticleDetailPage({
       {review ? (
         <div className="mb-8 rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50/60 to-white p-6">
           <div className="mb-3 flex items-center gap-2">
-            <span className="text-lg">🤖</span>
+            <Bot className="h-5 w-5 text-indigo-500" />
             <h2 className="text-sm font-semibold text-indigo-700">
               AI 摘要 · {review.model ?? "未知模型"}
             </h2>
@@ -105,7 +109,7 @@ export default async function ArticleDetailPage({
                     key={i}
                     className="flex items-start gap-2 text-sm text-slate-700"
                   >
-                    <span className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
+                    <Circle className="mt-1.5 h-1.5 w-1.5 shrink-0 fill-indigo-400 text-indigo-400" />
                     {kp}
                   </li>
                 ))}
@@ -129,7 +133,8 @@ export default async function ArticleDetailPage({
         </div>
       ) : (
         <div className="mb-8 rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-400">
-          🤖 尚未经 AI 分析（文章状态: {article.status}）
+          <Bot className="h-5 w-5 mx-auto mb-2 text-slate-300" />
+          尚未经 AI 分析（文章状态: {article.status}）
         </div>
       )}
 
