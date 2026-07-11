@@ -1,7 +1,18 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CheckCircle2, AlertTriangle, XCircle, Loader2, Circle } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CheckCircle2, AlertTriangle, XCircle, Loader2, Circle, Clock } from "lucide-react";
+
+function formatDuration(startedAt: string | null, endedAt: string | null): string {
+  if (!startedAt || !endedAt) return "—";
+  const ms = new Date(endedAt).getTime() - new Date(startedAt).getTime();
+  if (ms < 0) return "—";
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+  const min = Math.floor(ms / 60000);
+  const sec = Math.round((ms % 60000) / 1000);
+  return `${min}m${sec}s`;
+}
 
 /* ---------- types ---------- */
 
@@ -173,6 +184,7 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
               <th className="px-4 py-3">跳过</th>
               <th className="px-4 py-3">错误</th>
               <th className="px-4 py-3">状态</th>
+              <th className="px-4 py-3">耗时</th>
               <th className="px-4 py-3">说明</th>
             </tr>
           </thead>
@@ -206,6 +218,9 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
                   {r.errorCount > 0 ? r.errorCount : "-"}
                 </td>
                 <td className="px-4 py-3">{statusBadge(r.status)}</td>
+                <td className="px-4 py-3 text-xs text-slate-400">
+                  {r.endedAt ? formatDuration(r.startedAt, r.endedAt) : (r.status === "running" ? <Loader2 className="h-3 w-3 animate-spin text-indigo-400" /> : "—")}
+                </td>
                 <td className="px-4 py-3 max-w-[200px] truncate text-xs text-slate-400">
                   {r.message ?? "-"}
                 </td>
@@ -213,7 +228,7 @@ export function RunsTable({ initialLogs, siteNames, sessionMap, total: initialTo
             ))}
             {!logs.length ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={10} className="px-4 py-8 text-center text-slate-400">
                   暂无运行记录
                 </td>
               </tr>
