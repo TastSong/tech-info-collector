@@ -14,8 +14,52 @@
   <sub>Automated tech intelligence pipeline — Crawl, AI-review, summarize, and read — all from one app</sub>
 </p>
 
-<!-- 🖼️ SCREENSHOT: 资讯流首页 Feeds page with dark mode -->
-<!-- 🖼️ SCREENSHOT: 文章详情页 Article detail with AI summary sidebar -->
+<br/>
+
+<table align="center">
+  <tr>
+    <td align="center" valign="bottom">
+      <img src="doc/img/feed-dark-hero.png" alt="资讯流暗色" width="100%" />
+      <br/><sub>资讯流 · 暗色模式</sub>
+    </td>
+    <td align="center" valign="bottom">
+      <img src="doc/img/feed-hero.png" alt="资讯流浅色" width="100%" />
+      <br/><sub>资讯流 · 浅色模式</sub>
+    </td>
+    <td align="center" valign="bottom">
+      <img src="doc/img/article-detail-hero.png" alt="文章详情" width="100%" />
+      <br/><sub>文章详情 · AI 摘要 + 评分</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="bottom">
+      <img src="doc/img/dashboard.png" alt="仪表盘" width="100%" />
+      <br/><sub>仪表盘 · 统计 + 进度 + 调度</sub>
+    </td>
+    <td align="center" valign="bottom">
+      <img src="doc/img/site-ai-analyze.png" alt="AI 一键分析站点" width="100%" />
+      <br/><sub>新建站点 · AI 智能识别</sub>
+    </td>
+    <td align="center" valign="bottom">
+      <img src="doc/img/sites-hero.png" alt="站点管理" width="100%" />
+      <br/><sub>站点管理 · 102 站 · 三渲染引擎</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="bottom">
+      <img src="doc/img/mobile-feed.png" alt="移动端资讯流" width="85%" />
+      <br/><sub>移动资讯流 · 左滑/右滑手势</sub>
+    </td>
+    <td align="center" valign="bottom">
+      <img src="doc/img/mobile-article.png" alt="移动端文章" width="85%" />
+      <br/><sub>移动文章 · 阅读进度条</sub>
+    </td>
+    <td align="center" valign="bottom">
+      <img src="doc/img/mobile-dashboard.png" alt="移动端仪表盘" width="85%" />
+      <br/><sub>移动仪表盘 · 自适应</sub>
+    </td>
+  </tr>
+</table>
 
 ---
 
@@ -62,23 +106,6 @@
 </td>
 </tr>
 </table>
-
-### 🖼️ UI 截图 · Screenshots
-
-<!-- 🖼️ SCREENSHOT_1: 暗色模式资讯流首页，展示日期桶分组(今天/昨天/本周/更早)、分类折叠和文章卡片列表 -->
-> **[FIG 1]** 资讯流首页 — 日期桶分组 + 分类折叠 + 收藏筛选（暗色模式）
-
-<!-- 🖼️ SCREENSHOT_2: 文章详情页，左侧 Markdown 正文渲染，右侧 AI 摘要 Banner + 审核指标（质量分/新闻分环形图） -->
-> **[FIG 2]** 文章详情 — 正文渲染 + AI 摘要 Banner + 审核指标面板
-
-<!-- 🖼️ SCREENSHOT_3: 仪表盘页面，统计卡片(文章数/已发布/已驳回) + 实时采集进度条 + 定时调度 + 最近采集记录表 -->
-> **[FIG 3]** 仪表盘 — 统计卡片 + 实时采集进度 + 定时调度配置
-
-<!-- 🖼️ SCREENSHOT_4: 站点管理页面，列表含渲染模式徽章、AI参与度、文章计数、启用/禁用开关 -->
-> **[FIG 4]** 站点管理 — 102 站点一览 + 一键 AI 分析新建站点
-
-<!-- 🖼️ SCREENSHOT_5: 移动端资讯流，展示 FeedCard 滑动操作（左滑已读/右滑收藏） -->
-> **[FIG 5]** 移动端 — 滑动交互（左滑已读 · 右滑收藏）
 
 ---
 
@@ -163,8 +190,7 @@ docker compose exec app pnpm seed
 docker compose exec app pnpm run
 ```
 
-<!-- 🖼️ SCREENSHOT_6: Docker Desktop 中两个容器 (app + lightpanda) 正常运行状态的截图 -->
-> **[FIG 6]** Docker 双容器运行状态
+<br/>
 
 ### 本地开发
 
@@ -328,8 +354,7 @@ SQLite (WAL 模式)，6 张核心表：
 
 **文章状态机**：`raw → analyzing → published / rejected`
 
-<!-- 🖼️ SCREENSHOT_7: ER 图 (见 doc/architecture-analysis.md 4.1 节) -->
-> **[FIG 7]** 数据库 ER 图 → 详见 [`doc/architecture-analysis.md`](doc/architecture-analysis.md#41-er-图)
+> 📊 数据库 ER 图详见 [`doc/architecture-analysis.md`](doc/architecture-analysis.md#41-er-图)
 
 ---
 
