@@ -1,3 +1,4 @@
+import { getCurrentUser } from "@/src/lib/auth";
 import { countFeedArticles, queryFeedArticles, countSavedArticles } from "@/src/data/feed";
 import { FeedList } from "./components/FeedList";
 import type { ArticleItem } from "./components/FeedList";
@@ -8,9 +9,12 @@ export const dynamic = "force-dynamic";
 const PAGE_SIZE = 30;
 
 export default async function HomePage() {
-  const total = countFeedArticles();
-  const savedCount = countSavedArticles();
-  const rawRows = queryFeedArticles({ limit: PAGE_SIZE, offset: 0 });
+  const user = await getCurrentUser();
+  if (!user) return null; // middleware 已拦截，此处为安全兜底
+
+  const total = countFeedArticles(user.id);
+  const savedCount = countSavedArticles(user.id);
+  const rawRows = queryFeedArticles({ limit: PAGE_SIZE, offset: 0 }, user.id);
 
   const articles: ArticleItem[] = rawRows.map((r) => ({
     id: r.id,

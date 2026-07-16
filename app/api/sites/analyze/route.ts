@@ -11,6 +11,7 @@
  */
 import { NextResponse } from "next/server";
 import { analyzeSite } from "@/src/ai/site-analyzer";
+import { requireAdmin } from "@/src/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,10 @@ export const dynamic = "force-dynamic";
 const ANALYZE_TIMEOUT_MS = 90_000;
 
 export async function POST(req: Request) {
+  // admin only 检查
+  const user = await requireAdmin();
+  if (user instanceof NextResponse) return user;
+
   // 1) 解析请求体
   let body: { name?: string; urls?: string[] };
   try {

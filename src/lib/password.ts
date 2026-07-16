@@ -7,6 +7,7 @@ const SALT_LEN = 32;
 interface TokenPayload {
   u: number; // userId
   n: string; // username
+  r: "admin" | "user"; // role
   i: number; // issued at (unix seconds)
 }
 
@@ -14,9 +15,9 @@ function getSecret(): string {
   return process.env.AUTH_SECRET ?? "dev-secret-change-me";
 }
 
-/** Create a self-signed HMAC token encoding userId + username. */
-export function createSignedToken(userId: number, username: string): string {
-  const payload: TokenPayload = { u: userId, n: username, i: Math.floor(Date.now() / 1000) };
+/** Create a self-signed HMAC token encoding userId, username, and role. */
+export function createSignedToken(userId: number, username: string, role: "admin" | "user"): string {
+  const payload: TokenPayload = { u: userId, n: username, r: role, i: Math.floor(Date.now() / 1000) };
   const json = JSON.stringify(payload);
   const payloadB64 = Buffer.from(json).toString("base64url");
   const sig = createHmac("sha256", getSecret()).update(payloadB64).digest("base64url");

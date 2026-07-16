@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import PQueue from "p-queue";
 import { db, schema } from "@/db/client";
+import { requireAdmin } from "@/src/lib/auth";
 import { createAbortController } from "@/src/pipeline/abort";
 import { runCrawl } from "@/src/pipeline/service";
 
@@ -17,6 +18,9 @@ export const dynamic = "force-dynamic";
 const CONCURRENCY = Number(process.env.CRAWL_CONCURRENCY ?? 10);
 
 export async function POST(req: Request) {
+  const user = await requireAdmin();
+  if (user instanceof NextResponse) return user;
+
   let siteId: number | undefined;
   try {
     const body = (await req.json().catch(() => ({}))) as { siteId?: number };

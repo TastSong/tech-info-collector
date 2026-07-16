@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { db, schema } from "@/db/client";
-import { eq } from "drizzle-orm";
-import { verifySignedToken } from "@/src/lib/password";
+import { getCurrentUser } from "@/src/lib/auth";
 import { NavLinks } from "./components/NavLinks";
 import { UserMenu } from "./components/UserMenu";
 import { ThemeToggle } from "./components/ThemeToggle";
@@ -17,24 +14,6 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = "force-dynamic";
-
-/** Verify auth cookie and return current user (id + username), or null. */
-async function getCurrentUser(): Promise<{ id: number; username: string } | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) return null;
-
-  const payload = verifySignedToken(token);
-  if (!payload) return null;
-
-  // Confirm the user still exists in DB
-  const user = db.select({ id: schema.users.id, username: schema.users.username })
-    .from(schema.users)
-    .where(eq(schema.users.id, payload.u))
-    .get();
-
-  return user ?? null;
-}
 
 export default async function RootLayout({
   children,
@@ -64,7 +43,7 @@ export default async function RootLayout({
                 科技情报
               </Link>
               <div className="flex items-center gap-3">
-                <NavLinks />
+                <NavLinks role={currentUser?.role} />
                 <ThemeToggle />
                 {currentUser && <UserMenu username={currentUser.username} />}
               </div>

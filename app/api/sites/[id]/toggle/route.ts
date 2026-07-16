@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db/client";
 import { eq } from "drizzle-orm";
+import { requireAdmin } from "@/src/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,9 @@ export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const user = await requireAdmin();
+  if (user instanceof NextResponse) return user;
+
   const { id } = await params;
 
   const site = db

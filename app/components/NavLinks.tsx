@@ -3,14 +3,18 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, History, LayoutDashboard, Globe, FileText } from "lucide-react";
+import { Home, History, LayoutDashboard, Globe, FileText, Users } from "lucide-react";
 
-const NAV_ITEMS = [
+const BASE_ITEMS = [
   { href: "/", label: "资讯流", icon: Home },
   { href: "/history", label: "历史", icon: History },
   { href: "/dashboard", label: "仪表盘", icon: LayoutDashboard },
+];
+
+const ADMIN_ITEMS = [
   { href: "/sites", label: "站点", icon: Globe },
   { href: "/runs", label: "日志", icon: FileText },
+  { href: "/admin/users", label: "管理", icon: Users },
 ];
 
 function NavLink({
@@ -51,9 +55,11 @@ function NavLink({
   );
 }
 
-export function NavLinks() {
+export function NavLinks({ role }: { role?: string }) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
+  const isAdmin = role === "admin";
+  const navItems = isAdmin ? [...BASE_ITEMS, ...ADMIN_ITEMS] : BASE_ITEMS;
 
   return (
     <>
@@ -74,7 +80,7 @@ export function NavLinks() {
 
       {/* Desktop nav — always visible on sm+ */}
       <div className="hidden sm:flex items-center gap-1">
-        {NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <NavLink key={item.href} href={item.href} icon={item.icon}>
             {item.label}
           </NavLink>
@@ -88,7 +94,7 @@ export function NavLinks() {
         }`}
       >
         <div className="flex flex-col px-4 py-2">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <NavLink key={item.href} href={item.href} icon={item.icon} onClick={close}>
               {item.label}
             </NavLink>

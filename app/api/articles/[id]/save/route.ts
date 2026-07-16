@@ -1,14 +1,15 @@
 /**
- * POST /api/articles/[id]/save — 切换文章收藏/星标状态。
+ * POST /api/articles/[id]/save — 切换文章收藏/星标状态（当前用户）。
  *
- * 如果已收藏 (saved_at IS NOT NULL) → 取消收藏 (SET NULL)
- * 如果未收藏 (saved_at IS NULL)     → 收藏 (SET now)
+ * 如果已收藏 (user_article_saves 中存在) → 取消收藏 (DELETE)
+ * 如果未收藏                               → 添加收藏 (INSERT)
  *
  * Response: { ok: true, saved: boolean }
  */
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db/client";
-import { eq, sql } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+import { requireAuth } from "@/src/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -16,33 +17,33 @@ export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const user = await requireAuth();
+  if (user instanceof NextResponse) return user;
+
   const { id } = await params;
 
-  const article = db
-    .select({ id: schema.articles.id, savedAt: schema.articles.savedAt })
-    .from(schema.articles)
-    .where(eq(schema.articles.id, Number(id)))
+  const existing = db
+    .select({ id: schema.userArticleSaves.id })
+    .from(schema.userArticleSaves)
+    .where(
+      and(
+        eq(schema.userArticleSaves.userId, user.id),
+        eq(schema.userArticleSaves.articleId, Number(id)),
+      ),
+    )
     .get();
 
-  if (!article) {
-    return NextResponse.json({ error: "文章不存在" }, { status: 404 });
-  }
-
-  const currentlySaved = article.savedAt != null;
-
-  if (currentlySaved) {
+  if (existing) {
     // 取消收藏
-    db.update(schema.articles)
-      .set({ savedAt: null })
-      .where(eq(schema.articles.id, Number(id)))
+    db.delete(schema.userArticleSaves)
+      .where(eq(schema.userArticleSaves.id, existing.id))
       .run();
+    return NextResponse.json({ ok: true, saved: false });
   } else {
     // 添加收藏
-    db.update(schema.articles)
-      .set({ savedAt: sql`(unixepoch())` })
-      .where(eq(schema.articles.id, Number(id)))
+    db.insert(schema.userArticleSaves)
+      .values({ userId: user.id, articleId: Number(id) })
       .run();
+    return NextResponse.json({ ok: true, saved: true });
   }
-
-  return NextResponse.json({ ok: true, saved: !currentlySaved });
 }

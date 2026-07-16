@@ -1,5 +1,5 @@
 /**
- * GET /api/history — 分页查询已读历史文章（去重后）。
+ * GET /api/history — 分页查询已读历史文章（当前用户，去重后）。
  *
  * Query params:
  *  - page     (default 1)
@@ -9,6 +9,7 @@
  * articles 中的日期字段是 Unix 秒数（客户端自行转为 Date）。
  */
 import { NextResponse } from "next/server";
+import { requireAuth } from "@/src/lib/auth";
 import { countHistoryArticles, queryHistoryArticles } from "@/src/data/feed";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,9 @@ const PAGE_SIZE_MAX = 100;
 const PAGE_SIZE_DEFAULT = 30;
 
 export async function GET(req: Request) {
+  const user = await requireAuth();
+  if (user instanceof NextResponse) return user;
+
   const { searchParams } = new URL(req.url);
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const pageSize = Math.min(
@@ -25,10 +29,10 @@ export async function GET(req: Request) {
   );
   const offset = (page - 1) * pageSize;
 
-  const total = countHistoryArticles();
+  const total = countHistoryArticles(user.id);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  const rawRows = queryHistoryArticles({ limit: pageSize, offset });
+  const rawRows = queryHistoryArticles({ limit: pageSize, offset }, user.id);
 
   const articles = rawRows.map((r) => ({
     id: r.id,

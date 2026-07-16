@@ -18,6 +18,6 @@ export function initAdminUser(sqlite: Database.Database): void {
   if (existing) return; // 已有用户，不再创建
 
   const hash = hashPassword(password);
-  sqlite.prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)").run(username, hash);
+  sqlite.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, 'admin')").run(username, hash);
   console.log(`[auth] 已自动创建管理员账户: ${username}`);
 }

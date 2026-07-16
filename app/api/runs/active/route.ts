@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db/client";
 import { eq, desc, and, ne, sql } from "drizzle-orm";
+import { requireAdmin } from "@/src/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/runs/active — 返回当前在跑 + 最近完成的 run logs（带站点名 + session 汇总）
 // running 日志只取 10 分钟内的，超过的视为僵尸（清理掉）
 export async function GET() {
+  const user = await requireAdmin();
+  if (user instanceof NextResponse) return user;
   const allRunning = db
     .select()
     .from(schema.runLogs)

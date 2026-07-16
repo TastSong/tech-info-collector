@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db/client";
 import { eq } from "drizzle-orm";
+import { requireAdmin } from "@/src/lib/auth";
 import { abortCrawl } from "@/src/pipeline/abort";
 import { closeBrowser } from "@/src/crawler/playwright";
 import { closeLightpanda } from "@/src/crawler/lightpanda";
@@ -13,6 +14,9 @@ import { closeLightpanda } from "@/src/crawler/lightpanda";
 export const dynamic = "force-dynamic";
 
 export async function POST() {
+  const user = await requireAdmin();
+  if (user instanceof NextResponse) return user;
+
   abortCrawl();
 
   // 将所有 running 状态的 run_logs 标记为"用户中止"

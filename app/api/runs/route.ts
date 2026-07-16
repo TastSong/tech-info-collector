@@ -10,10 +10,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/db/client";
 import { desc, sql } from "drizzle-orm";
+import { requireAdmin } from "@/src/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  const user = await requireAdmin();
+  if (user instanceof NextResponse) return user;
   const { searchParams } = new URL(req.url);
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const pageSize = Math.min(100, Math.max(1, Number(searchParams.get("pageSize")) || 30));

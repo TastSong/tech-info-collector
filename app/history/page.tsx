@@ -1,3 +1,4 @@
+import { getCurrentUser } from "@/src/lib/auth";
 import { countHistoryArticles, queryHistoryArticles } from "@/src/data/feed";
 import { HistoryList } from "./HistoryList";
 import type { HistoryItem } from "./HistoryList";
@@ -8,8 +9,11 @@ export const dynamic = "force-dynamic";
 const PAGE_SIZE = 30;
 
 export default async function HistoryPage() {
-  const total = countHistoryArticles();
-  const rawRows = queryHistoryArticles({ limit: PAGE_SIZE, offset: 0 });
+  const user = await getCurrentUser();
+  if (!user) return null;
+
+  const total = countHistoryArticles(user.id);
+  const rawRows = queryHistoryArticles({ limit: PAGE_SIZE, offset: 0 }, user.id);
 
   const articles: HistoryItem[] = rawRows.map((r) => ({
     id: r.id,

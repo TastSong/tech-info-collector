@@ -1,5 +1,5 @@
 /**
- * /api/sites — 站点列表 API。
+ * /api/sites — 站点列表 API（仅管理员）。
  *
  * GET  — 返回全部站点，附带文章计数
  * POST — 创建新站点
@@ -7,10 +7,13 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db/client";
 import { sql } from "drizzle-orm";
+import { requireAdmin } from "@/src/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const user = await requireAdmin();
+  if (user instanceof NextResponse) return user;
   const sites = db.select().from(schema.sites).all();
 
   const counts = new Map(
@@ -34,6 +37,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const user = await requireAdmin();
+  if (user instanceof NextResponse) return user;
   let body: Record<string, unknown>;
   try {
     body = await req.json();

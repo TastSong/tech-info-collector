@@ -1,12 +1,13 @@
-import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
-/** 系统用户（唯一用户，注册后不可再注册） */
+/** 系统用户（admin 可在后台管理，初次部署自动创建管理员） */
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   authToken: text("auth_token"),
+  role: text("role", { enum: ["admin", "user"] }).notNull().default("user"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -143,3 +144,36 @@ export const runLogs = sqliteTable("run_logs", {
   errorCount: integer("error_count").notNull().default(0),
   message: text("message"),
 });
+
+/** 用户文章已读记录（每用户每篇文章一条，替代 articles.viewed_at） */
+export const userArticleViews = sqliteTable("user_article_views", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  articleId: integer("article_id")
+    .notNull()
+    .references(() => articles.id, { onDelete: "cascade" }),
+  viewedAt: integer("viewed_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+}, (table) => [
+  uniqueIndex("uq_user_article_view").on(table.userId, table.articleId),
+  index("idx_uav_user_time").on(table.userId, table.viewedAt),
+]);
+
+/** 用户文章收藏记录（每用户每篇文章一条，替代 articles.saved_at） */
+export const userArticleSaves = sqliteTable("user_article_saves", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  articleId: integer("article_id")
+    .notNull()
+    .references(() => articles.id, { onDelete: "cascade" }),
+  savedAt: integer("saved_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+}, (table) => [
+  uniqueIndex("uq_user_article_save").on(table.userId, table.articleId),
+]);

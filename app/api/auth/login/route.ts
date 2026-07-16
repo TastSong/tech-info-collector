@@ -38,7 +38,7 @@ export async function POST(req: Request) {
   }
 
   // 自签名 token，支持多浏览器同时在线
-  const authToken = createSignedToken(user.id, user.username);
+  const authToken = createSignedToken(user.id, user.username, user.role as "admin" | "user");
 
   const cookieStore = await cookies();
   cookieStore.set("auth_token", authToken, {
