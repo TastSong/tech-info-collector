@@ -122,12 +122,19 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
   const [total, setTotal] = useState(initialTotal);
   const [loadingPage, setLoadingPage] = useState(false);
   const [savedCount, setSavedCount] = useState(initialSavedCount);
+  // 列表版本号：全量刷新时递增，用于 FeedCard key 强制重新挂载，
+  // 避免 dismissed 状态的 FeedCard 复用导致收藏列表首次切换不显示。
+  const [listVersion, setListVersion] = useState(0);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  // 收藏状态同步
+  // 使用 ref 追踪 savedOnly，避免 handleToggleSaved 闭包陈旧
+  const savedOnlyRef = useRef(savedOnly);
+  savedOnlyRef.current = savedOnly;
+
+  // 收藏状态同步（通过 ref 读取 savedOnly，避免闭包陈旧）
   const handleToggleSaved = useCallback((id: number, saved: boolean) => {
-    if (savedOnly && !saved) {
+    if (savedOnlyRef.current && !saved) {
       setArticles((prev) => prev.filter((a) => a.id !== id));
       setTotal((prev) => prev - 1);
     } else {
@@ -232,6 +239,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
       setPage(data.page);
       setTotal(data.total);
       setDismissedIds(new Set());
+      setListVersion((v) => v + 1);
     } catch {
       // silent
     } finally {
@@ -302,6 +310,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
           setPage(1);
           setTotal(data.total);
           setDismissedIds(new Set());
+          setListVersion((v) => v + 1);
         }
       } catch {
         // silent
@@ -335,6 +344,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
           setPage(1);
           setTotal(data.total);
           setDismissedIds(new Set());
+          setListVersion((v) => v + 1);
         })
         .finally(() => setLoadingPage(false));
     }
@@ -428,6 +438,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
                 setTotal(data.total);
                 setSavedCount(data.savedOnly ? data.total : initialSavedCount);
                 setDismissedIds(new Set());
+                setListVersion((v) => v + 1);
               } catch {
                 setSavedOnly(!next);
               } finally {
@@ -555,7 +566,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
                             const idx = animCounter++;
                             return (
                               <FeedCard
-                                key={a.id}
+                                key={`${a.id}-v${listVersion}`}
                                 article={{
                                   ...a,
                                   onToggleSaved: handleToggleSaved,
