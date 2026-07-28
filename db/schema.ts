@@ -65,6 +65,9 @@ export const articles = sqliteTable("articles", {
   body: text("body"),
   publishedAt: integer("published_at", { mode: "timestamp" }),
   contentHash: text("content_hash"),
+  /** 跨站聚类键：标题相似（同事件多站报道）的文章共享同一 key，feed 据此折叠。
+   *  由 analyze 阶段基于标题字符 bigram + Jaccard 相似度计算。 */
+  clusterKey: text("cluster_key"),
   status: text("status", {
     enum: ["raw", "analyzing", "published", "rejected"],
   })
@@ -82,6 +85,8 @@ export const articles = sqliteTable("articles", {
     index("idx_articles_status").on(table.status),
     // 内容去重 & 已读联动: content_hash 匹配
     index("idx_articles_content_hash").on(table.contentHash),
+    // 跨站聚类去重: cluster_key 匹配（含 feed "簇内任一已读即簇已读"）
+    index("idx_articles_cluster_key").on(table.clusterKey),
   ]);
 
 /** AI 沙盒对单篇文章的审核结果（审计留痕） */

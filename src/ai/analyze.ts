@@ -11,6 +11,7 @@ import PQueue from "p-queue";
 import { db, schema } from "../../db/client";
 import { reviewArticle, decideStatus, passesPublishGate } from "./sandbox";
 import { tryParseDate } from "../lib/date";
+import { clusterPublished } from "../pipeline/cluster";
 
 interface Opts {
   limit?: number;
@@ -221,6 +222,16 @@ export async function analyzePending(opts: Opts = {}): Promise<void> {
   // ── 每站每日配额（D）：本批新发布文章按 (site_id, 日期) 分组，
   //   每组保留 quality_score Top-N，超额文章回退为 rejected。──
   await enforceDailyQuota();
+
+  // ── 跨站聚类去重（G）：近 2 天 published 文章按标题相似度分配 cluster_key，
+  //   同 cluster 的文章在 feed 去重时只保留评分最高的一篇。──
+  const clustered = await clusterPublished({ recentDays: 2 }).catch((e) => {
+    console.error(`[cluster] 聚类失败: ${(e as Error).message}`);
+    return 0;
+  });
+  if (clustered > 0) {
+    console.log(`[cluster] ${clustered} 篇跨站去重（同事件多站报道合并）`);
+  }
 }
 
 /**

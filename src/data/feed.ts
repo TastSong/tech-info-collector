@@ -59,6 +59,33 @@ export function getRetentionDays(): number {
 /* ---------- 公共 WHERE 片段 ---------- */
 
 /**
+ * 跨站聚类去重键：
+ *   COALESCE(NULLIF(a.cluster_key,''), a.content_hash, '#'||a.id)
+ * 有 cluster_key → 按簇去重；无 cluster_key → 按 content_hash 去重（回退）。
+ * 用于 ROW_NUMBER PARTITION BY 和 COUNT GROUP BY。
+ */
+function dedupKey() {
+  return sql`COALESCE(NULLIF(a.cluster_key, ''), a.content_hash, '#' || a.id)`;
+}
+
+/**
+ * "簇内任一文章已读 → 整簇隐藏"。
+ * 与 dedupKey 配合：当用户标记簇内任一成员为已读，feedWhere 将整簇排除。
+ * cluster_key 为空（未聚簇）时退化为仅单篇已读判定。
+ */
+function clusterReadGuard(u: string) {
+  return sql`
+    AND NOT EXISTS (
+      SELECT 1 FROM articles a2
+      JOIN user_article_views uv2 ON uv2.article_id = a2.id
+      WHERE uv2.user_id = ${u}
+        AND a2.cluster_key IS NOT NULL
+        AND a2.cluster_key <> ''
+        AND a2.cluster_key = a.cluster_key
+    )`;
+}
+
+/**
  * 近 N 天未读（当前用户）、已发布。
  * 未读由 user_article_views 表判断；N 来自 getRetentionDays()。
  */
@@ -71,6 +98,7 @@ function feedWhere(userId: number) {
     SELECT 1 FROM user_article_views uv
     WHERE uv.user_id = ${u} AND uv.article_id = a.id
   )
+  ${clusterReadGuard(u)}
   AND (
     a.published_at >= CAST((unixepoch() - ${cutoffSecs}) AS INTEGER)
     OR (a.published_at IS NULL AND a.fetched_at >= CAST((unixepoch() - ${cutoffSecs}) AS INTEGER))
@@ -118,6 +146,7 @@ function todayWhere(userId: number) {
     SELECT 1 FROM user_article_views uv
     WHERE uv.user_id = ${u} AND uv.article_id = a.id
   )
+  ${clusterReadGuard(u)}
   AND COALESCE(a.published_at, a.fetched_at) >= ${todaySecs}
 `;
 }
@@ -154,7 +183,7 @@ function dedupSelectBody(userId: number, whereClause: ReturnType<typeof sql>, ex
         r.quality_score,
         us.saved_at,
         ROW_NUMBER() OVER (
-          PARTITION BY COALESCE(a.content_hash, '#' || a.id)
+          PARTITION BY ${dedupKey()}
           ORDER BY
             CASE WHEN r.id IS NOT NULL THEN 0 ELSE 1 END,
             COALESCE(a.published_at, a.fetched_at) DESC
@@ -199,7 +228,7 @@ function historySelectBody(userId: number) {
         r.quality_score,
         us.saved_at,
         ROW_NUMBER() OVER (
-          PARTITION BY COALESCE(a.content_hash, '#' || a.id)
+          PARTITION BY ${dedupKey()}
           ORDER BY
             CASE WHEN r.id IS NOT NULL THEN 0 ELSE 1 END,
             COALESCE(a.published_at, a.fetched_at) DESC
@@ -226,7 +255,7 @@ export function countFeedArticles(userId: number): number {
       INNER JOIN sites s ON a.site_id = s.id
       LEFT JOIN ai_reviews r ON a.id = r.article_id
       WHERE ${feedWhere(userId)}
-      GROUP BY COALESCE(a.content_hash, '#' || a.id)
+      GROUP BY ${dedupKey()}
     )
   `,
   ) as { cnt: number } | undefined;
@@ -261,7 +290,7 @@ export function countHistoryArticles(userId: number): number {
       LEFT JOIN ai_reviews r ON a.id = r.article_id
       INNER JOIN user_article_views uv ON uv.user_id = ${u} AND uv.article_id = a.id
       WHERE ${historyWhere(userId)}
-      GROUP BY COALESCE(a.content_hash, '#' || a.id)
+      GROUP BY ${dedupKey()}
     )
   `,
   ) as { cnt: number } | undefined;
@@ -290,7 +319,7 @@ export function countSavedArticles(userId: number): number {
       LEFT JOIN ai_reviews r ON a.id = r.article_id
       INNER JOIN user_article_saves us ON us.user_id = ${u} AND us.article_id = a.id
       WHERE ${savedWhere(userId)}
-      GROUP BY COALESCE(a.content_hash, '#' || a.id)
+      GROUP BY ${dedupKey()}
     )
   `,
   ) as { cnt: number } | undefined;

@@ -70,6 +70,14 @@ try {
   // 列已存在，静默跳过
 }
 
+// 为存量数据库添加 articles.cluster_key 列及索引（跨站聚类去重 G）
+try {
+  sqlite.exec(`ALTER TABLE articles ADD COLUMN cluster_key TEXT`);
+} catch {
+  // 列已存在，静默跳过
+}
+sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_articles_cluster_key ON articles(cluster_key)`);
+
 export const db = drizzle(sqlite, { schema });
 export { schema };
 
