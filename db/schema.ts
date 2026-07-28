@@ -184,3 +184,17 @@ export const userArticleSaves = sqliteTable("user_article_saves", {
 }, (table) => [
   uniqueIndex("uq_user_article_save").on(table.userId, table.articleId),
 ]);
+
+/** 每日 AI 摘要 digest（每天一条，由 cron 在分析完成后生成） */
+export const dailyDigests = sqliteTable("daily_digests", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  /** 摘要日期（YYYY-MM-DD，Asia/Shanghai），同一天不重复生成 */
+  date: text("date").notNull().unique(),
+  /** Markdown 格式的摘要正文（5 条要闻） */
+  content: text("content").notNull(),
+  /** 摘要覆盖的文章数 */
+  articleCount: integer("article_count").notNull().default(0),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+});

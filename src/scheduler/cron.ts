@@ -17,6 +17,7 @@ import { eq } from "drizzle-orm";
 import { runCrawl } from "../pipeline/service";
 import { fire } from "../notify/notifier";
 import { expireUnreadForUser } from "../data/feed";
+import { generateDailyDigest } from "../ai/digest";
 
 const DEFAULT_CRON = "0 9 * * *";
 const MAX_CONCURRENT = 2;
@@ -156,6 +157,18 @@ export async function runAll() {
     if (expired > 0) console.log(`  [cron] 未读自动过期：${expired} 篇`);
   } catch (e) {
     console.error(`  [cron] 过期清理失败: ${(e as Error).message}`);
+  }
+
+  // 每日 AI 摘要：分析/过期完成后再生成 digest（确保覆盖完整当天的文章）
+  let digestDone = false;
+  try {
+    const digest = await generateDailyDigest();
+    if (digest) {
+      digestDone = true;
+      console.log(`  [cron] 每日 AI 摘要生成完成 (${digest.articleCount} 篇)`);
+    }
+  } catch (e) {
+    console.error(`  [cron] 摘要生成失败: ${(e as Error).message}`);
   }
 
   const duration = ((Date.now() - started) / 1000).toFixed(0);

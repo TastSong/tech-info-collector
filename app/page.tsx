@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/src/lib/auth";
 import { countFeedArticles, queryFeedArticles, countSavedArticles, queryTodayTop } from "@/src/data/feed";
 import { FeedList } from "./components/FeedList";
+import { DigestCard } from "./components/DigestCard";
 import type { ArticleItem } from "./components/FeedList";
 import { parseTags } from "@/src/lib/parse-tags";
 
@@ -41,6 +42,8 @@ export default async function HomePage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">资讯流</h1>
       </div>
+
+      <DigestCard />
 
       <FeedList
         initialArticles={articles}

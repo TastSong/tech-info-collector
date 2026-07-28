@@ -78,6 +78,17 @@ try {
 }
 sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_articles_cluster_key ON articles(cluster_key)`);
 
+// 确保 daily_digests 表存在（每日 AI 摘要 H）
+sqlite.exec(
+  `CREATE TABLE IF NOT EXISTS daily_digests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL UNIQUE,
+    content TEXT NOT NULL,
+    article_count INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  )`,
+);
+
 export const db = drizzle(sqlite, { schema });
 export { schema };
 
