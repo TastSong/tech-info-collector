@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { FeedCard } from "./FeedCard";
 import { CatchUpMenu } from "./CatchUpMenu";
 import { parseTags } from "@/src/lib/parse-tags";
-import { Calendar, Search, Filter, Star, X, Inbox, SearchX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronDown, Loader2, Eye } from "lucide-react";
+import { Calendar, Search, Filter, Star, X, Inbox, SearchX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronDown, Loader2, Eye, Sparkles } from "lucide-react";
 import { useToast } from "./Toast";
 
 export interface ArticleItem {
@@ -95,9 +95,10 @@ interface Props {
   initialTotal: number;
   initialPage: number;
   initialSavedCount: number;
+  initialTodayTop?: ArticleItem[];
 }
 
-export function FeedList({ initialArticles, initialTotal, initialPage, initialSavedCount }: Props) {
+export function FeedList({ initialArticles, initialTotal, initialPage, initialSavedCount, initialTodayTop }: Props) {
   const toast = useToast();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -123,6 +124,8 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
   const [total, setTotal] = useState(initialTotal);
   const [loadingPage, setLoadingPage] = useState(false);
   const [savedCount, setSavedCount] = useState(initialSavedCount);
+  // 今日精选：未读列表首次加载时由 SSR 注入；分页/筛选/清空后折叠（避免重复展示）
+  const [todayTop, setTodayTop] = useState<ArticleItem[]>(initialTodayTop ?? []);
   // 列表版本号：全量刷新时递增，用于 FeedCard key 强制重新挂载，
   // 避免 dismissed 状态的 FeedCard 复用导致收藏列表首次切换不显示。
   const [listVersion, setListVersion] = useState(0);
@@ -351,7 +354,6 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
   }, [savedOnly]);
 
   const anyFilterActive = search.trim() !== "" || categoryFilter !== "" || siteFilter !== "" || savedOnly;
-
   function clearFilters() {
     setSearch("");
     setCategoryFilter("");
@@ -374,6 +376,13 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
 
   const totalDisplayed = total;
   const totalCategories = new Set(filtered.map((r) => r.category ?? "未分类")).size;
+
+  // 今日精选：仅在无任何筛选、非收藏模式、第 1 页时展示（避免重复噪声）
+  // 已被 dismiss 或已读的精选项从展示中剔除
+  const visibleTop = useMemo(() => {
+    if (anyFilterActive || page !== 1) return [];
+    return todayTop.filter((a) => !dismissedIds.has(a.id));
+  }, [todayTop, anyFilterActive, page, dismissedIds]);
 
   // 为文章分配全局递增 index（用于 animation-delay）
   let animCounter = 0;
@@ -518,6 +527,31 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
           </span>
         </div>
       </div>
+
+      {/* 今日 Top 精选区 */}
+      {visibleTop.length > 0 && (
+        <section className="mb-8 rounded-xl border border-indigo-200 bg-indigo-50/50 p-5 dark:border-indigo-900/60 dark:bg-indigo-950/20">
+          <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-indigo-700 dark:text-indigo-300">
+            <Sparkles className="h-4 w-4" />
+            今日精选
+            <span className="text-xs font-normal text-indigo-400 dark:text-indigo-500">
+              按情报价值排序 · {visibleTop.length} 篇
+            </span>
+          </h2>
+          <div className="space-y-2">
+            {visibleTop.map((a) => (
+              <FeedCard
+                key={`top-${a.id}`}
+                article={{
+                  ...a,
+                  onToggleSaved: handleToggleSaved,
+                  animIndex: undefined,
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 文章列表 */}
       {!bucketInfos.length ? (

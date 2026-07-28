@@ -8,6 +8,7 @@
  */
 import { db } from "@/db/client";
 import { sql } from "drizzle-orm";
+import { shanghaiMidnightSecs } from "@/src/lib/date";
 
 /* ---------- types ---------- */
 
@@ -102,6 +103,22 @@ function historyWhere(userId: number) {
     SELECT 1 FROM user_article_views uv
     WHERE uv.user_id = ${u} AND uv.article_id = a.id
   )
+`;
+}
+
+/* ---------- 今日精选 WHERE（C） ---------- */
+
+/** 今日（Asia/Shanghai 午夜起）未读 published。 */
+function todayWhere(userId: number) {
+  const u = uid(userId);
+  const todaySecs = shanghaiMidnightSecs(0);
+  return sql`
+  a.status = 'published'
+  AND NOT EXISTS (
+    SELECT 1 FROM user_article_views uv
+    WHERE uv.user_id = ${u} AND uv.article_id = a.id
+  )
+  AND COALESCE(a.published_at, a.fetched_at) >= ${todaySecs}
 `;
 }
 
@@ -287,6 +304,22 @@ export function querySavedArticles(opts: FeedQueryOptions, userId: number): Feed
     sql`${selectBody}
     ORDER BY saved_at DESC
     LIMIT ${opts.limit} OFFSET ${opts.offset}`,
+  ) as unknown as FeedRow[];
+}
+
+/* ---------- 今日 Top N 精选（C） ---------- */
+
+/**
+ * 今日跨站点精选：取「今天」（Asia/Shanghai 午夜起）发布的未读文章，
+ * 按 quality_score 倒序、content_hash 去重后取 Top N。
+ * 今天无数据时返回空数组（前端据此折叠精选区）。
+ */
+export function queryTodayTop(userId: number, limit: number): FeedRow[] {
+  const selectBody = dedupSelectBody(userId, todayWhere(userId));
+  return db.all(
+    sql`${selectBody}
+    ORDER BY quality_score DESC, COALESCE(published_at, fetched_at) DESC
+    LIMIT ${Math.max(1, limit)}`,
   ) as unknown as FeedRow[];
 }
 

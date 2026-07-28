@@ -17,28 +17,9 @@ import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { requireAuth } from "@/src/lib/auth";
+import { shanghaiMidnightSecs } from "@/src/lib/date";
 
 export const dynamic = "force-dynamic";
-
-const DAY = 86400;
-const TZ = "Asia/Shanghai";
-
-/**
- * 计算 Asia/Shanghai 时区「今天午夜」往前 keepDays 天的 unix 时间戳（秒）。
- * keepDays=0 → 今天 00:00；keepDays=2 → 前天 00:00。
- */
-function shanghaiCutoffSecs(keepDays: number): number {
-  const fmt = new Intl.DateTimeFormat("zh-CN", {
-    timeZone: TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  const [y, m, d] = fmt.format(new Date()).split("/").map(Number);
-  // (y,m,d) 00:00:00+08:00 对应的 UTC ms = Date.UTC(y,m-1,d) - 8h
-  const shanghaiMidnightMs = Date.UTC(y, m - 1, d) - 8 * 3600 * 1000;
-  return Math.floor((shanghaiMidnightMs - keepDays * DAY * 1000) / 1000);
-}
 
 export async function POST(req: Request) {
   const user = await requireAuth();
@@ -51,8 +32,8 @@ export async function POST(req: Request) {
     mode === "all"
       ? Math.floor(Date.now() / 1000) + 1 // 未来时间戳 → 全部未读清空
       : mode === "today"
-        ? shanghaiCutoffSecs(0)
-        : shanghaiCutoffSecs(2); // keep2
+        ? shanghaiMidnightSecs(0)
+        : shanghaiMidnightSecs(2); // keep2
 
   const result = db.run(sql`
     INSERT OR IGNORE INTO user_article_views (user_id, article_id, viewed_at)

@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/src/lib/auth";
-import { countFeedArticles, queryFeedArticles, countSavedArticles } from "@/src/data/feed";
+import { countFeedArticles, queryFeedArticles, countSavedArticles, queryTodayTop } from "@/src/data/feed";
 import { FeedList } from "./components/FeedList";
 import type { ArticleItem } from "./components/FeedList";
 import { parseTags } from "@/src/lib/parse-tags";
@@ -7,6 +7,7 @@ import { parseTags } from "@/src/lib/parse-tags";
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 30;
+const TOP_N = 10;
 
 export default async function HomePage() {
   const user = await getCurrentUser();
@@ -15,8 +16,9 @@ export default async function HomePage() {
   const total = countFeedArticles(user.id);
   const savedCount = countSavedArticles(user.id);
   const rawRows = queryFeedArticles({ limit: PAGE_SIZE, offset: 0 }, user.id);
+  const rawTop = queryTodayTop(user.id, TOP_N);
 
-  const articles: ArticleItem[] = rawRows.map((r) => ({
+  const mapRow = (r: typeof rawRows[number]): ArticleItem => ({
     id: r.id,
     title: r.title,
     headline: r.headline,
@@ -29,7 +31,10 @@ export default async function HomePage() {
     tags: parseTags(r.tags),
     qualityScore: r.qualityScore,
     savedAt: r.savedAt ? new Date(r.savedAt * 1000) : null,
-  }));
+  });
+
+  const articles: ArticleItem[] = rawRows.map(mapRow);
+  const todayTop: ArticleItem[] = rawTop.map(mapRow);
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
@@ -42,6 +47,7 @@ export default async function HomePage() {
         initialTotal={total}
         initialPage={1}
         initialSavedCount={savedCount}
+        initialTodayTop={todayTop}
       />
     </main>
   );
