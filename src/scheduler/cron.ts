@@ -16,6 +16,7 @@ import { db, schema } from "../../db/client";
 import { eq } from "drizzle-orm";
 import { runCrawl } from "../pipeline/service";
 import { fire } from "../notify/notifier";
+import { expireUnreadForUser } from "../data/feed";
 
 const DEFAULT_CRON = "0 9 * * *";
 const MAX_CONCURRENT = 2;
@@ -147,9 +148,19 @@ export async function runAll() {
     errors++;
   }
 
+  // 未读自动过期：超过 retention 天仍未读的 published 文章标记已读
+  let expired = 0;
+  try {
+    const users = db.select({ id: schema.users.id }).from(schema.users).all();
+    for (const u of users) expired += expireUnreadForUser(u.id);
+    if (expired > 0) console.log(`  [cron] 未读自动过期：${expired} 篇`);
+  } catch (e) {
+    console.error(`  [cron] 过期清理失败: ${(e as Error).message}`);
+  }
+
   const duration = ((Date.now() - started) / 1000).toFixed(0);
   console.log(
-    `[cron] 完成：采集 ${crawled} 篇 · 审核 ${analyzed} 篇 · 错误 ${errors} · 耗时 ${duration}s`,
+    `[cron] 完成：采集 ${crawled} 篇 · 审核 ${analyzed} 篇 · 过期 ${expired} 篇 · 错误 ${errors} · 耗时 ${duration}s`,
   );
 
   await fire({

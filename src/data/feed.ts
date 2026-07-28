@@ -43,14 +43,27 @@ function uid(userId: number): string {
   return String(userId);
 }
 
+/** feed 未读窗口（天数）：settings.feed_retention_days → env FEED_RETENTION_DAYS → 默认 7。
+ *  超过该天数的未读文章不再出现在资讯流；cron 也会据此自动过期标记。 */
+export function getRetentionDays(): number {
+  const row = db.get(sql`SELECT value FROM settings WHERE key = ${"feed_retention_days"}`) as
+    | { value: string }
+    | undefined;
+  const fromSettings = Number(row?.value);
+  if (Number.isFinite(fromSettings) && fromSettings > 0) return Math.floor(fromSettings);
+  const fromEnv = Number(process.env.FEED_RETENTION_DAYS);
+  return Number.isFinite(fromEnv) && fromEnv > 0 ? Math.floor(fromEnv) : 7;
+}
+
 /* ---------- 公共 WHERE 片段 ---------- */
 
 /**
- * 近 15 天未读（当前用户）、已发布。
- * 未读由 user_article_views 表判断。
+ * 近 N 天未读（当前用户）、已发布。
+ * 未读由 user_article_views 表判断；N 来自 getRetentionDays()。
  */
 function feedWhere(userId: number) {
   const u = uid(userId);
+  const cutoffSecs = getRetentionDays() * 86400;
   return sql`
   a.status = 'published'
   AND NOT EXISTS (
@@ -58,8 +71,8 @@ function feedWhere(userId: number) {
     WHERE uv.user_id = ${u} AND uv.article_id = a.id
   )
   AND (
-    a.published_at >= CAST((unixepoch() - 1296000) AS INTEGER)
-    OR (a.published_at IS NULL AND a.fetched_at >= CAST((unixepoch() - 1296000) AS INTEGER))
+    a.published_at >= CAST((unixepoch() - ${cutoffSecs}) AS INTEGER)
+    OR (a.published_at IS NULL AND a.fetched_at >= CAST((unixepoch() - ${cutoffSecs}) AS INTEGER))
   )
 `;
 }
@@ -275,4 +288,30 @@ export function querySavedArticles(opts: FeedQueryOptions, userId: number): Feed
     ORDER BY saved_at DESC
     LIMIT ${opts.limit} OFFSET ${opts.offset}`,
   ) as unknown as FeedRow[];
+}
+
+/* ---------- 未读自动过期（B） ---------- */
+
+/**
+ * 将"超过 retention 天仍未读"的 published 文章标记为已读（针对指定用户）。
+ *
+ * viewed_at 取文章发布时间（而非当前时间），使过期记录在已读历史中
+ * 按原发布日期归位，不会在历史顶部刷出"今天读了 N 篇"的噪声。
+ *
+ * 返回受影响行数。
+ */
+export function expireUnreadForUser(userId: number): number {
+  const cutoffSecs = getRetentionDays() * 86400;
+  const result = db.run(sql`
+    INSERT OR IGNORE INTO user_article_views (user_id, article_id, viewed_at)
+    SELECT ${userId}, a.id, COALESCE(a.published_at, a.fetched_at)
+    FROM articles a
+    WHERE a.status = 'published'
+      AND COALESCE(a.published_at, a.fetched_at) < CAST((unixepoch() - ${cutoffSecs}) AS INTEGER)
+      AND NOT EXISTS (
+        SELECT 1 FROM user_article_views uv
+        WHERE uv.user_id = ${userId} AND uv.article_id = a.id
+      )
+  `);
+  return (result as { changes?: number }).changes ?? 0;
 }
