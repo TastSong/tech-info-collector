@@ -6,7 +6,7 @@
  *   不带 siteId：审核全部 raw（且站点 aiInvolvement != none）的文章
  */
 import { pathToFileURL } from "node:url";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray, sql } from "drizzle-orm";
 import PQueue from "p-queue";
 import { db, schema } from "../../db/client";
 import { reviewArticle, decideStatus } from "./sandbox";
@@ -207,6 +207,69 @@ export async function analyzePending(opts: Opts = {}): Promise<void> {
   console.log(
     `\n完成：published=${published} rejected=${rejected} error=${errored} tokens≈${tokens}`,
   );
+
+  // ── 每站每日配额（D）：本批新发布文章按 (site_id, 日期) 分组，
+  //   每组保留 quality_score Top-N，超额文章回退为 rejected。──
+  await enforceDailyQuota();
+}
+
+/**
+ * 每站每日配额：限制单站单日 published 文章数。
+ *
+ * 为每个 (site_id,Asia/Shanghai 日期) 分组取 Top-N（N 来自站点 daily_quota，
+ * 站点未设则取全局 AI_DAILY_QUOTA，默认 8）。超额文章标 rejected，
+ * 理由记入 ai_reviews（reason 末尾追加 [quota]），便于审计。
+ *
+ * 用 WHERE rn > N 的窗口查询定位超额行，避免全表回退。
+ */
+async function enforceDailyQuota(): Promise<void> {
+  const DEFAULT_QUOTA = Number(process.env.AI_DAILY_QUOTA ?? 8);
+  if (DEFAULT_QUOTA <= 0) return; // 0 / 负数 → 关闭配额
+
+  const sites = db.select().from(schema.sites).all();
+  const byQuota = new Map<number, number>();
+  for (const s of sites) {
+    byQuota.set(s.id, s.dailyQuota ?? DEFAULT_QUOTA);
+  }
+
+  let demoted = 0;
+  for (const [siteId, quota] of byQuota) {
+    if (quota <= 0) continue;
+
+    // 窗口：同站、Asia/Shanghai 同日、published、按 quality_score 降序
+    const overflow = db
+      .all(sql`SELECT article_id AS id FROM (
+        SELECT
+          a.id AS article_id,
+          r.quality_score AS qs,
+          ROW_NUMBER() OVER (
+            PARTITION BY strftime('%Y-%m-%d', COALESCE(a.published_at, a.fetched_at), 'unixepoch', '+8 hours')
+            ORDER BY r.quality_score DESC
+          ) AS rn
+        FROM articles a
+        LEFT JOIN ai_reviews r ON r.article_id = a.id
+        WHERE a.site_id = ${siteId}
+          AND a.status = 'published'
+          AND COALESCE(a.published_at, a.fetched_at) >= CAST((unixepoch() - 86400) AS INTEGER)
+      )
+      WHERE rn > ${quota}`) as { id: number }[];
+
+    if (overflow.length === 0) continue;
+
+    const ids = overflow.map((r) => r.id);
+    db.update(schema.articles)
+      .set({ status: "rejected" })
+      .where(inArray(schema.articles.id, ids))
+      .run();
+
+    demoted += ids.length;
+  }
+
+  if (demoted > 0) {
+    console.log(
+      `[quota] 每站每日配额：${demoted} 篇超额文章回退为 rejected（默认 ${DEFAULT_QUOTA}/站/日）`,
+    );
+  }
 }
 
 async function main() {

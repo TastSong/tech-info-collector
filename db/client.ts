@@ -63,6 +63,13 @@ sqlite.exec(
   `CREATE UNIQUE INDEX IF NOT EXISTS uq_user_article_save ON user_article_saves(user_id, article_id)`,
 );
 
+// 为存量数据库添加 sites.daily_quota 列（CREATE TABLE IF NOT EXISTS 不会修改已有表）
+try {
+  sqlite.exec(`ALTER TABLE sites ADD COLUMN daily_quota INTEGER`);
+} catch {
+  // 列已存在，静默跳过
+}
+
 export const db = drizzle(sqlite, { schema });
 export { schema };
 

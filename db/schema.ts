@@ -48,6 +48,8 @@ export const sites = sqliteTable("sites", {
     .default("extract_judge"),
   /** 该站点关注什么内容（作为 AI 沙盒的 scope 输入） */
   scope: text("scope"),
+  /** 每站每日发布上限（按 quality_score 取 Top-N），NULL 走全局默认 AI_DAILY_QUOTA */
+  dailyQuota: integer("daily_quota"),
   enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
   lastRunAt: integer("last_run_at", { mode: "timestamp" }),
 });
