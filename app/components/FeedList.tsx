@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { FeedCard } from "./FeedCard";
+import { CatchUpMenu } from "./CatchUpMenu";
 import { parseTags } from "@/src/lib/parse-tags";
 import { Calendar, Search, Filter, Star, X, Inbox, SearchX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronDown, Loader2, Eye } from "lucide-react";
 import { useToast } from "./Toast";
@@ -328,6 +329,27 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
     }
   }, [filtered, markBatchRead, savedOnly, toast]);
 
+  // 一键追平成功后：回到第 1 页并刷新未读总数
+  const onCatchUpCleared = useCallback(async () => {
+    setLoadingPage(true);
+    try {
+      const savedParam = savedOnly ? "&saved=1" : "";
+      const res = await fetch(`/api/feed?page=1&pageSize=${PAGE_SIZE}${savedParam}`);
+      if (res.ok) {
+        const data = await res.json();
+        setArticles(((data.articles ?? []) as ArticleRaw[]).map(fromRaw));
+        setPage(1);
+        setTotal(data.total);
+        setDismissedIds(new Set());
+        setListVersion((v) => v + 1);
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoadingPage(false);
+    }
+  }, [savedOnly]);
+
   const anyFilterActive = search.trim() !== "" || categoryFilter !== "" || siteFilter !== "" || savedOnly;
 
   function clearFilters() {
@@ -475,7 +497,7 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
           ) : anyFilterActive ? (
             <>筛选结果 · {filtered.length} 篇（共 {totalDisplayed}）</>
           ) : (
-            <>近 15 天未读 · {totalDisplayed} 篇 · {totalCategories} 个分类</>
+            <>近 7 天未读 · {totalDisplayed} 篇 · {totalCategories} 个分类</>
           )}
         </div>
         <div className="flex items-center gap-3">
@@ -587,22 +609,23 @@ export function FeedList({ initialArticles, initialTotal, initialPage, initialSa
         </div>
       )}
 
-      {/* 底部操作栏：分页 + 全部已读 */}
+      {/* 底部操作栏：分页 + 已读操作 */}
       <div className="mt-8 space-y-4">
-        {/* 全部已读（单页时与分页并列，多页时在分页下方） */}
+        {/* 一键追平（批量清积压） + 标记本页已读 */}
         {filtered.length > 0 && !savedOnly && (
-          <div className="flex justify-center">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <CatchUpMenu onCleared={onCatchUpCleared} />
             <button
               onClick={markAllRead}
               disabled={bulkLoading}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-indigo-300 hover:text-indigo-600 dark:hover:border-indigo-500 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-slate-300 hover:text-slate-700 dark:hover:bg-slate-800 hover:bg-slate-50 disabled:opacity-40 transition-colors"
             >
               {bulkLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Eye className="h-4 w-4" />
               )}
-              {bulkLoading ? (bulkProgress || "处理中…") : `全部已读 (${filtered.length})`}
+              {bulkLoading ? (bulkProgress || "处理中…") : `标记本页已读 (${filtered.length})`}
             </button>
           </div>
         )}
