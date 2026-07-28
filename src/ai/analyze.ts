@@ -9,7 +9,7 @@ import { pathToFileURL } from "node:url";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import PQueue from "p-queue";
 import { db, schema } from "../../db/client";
-import { reviewArticle, decideStatus } from "./sandbox";
+import { reviewArticle, decideStatus, passesPublishGate } from "./sandbox";
 import { tryParseDate } from "../lib/date";
 
 interface Opts {
@@ -43,8 +43,9 @@ function tryReuseReview(
       reviewId: schema.aiReviews.id,
       articleId: schema.aiReviews.articleId,
       usable: schema.aiReviews.usable,
-      qualityScore: schema.aiReviews.qualityScore,
+      isNews: schema.aiReviews.isNews,
       newsScore: schema.aiReviews.newsScore,
+      qualityScore: schema.aiReviews.qualityScore,
       tokensUsed: schema.aiReviews.tokensUsed,
     })
     .from(schema.aiReviews)
@@ -62,8 +63,15 @@ function tryReuseReview(
 
   if (!row || row.articleId === currentArticleId) return null;
 
-  // 使用相同的判定逻辑决定状态
-  const status: "published" | "rejected" = row.usable ? "published" : "rejected";
+  // 复用时同样走收紧后的发布闸门（含 isNews / newsScore 判定）
+  const passes = row.usable && row.isNews !== null && row.isNews !== undefined
+    ? passesPublishGate({
+        usable: row.usable,
+        isNews: row.isNews,
+        newsScore: row.newsScore ?? 0,
+        qualityScore: row.qualityScore ?? 0,
+      })
+    : row.usable; // 历史数据缺 isNews 时退化为仅 usable 判定
 
   // 将复用的审核记录也插入 aiReviews（关联当前文章，审计留痕）
   db.insert(schema.aiReviews)
@@ -72,13 +80,15 @@ function tryReuseReview(
       model: "reused",
       relevant: true,
       usable: row.usable,
-      qualityScore: row.qualityScore,
+      isNews: row.isNews,
       newsScore: row.newsScore,
+      qualityScore: row.qualityScore,
       reason: `复用自 review #${row.reviewId} (article #${row.articleId}, 相同 contentHash)`,
       tokensUsed: 0,
     })
     .run();
 
+  const status: "published" | "rejected" = passes ? "published" : "rejected";
   return { status, tokens: 0, reviewId: row.reviewId };
 }
 

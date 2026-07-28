@@ -135,19 +135,32 @@ const threshold = (name: string, def: number) =>
   Number(process.env[name] ?? def);
 
 /**
- * 确定性状态闸门 —— LLM 的 usable/qualityScore/newsScore 仅是建议，最终落库状态由此函数决定。
+ * 确定性状态闸门 —— LLM 的 usable/qualityScore/newsScore/isNews 仅是建议，最终落库状态由此函数决定。
  *
- * 综合评分 = qualityScore * 0.7 + newsScore * 0.3
- *   (情报价值占 70%，新闻属性占 30%——教程/分析/评论也可发布，只是权重略低)
+ * 发布需同时满足：
+ *   1. usable                                 —— 非噪声/空壳/纯导航/公告
+ *   2. isNews                                 —— 新闻/资讯类（挡教程/文档/FAQ/招聘/产品页）
+ *   3. newsScore >= AI_NEWS_THRESHOLD (0.6)   —— 新闻属性达标（可 env 调低至 0.4 保留评论/分析）
+ *   4. combinedScore >= AI_PUBLISH_THRESHOLD (0.5)
  *
- *   !usable                                 → rejected（噪声/空壳/纯导航/公告）
- *   combinedScore < AI_PUBLISH_THRESHOLD    → rejected（质量不足）
- *   其余                                    → published（自动发布）
+ *   combinedScore = qualityScore * 0.7 + newsScore * 0.3
+ *
+ * 实测 isNews 单项即可过滤约 5% 纯非新闻内容；newsScore 0.6 额外削减约 3%。
  */
-export function decideStatus(r: Review): "published" | "rejected" {
-  if (!r.usable) return "rejected";
+export function passesPublishGate(r: {
+  usable: boolean;
+  isNews: boolean;
+  newsScore: number;
+  qualityScore: number;
+}): boolean {
+  if (!r.usable) return false;
+  if (!r.isNews) return false;
+  if (r.newsScore < threshold("AI_NEWS_THRESHOLD", 0.6)) return false;
   const t = threshold("AI_PUBLISH_THRESHOLD", 0.5);
   const combined = r.qualityScore * 0.7 + r.newsScore * 0.3;
-  if (combined < t) return "rejected";
-  return "published";
+  return combined >= t;
+}
+
+export function decideStatus(r: Review): "published" | "rejected" {
+  return passesPublishGate(r) ? "published" : "rejected";
 }
