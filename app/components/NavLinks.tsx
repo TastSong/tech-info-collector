@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, History, LayoutDashboard, Globe, FileText, Users } from "lucide-react";
+import { Home, History, LayoutDashboard, Globe, FileText, Users, Newspaper } from "lucide-react";
 
 const BASE_ITEMS = [
-  { href: "/", label: "资讯流", icon: Home },
+  { href: "/", label: "首页", icon: Home },
+  { href: "/feed", label: "资讯流", icon: Newspaper },
   { href: "/history", label: "历史", icon: History },
   { href: "/dashboard", label: "仪表盘", icon: LayoutDashboard },
 ];
