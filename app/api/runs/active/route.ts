@@ -31,11 +31,30 @@ export async function GET() {
     }
   }
 
+  // 清理僵尸 runLogs（>10min 无进展）
   const now = new Date();
   for (const r of stale) {
     db.update(schema.runLogs)
       .set({ status: "error", endedAt: now, message: "超时未完成，自动标记为失败" })
       .where(eq(schema.runLogs.id, r.id))
+      .run();
+  }
+
+  // 清理僵尸 analyze 会话（>30min 仍在 analyzing 状态）
+  const analyzeCutoff = Date.now() - 30 * 60 * 1000;
+  const staleSessions = db
+    .select()
+    .from(schema.crawlSessions)
+    .where(eq(schema.crawlSessions.status, "analyzing"))
+    .all()
+    .filter((s) => {
+      const ts = s.startedAt ? new Date(s.startedAt).getTime() : 0;
+      return ts < analyzeCutoff;
+    });
+  for (const s of staleSessions) {
+    db.update(schema.crawlSessions)
+      .set({ status: "error", endedAt: now })
+      .where(eq(schema.crawlSessions.id, s.id))
       .run();
   }
 
@@ -67,11 +86,13 @@ export async function GET() {
     }
   }
 
-  // 当前 running session
+  // 当前 running session（含 analyzing 状态）
   const runningSession = db
     .select()
     .from(schema.crawlSessions)
-    .where(eq(schema.crawlSessions.status, "running"))
+    .where(
+      sql`${schema.crawlSessions.status} IN ('running', 'analyzing')`,
+    )
     .orderBy(desc(schema.crawlSessions.startedAt))
     .limit(1)
     .all()
@@ -86,6 +107,44 @@ export async function GET() {
       .where(eq(schema.runLogs.crawlSessionId, runningSession.id))
       .all();
     sessionCompleted = sessionLogs.filter((l) => l.status !== "running").length;
+  }
+
+  // 当前阶段判定 + 分析进度
+  let phase: "idle" | "crawling" | "analyzing" = "idle";
+  let analyze: {
+    remaining: number;
+    processing: number;
+  } | null = null;
+
+  if (runningSession) {
+    if (runningSession.status === "analyzing") {
+      phase = "analyzing";
+    } else if (running.length > 0) {
+      phase = "crawling";
+    } else {
+      // running session 但没有 running log（可能刚启动）
+      phase = "crawling";
+    }
+
+    // 分析阶段：统计文章处理进度
+    if (phase === "analyzing") {
+      const rawCount = db
+        .select({ count: sql<number>`count(*)` })
+        .from(schema.articles)
+        .where(eq(schema.articles.status, "raw"))
+        .all()
+        .at(0)?.count ?? 0;
+      const analyzingCount = db
+        .select({ count: sql<number>`count(*)` })
+        .from(schema.articles)
+        .where(eq(schema.articles.status, "analyzing"))
+        .all()
+        .at(0)?.count ?? 0;
+      analyze = {
+        remaining: rawCount + analyzingCount,
+        processing: analyzingCount,
+      };
+    }
   }
 
   const items = {
@@ -105,6 +164,8 @@ export async function GET() {
           completedCount: sessionCompleted,
         }
       : null,
+    phase,
+    analyze,
   };
 
   return NextResponse.json(items);

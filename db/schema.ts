@@ -118,7 +118,7 @@ export const crawlSessions = sqliteTable("crawl_sessions", {
   startedAt: integer("started_at", { mode: "timestamp" }).notNull(),
   endedAt: integer("ended_at", { mode: "timestamp" }),
   status: text("status", {
-    enum: ["running", "success", "partial", "error", "aborted"],
+    enum: ["running", "analyzing", "success", "partial", "error", "aborted"],
   })
     .notNull()
     .default("running"),

@@ -123,7 +123,7 @@ export async function runCrawl(opts: CrawlOptions = {}): Promise<{
     await closeLightpanda().catch(() => {});
   }
 
-  // 5. 汇总 session 结果
+  // 5. 汇总 session 结果（先写采集统计，不设 endedAt/status）
   const sessionRuns = db.select()
     .from(schema.runLogs)
     .where(eq(schema.runLogs.crawlSessionId, sessionId))
@@ -133,14 +133,14 @@ export async function runCrawl(opts: CrawlOptions = {}): Promise<{
   const totalSkipped = sessionRuns.reduce((s, r) => s + r.skipped, 0);
   const hasErrors = totalErrors > 0;
   const hasPartial = sessionRuns.some((r) => r.status === "partial");
-  const status: CrawlSummary["status"] =
+  const crawlStatus: CrawlSummary["status"] =
     opts.signal?.aborted ? "aborted"
     : hasErrors && totalFetched === 0 ? "error"
     : hasPartial || hasErrors ? "partial"
     : "success";
 
   db.update(schema.crawlSessions)
-    .set({ endedAt: new Date(), status, totalFetched, totalUpdated, totalSkipped, totalErrors })
+    .set({ totalFetched, totalUpdated, totalSkipped, totalErrors })
     .where(eq(schema.crawlSessions.id, sessionId))
     .run();
 
@@ -148,13 +148,25 @@ export async function runCrawl(opts: CrawlOptions = {}): Promise<{
 
   // 6. 自动 AI 分析
   if (autoAnalyze && !opts.signal?.aborted) {
+    // 切换到分析阶段（前端通过 session status = "analyzing" 展示 AI 分析进度）
+    db.update(schema.crawlSessions)
+      .set({ status: "analyzing" })
+      .where(eq(schema.crawlSessions.id, sessionId))
+      .run();
     console.log("开始 AI 分析…");
     await analyzePending({ concurrency });
     console.log("AI 分析完成。");
   }
 
+  // 7. 最终状态写入
+  const finalStatus = opts.signal?.aborted ? "aborted" : crawlStatus;
+  db.update(schema.crawlSessions)
+    .set({ endedAt: new Date(), status: finalStatus })
+    .where(eq(schema.crawlSessions.id, sessionId))
+    .run();
+
   return {
     skipped,
-    summary: { sessionId, totalFetched, totalUpdated, totalSkipped, totalErrors, status },
+    summary: { sessionId, totalFetched, totalUpdated, totalSkipped, totalErrors, status: finalStatus },
   };
 }

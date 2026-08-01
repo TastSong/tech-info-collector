@@ -4,6 +4,7 @@ import { count, eq, sql } from "drizzle-orm";
 import { CrawlTrigger } from "../components/ActionButtons";
 import { statusBadge, renderBadge } from "../components/Badges";
 import { LiveProgress } from "../components/LiveProgress";
+import { OverallProgress } from "../components/OverallProgress";
 import { ScheduleSection } from "../components/ScheduleSection";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import { Newspaper, CheckCircle2, XCircle, ArrowRight, Clock } from "lucide-react";
@@ -85,6 +86,9 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      {/* Overall Progress — 总体流水线进度 */}
+      <OverallProgress />
+
       {/* Live Progress */}
       <LiveProgress />
 
@@ -126,7 +130,7 @@ export default function DashboardPage() {
                         : "-"}
                     </td>
                     <td className="px-4 py-3 font-medium">
-                      {s.status === "running" ? (
+                      {s.status === "running" || s.status === "analyzing" ? (
                         <span className="flex items-center gap-1.5">
                           <span className="inline-flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
                           {s.siteCount} 站
@@ -148,6 +152,8 @@ export default function DashboardPage() {
                         ? <span className="text-xs font-medium text-amber-600">部分</span>
                         : s.status === "running"
                         ? <span className="text-xs font-medium text-indigo-600">采集中</span>
+                        : s.status === "analyzing"
+                        ? <span className="text-xs font-medium text-purple-600">分析中</span>
                         : s.status === "aborted"
                         ? <span className="text-xs font-medium text-slate-500">已中止</span>
                         : <span className="text-xs font-medium text-red-600">失败</span>}
